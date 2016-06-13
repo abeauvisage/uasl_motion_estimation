@@ -1,0 +1,315 @@
+# depslib dependency file v1.0
+1465806971 source:/home/abeauvisage/Documents/MotionEstimation/main.cpp
+	<iostream>
+	<fstream>
+	<string>
+	<sstream>
+	"opencv2/opencv.hpp"
+	<iomanip>
+	"viso_stereo.h"
+	"Graph2D.h"
+	"matcher.h"
+
+1450450936 /usr/local/include/opencv2/opencv.hpp
+	"opencv2/core.hpp"
+	"opencv2/imgproc.hpp"
+	"opencv2/photo.hpp"
+	"opencv2/video.hpp"
+	"opencv2/features2d.hpp"
+	"opencv2/objdetect.hpp"
+	"opencv2/calib3d.hpp"
+	"opencv2/imgcodecs.hpp"
+	"opencv2/videoio.hpp"
+	"opencv2/highgui.hpp"
+	"opencv2/ml.hpp"
+
+1450450936 /usr/local/include/opencv2/core.hpp
+	"opencv2/core/cvdef.h"
+	"opencv2/core/version.hpp"
+	"opencv2/core/base.hpp"
+	"opencv2/core/cvstd.hpp"
+	"opencv2/core/traits.hpp"
+	"opencv2/core/matx.hpp"
+	"opencv2/core/types.hpp"
+	"opencv2/core/mat.hpp"
+	"opencv2/core/persistence.hpp"
+	"opencv2/opencv.hpp"
+	"opencv2/xfeatures2d.hpp"
+	"opencv2/core/operations.hpp"
+	"opencv2/core/cvstd.inl.hpp"
+	"opencv2/core/utility.hpp"
+	"opencv2/core/optim.hpp"
+
+1450450936 /usr/local/include/opencv2/core/cvdef.h
+	<limits.h>
+	"opencv2/core/hal/interface.h"
+	<emmintrin.h>
+	<pmmintrin.h>
+	<tmmintrin.h>
+	<smmintrin.h>
+	<nmmintrin.h>
+	<nmmintrin.h>
+	<popcntintrin.h>
+	<immintrin.h>
+	<immintrin.h>
+	<Intrin.h>
+	"arm_neon.h"
+	<arm_neon.h>
+	<intrin.h>
+
+1450450936 /usr/local/include/opencv2/core/hal/interface.h
+	<cstddef>
+	<stddef.h>
+	<cstdint>
+	<stdint.h>
+
+1450450936 /usr/local/include/opencv2/core/version.hpp
+
+1450450936 /usr/local/include/opencv2/core/base.hpp
+	<climits>
+	<algorithm>
+	"opencv2/core/cvdef.h"
+	"opencv2/core/cvstd.hpp"
+	"opencv2/core/neon_utils.hpp"
+
+1450450936 /usr/local/include/opencv2/core/cvstd.hpp
+	"opencv2/core/cvdef.h"
+	<cstddef>
+	<cstring>
+	<cctype>
+	<string>
+	<algorithm>
+	<utility>
+	<cstdlib>
+	<cmath>
+	"opencv2/core/ptr.inl.hpp"
+
+1450450936 /usr/local/include/opencv2/core/ptr.inl.hpp
+	<algorithm>
+
+1450450936 /usr/local/include/opencv2/core/neon_utils.hpp
+	"opencv2/core/cvdef.h"
+
+1450450936 /usr/local/include/opencv2/core/traits.hpp
+	"opencv2/core/cvdef.h"
+
+1450450936 /usr/local/include/opencv2/core/matx.hpp
+	"opencv2/core/cvdef.h"
+	"opencv2/core/base.hpp"
+	"opencv2/core/traits.hpp"
+	"opencv2/core/saturate.hpp"
+
+1450450936 /usr/local/include/opencv2/core/saturate.hpp
+	"opencv2/core/cvdef.h"
+	"opencv2/core/fast_math.hpp"
+
+1450450936 /usr/local/include/opencv2/core/fast_math.hpp
+	"opencv2/core/cvdef.h"
+	<fastmath.h>
+	<cmath>
+	<math.h>
+	"tegra_round.hpp"
+
+1450450936 /usr/local/include/opencv2/core/types.hpp
+	<climits>
+	<cfloat>
+	<vector>
+	"opencv2/core/cvdef.h"
+	"opencv2/core/cvstd.hpp"
+	"opencv2/core/matx.hpp"
+
+1450450936 /usr/local/include/opencv2/core/mat.hpp
+	"opencv2/core/matx.hpp"
+	"opencv2/core/types.hpp"
+	"opencv2/core/bufferpool.hpp"
+	"opencv2/core/mat.inl.hpp"
+
+1450450936 /usr/local/include/opencv2/core/bufferpool.hpp
+
+1450450936 /usr/local/include/opencv2/core/mat.inl.hpp
+
+1450450936 /usr/local/include/opencv2/core/persistence.hpp
+	"opencv2/core/types.hpp"
+	"opencv2/core/mat.hpp"
+	"opencv2/opencv.hpp"
+	<time.h>
+
+1450450936 /usr/local/include/opencv2/core/operations.hpp
+	<cstdio>
+
+1450450936 /usr/local/include/opencv2/core/cvstd.inl.hpp
+	<complex>
+	<ostream>
+
+1450450936 /usr/local/include/opencv2/core/utility.hpp
+	"opencv2/core.hpp"
+	"opencv2/core/core_c.h"
+
+1450450936 /usr/local/include/opencv2/core/core_c.h
+	"opencv2/core/types_c.h"
+	"cxcore.h"
+	"cxcore.h"
+	"opencv2/core/utility.hpp"
+
+1450450936 /usr/local/include/opencv2/core/types_c.h
+	<ipl.h>
+	<ipl/ipl.h>
+	"opencv2/core/cvdef.h"
+	<assert.h>
+	<stdlib.h>
+	<string.h>
+	<float.h>
+	"opencv2/core.hpp"
+
+1450450936 /usr/local/include/opencv2/core/optim.hpp
+	"opencv2/core.hpp"
+
+1450450936 /usr/local/include/opencv2/imgproc.hpp
+	"opencv2/core.hpp"
+	<opencv2/core.hpp>
+	<opencv2/imgproc.hpp>
+	<opencv2/imgcodecs.hpp>
+	<opencv2/highgui.hpp>
+	<iostream>
+	<opencv2/imgproc.hpp>
+	<opencv2/highgui.hpp>
+	<opencv2/imgproc.hpp>
+	<opencv2/highgui.hpp>
+	<math.h>
+	<opencv2/imgproc.hpp>
+	<opencv2/highgui.hpp>
+	"opencv2/imgproc.hpp"
+	"opencv2/highgui.hpp"
+	"opencv2/imgproc/imgproc_c.h"
+
+1450450936 /usr/local/include/opencv2/imgcodecs.hpp
+	"opencv2/core.hpp"
+	<opencv2/opencv.hpp>
+
+1450450936 /usr/local/include/opencv2/highgui.hpp
+	"opencv2/core.hpp"
+	"opencv2/imgcodecs.hpp"
+	"opencv2/videoio.hpp"
+	"opencv2/highgui/highgui_c.h"
+
+1450450936 /usr/local/include/opencv2/videoio.hpp
+	"opencv2/core.hpp"
+	"opencv2/opencv.hpp"
+
+1450450936 /usr/local/include/opencv2/highgui/highgui_c.h
+	"opencv2/core/core_c.h"
+	"opencv2/imgproc/imgproc_c.h"
+	"opencv2/imgcodecs/imgcodecs_c.h"
+	"opencv2/videoio/videoio_c.h"
+
+1450450936 /usr/local/include/opencv2/imgproc/imgproc_c.h
+	"opencv2/imgproc/types_c.h"
+
+1450450936 /usr/local/include/opencv2/imgproc/types_c.h
+	"opencv2/core/core_c.h"
+
+1450450936 /usr/local/include/opencv2/imgcodecs/imgcodecs_c.h
+	"opencv2/core/core_c.h"
+
+1450450936 /usr/local/include/opencv2/videoio/videoio_c.h
+	"opencv2/core/core_c.h"
+
+1450450936 /usr/local/include/opencv2/photo.hpp
+	"opencv2/core.hpp"
+	"opencv2/imgproc.hpp"
+	"opencv2/photo/photo_c.h"
+
+1450450936 /usr/local/include/opencv2/photo/photo_c.h
+	"opencv2/core/core_c.h"
+
+1450450936 /usr/local/include/opencv2/video.hpp
+	"opencv2/video/tracking.hpp"
+	"opencv2/video/background_segm.hpp"
+	"opencv2/video/tracking_c.h"
+
+1450450936 /usr/local/include/opencv2/video/tracking.hpp
+	"opencv2/core.hpp"
+	"opencv2/imgproc.hpp"
+
+1450450936 /usr/local/include/opencv2/video/background_segm.hpp
+	"opencv2/core.hpp"
+
+1450450936 /usr/local/include/opencv2/video/tracking_c.h
+	"opencv2/imgproc/types_c.h"
+
+1450450936 /usr/local/include/opencv2/features2d.hpp
+	"opencv2/core.hpp"
+	"opencv2/flann/miniflann.hpp"
+
+1450450936 /usr/local/include/opencv2/flann/miniflann.hpp
+	"opencv2/core.hpp"
+	"opencv2/flann/defines.h"
+
+1450450936 /usr/local/include/opencv2/flann/defines.h
+	"config.h"
+
+1450450936 /usr/local/include/opencv2/flann/config.h
+
+1450450936 /usr/local/include/opencv2/objdetect.hpp
+	"opencv2/core.hpp"
+	"opencv2/objdetect/detection_based_tracker.hpp"
+	"opencv2/objdetect/objdetect_c.h"
+
+1450450936 /usr/local/include/opencv2/objdetect/detection_based_tracker.hpp
+	<vector>
+
+1450450936 /usr/local/include/opencv2/objdetect/objdetect_c.h
+	"opencv2/core/core_c.h"
+	<deque>
+	<vector>
+
+1450450936 /usr/local/include/opencv2/calib3d.hpp
+	"opencv2/core.hpp"
+	"opencv2/features2d.hpp"
+	"opencv2/core/affine.hpp"
+	"opencv2/calib3d/calib3d_c.h"
+
+1450450936 /usr/local/include/opencv2/core/affine.hpp
+	<opencv2/core.hpp>
+
+1450450936 /usr/local/include/opencv2/calib3d/calib3d_c.h
+	"opencv2/core/core_c.h"
+
+1450450936 /usr/local/include/opencv2/ml.hpp
+	"opencv2/core.hpp"
+	<float.h>
+	<map>
+	<iostream>
+
+1464794947 /home/abeauvisage/Documents/MotionEstimation/include/viso_stereo.h
+	<iostream>
+	"opencv2/core/core.hpp"
+	"featureType.h"
+
+1450450936 /usr/local/include/opencv2/core/core.hpp
+	"opencv2/core.hpp"
+
+1461682334 /home/abeauvisage/Documents/MotionEstimation/include/featureType.h
+	<cstddef>
+	<cstdlib>
+	<cstdint>
+	<iostream>
+	<cstring>
+
+1461929964 /home/abeauvisage/Documents/MotionEstimation/include/Graph2D.h
+	<vector>
+	<string>
+	<sstream>
+	"opencv2/opencv.hpp"
+
+1463671380 /home/abeauvisage/Documents/MotionEstimation/include/matcher.h
+
+1461929964 source:/home/abeauvisage/Documents/MotionEstimation/src/Graph2D.cpp
+	"Graph2D.h"
+
+1464807895 source:/home/abeauvisage/Documents/MotionEstimation/src/viso_stereo.cpp
+	"viso_stereo.h"
+	<math.h>
+	<iostream>
+	<opencv2/highgui.hpp>
+
