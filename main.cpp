@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "opencv2/opencv.hpp"
+//#include <opencv2/viz.hpp>
 #include <iomanip>
 
 #include "viso_stereo.h"
@@ -34,7 +35,7 @@ int main()
 
     ofstream file,proj;
     file.open(dir+"/coord.txt");
-    proj.open(dir+"/projection.csv");
+//    proj.open(dir+"/projection.csv");
 
     Graph2D g("Trajectory",2);
     vector<CvPoint2D32f> pts;
@@ -93,7 +94,7 @@ int main()
 
 //    param.optim = 2;
         param.reweighting = false;
-//    param.inlier_threshold = 2;
+//    param.inlier_threshold = 1.5;
 
     VisualOdometryStereo viso(param);
     Mat pose = Mat::eye(Size(4,4),CV_64F);
@@ -131,6 +132,15 @@ int main()
         getline(ss,init_gx,';');
         getline(ss,init_gy,';');
     }
+
+    /*** viz ***/
+
+//    viz::Viz3d myWindow("coordinate frame");
+//    myWindow.showWidget("coordinate widget", viz::WCoordinateSystem());
+//    myWindow.spin();
+
+    /***********/
+
 
     waitKey(0);
 
@@ -187,17 +197,20 @@ int main()
 
                     /**** processing 3D pts ****/
 
-                    if(viso.process(matched))
-                        cout << "worked" << endl;
+                    if(viso.process(matched)){
+                        viso.updatePose();
+                        pose = viso.getPose();
+                    }
                     else
                         cout << "failed" << endl;
+//
+//                    Mat new_pose =viso.getMotion();
+//                    proj << new_pose << endl;
+//                    Mat inv;invert(new_pose,inv);
+//                    if(abs(new_pose.at<double>(0,3)) < 10 && abs(new_pose.at<double>(2,3)) < 10)
+//                        pose *= inv;
 
-                    Mat new_pose =viso.getMotion();
-                    proj << new_pose << endl;
-                    Mat inv;invert(new_pose,inv);
-                    if(abs(new_pose.at<double>(0,3)) < 10 && abs(new_pose.at<double>(2,3)) < 10)
-                        pose *= inv;
-
+                    pose = viso.getPose();
 
                     x = pose.at<double>(0,3);
                     y = pose.at<double>(2,3);
@@ -269,8 +282,8 @@ int main()
 //                if( param.base*param.calib.f/(stof(m11)-stof(m21)) > 0 && param.base*param.calib.f/(stof(m11)-stof(m21)) < 30)
                     p_matched.push_back(Matcher::p_match(stof(m11),stof(m12),0,stof(m21),stof(m22),0,stof(m31),stof(m32),0,stof(m41),stof(m42),0));
                     matched.push_back(StereoOdoMatches<Point2f>(Point2f(stof(m11),stof(m12)),Point2f(stof(m21),stof(m22)),Point2f(stof(m31),stof(m32)),Point2f(stof(m41),stof(m42))));
-                    cout << p_matched[p_matched.size()-1].u1p << "," << p_matched[p_matched.size()-1].v1p << "," << p_matched[p_matched.size()-1].u2p << "," << p_matched[p_matched.size()-1].v2p << endl;
-                    cout << "frame: " << f << endl;
+//                    cout << p_matched[p_matched.size()-1].u1p << "," << p_matched[p_matched.size()-1].v1p << "," << p_matched[p_matched.size()-1].u2p << "," << p_matched[p_matched.size()-1].v2p << endl;
+//                    cout << "frame: " << f << endl;
                 }
             }
         }

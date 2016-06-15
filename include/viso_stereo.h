@@ -41,7 +41,10 @@ public:
 
     bool process(const std::vector<StereoOdoMatches<cv::Point2f>>& matches);
 
+    void updatePose();
+
     cv::Mat getMotion();
+    cv::Mat getPose(){return m_pose;};
     std::vector<cv::Point3d> getPts3D(){return pts3D;}
     std::vector<int> getInliers_idx(){return inliers_idx;}
 
@@ -57,6 +60,7 @@ private:
     std::vector<double> observations;
     std::vector<double> predictions;
     std::vector<double> residuals;
+    cv::Mat m_pose;
 
     bool optimize(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection);
     void projectionUpdate(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection);

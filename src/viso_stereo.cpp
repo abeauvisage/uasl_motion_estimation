@@ -9,6 +9,7 @@ using namespace cv;
 
 VisualOdometryStereo::VisualOdometryStereo (parameters param) : m_param(param) {
     srand(0);
+    m_pose = Mat::eye(4,4,CV_64F);
 }
 
 
@@ -260,4 +261,12 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
         return false;
     else
         return true;
+}
+
+void VisualOdometryStereo::updatePose(){
+    Mat tmp_pose = getMotion();
+    if(abs(tmp_pose.at<double>(0,3)) < 10 && abs(tmp_pose.at<double>(2,3)) < 10){
+        Mat inv;invert(tmp_pose,inv);
+        m_pose *= inv;
+    }
 }
