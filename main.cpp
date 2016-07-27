@@ -30,11 +30,11 @@ int main()
     string dir = "/home/abeauvisage/Documents/datasets/16_05_26/test_16_05_26-a_rec";
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/16_03_14/test_16_03_14_2_rectified";
 
-    ifstream data(dir+"/matches_10_yes.txt");
+    ifstream data(dir+"/matches_10_new.txt");
     ifstream gps(dir+"/gps.txt");
 
     ofstream file,proj;
-    file.open(dir+"/coord.txt");
+    file.open(dir+"/new_coord.txt");
 //    proj.open(dir+"/projection.csv");
 
     Graph2D g("Trajectory",2);
@@ -93,7 +93,7 @@ int main()
 
 
 //    param.optim = 2;
-        param.reweighting = false;
+//        param.reweighting = false;
 //    param.inlier_threshold = 1.5;
 
     VisualOdometryStereo viso(param);
@@ -121,7 +121,7 @@ int main()
 
     int skip =10;
     int test_frame=0;
-    int nframe=250+skip;  //dataset 03_07 -> d1: 250 d2: 230 d4-> 600
+    int nframe=250;  //dataset 03_07 -> d1: 250 d2: 230 d4-> 600
 
     /***************/
     string init_gx,init_gy;
@@ -154,7 +154,7 @@ int main()
         {
             if(line == ""){
 
-                /******* gps data ******/\
+                /******* gps data ******/
 
                 string gx,gy;
                  if(gps.is_open()){
@@ -199,7 +199,7 @@ int main()
 
                     if(viso.process(matched)){
                         viso.updatePose();
-                        pose = viso.getPose();
+                        //pose = viso.getPose();
                     }
                     else
                         cout << "failed" << endl;
@@ -211,6 +211,7 @@ int main()
 //                        pose *= inv;
 
                     pose = viso.getPose();
+                    cout << pose << endl;
 
                     x = pose.at<double>(0,3);
                     y = pose.at<double>(2,3);
@@ -263,7 +264,7 @@ int main()
                 nframe+=skip;
                 p_matched.clear();
                 matched.clear();
-                waitKey(50);
+                waitKey(0);
             }
             else{
                 stringstream ss(line);

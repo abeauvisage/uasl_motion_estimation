@@ -13,6 +13,7 @@ Graph2D::Graph2D(string name, const int nb): m_name(name), m_nb_curves(nb)
 
     for(int i=0;i<m_nb_curves;i++){
         vector<Point2f> pts;
+        pts.push_back(Point2f(0,0));
         m_values.push_back(pts);
     }
 

@@ -36,7 +36,7 @@ public:
     };
 
 
-    VisualOdometryStereo(parameters param);
+    VisualOdometryStereo(parameters param=parameters());
     ~VisualOdometryStereo(){};
 
     bool process(const std::vector<StereoOdoMatches<cv::Point2f>>& matches);
