@@ -46,7 +46,7 @@ bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& mat
                 for (int j=0; j<6; j++)
                     x[j] = 0;
 
-                if (optimize(matches,selection)) { // if optimization succeeded and more inliers obtained, inliers are saved
+                if (optimize(matches,selection,false)) { // if optimization succeeded and more inliers obtained, inliers are saved
                     vector<int> inliers_tmp = computeInliers(matches);
                     if (inliers_tmp.size()>inliers_idx.size())
                         inliers_idx = inliers_tmp;
@@ -61,7 +61,7 @@ bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& mat
         /** final optimization **/
 
         if (inliers_idx.size()>=6) // check that more than 6 inliers have been obtained
-            if (optimize(matches,inliers_idx)) // optimize using inliers
+            if (optimize(matches,inliers_idx,true)) // optimize using inliers
                 return true;
             else
                 return false;
@@ -75,7 +75,7 @@ vector<int> VisualOdometryStereo::computeInliers(const vector<StereoOdoMatches<P
     for (int i=0;i<matches.size();i++)
         selection.push_back(i);
 
-    projectionUpdate(matches,selection);
+    projectionUpdate(matches,selection,false);
 
     vector<int> inliers_idx;
     for (int i=0; i<matches.size(); i++){
@@ -89,7 +89,7 @@ vector<int> VisualOdometryStereo::computeInliers(const vector<StereoOdoMatches<P
     return inliers_idx;
 }
 
-void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2f>>& matches, const vector<int>& selection){
+void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2f>>& matches, const vector<int>& selection, bool weight){
 
     Point3d p1,p2,p2d;
 
@@ -125,6 +125,11 @@ void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2
         // compute 3d point in current left coordinate system
         double* R_ptr = R.ptr<double>();
         p2 = Point3d(R_ptr[0]*p1.x+R_ptr[1]*p1.y+R_ptr[2]*p1.z+tx, R_ptr[3]*p1.x+R_ptr[4]*p1.y+R_ptr[5]*p1.z+ty, R_ptr[6]*p1.x+R_ptr[7]*p1.y+R_ptr[8]*p1.z+tz);
+        float w;
+        if(weight)
+            w = 1/p1.z;
+        else
+            w = 1;
 
         for (int j=0; j<6; j++) {
 
@@ -150,10 +155,10 @@ void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2
             }
 
             // set jacobian entries (project via K)
-            J[(4*i+0)*6+j] = m_param.f1*(p2d.x*p2.z-p2.x*p2d.z)/(p2.z*p2.z); // left u'
-            J[(4*i+1)*6+j] = m_param.f1*(p2d.y*p2.z-p2.y*p2d.z)/(p2.z*p2.z); // left v'
-            J[(4*i+2)*6+j] = m_param.f2*(p2d.x*p2.z-(p2.x-m_param.baseline)*p2d.z)/(p2.z*p2.z); // right u'
-            J[(4*i+3)*6+j] = m_param.f2*(p2d.y*p2.z-p2.y*p2d.z)/(p2.z*p2.z); // right v'
+            J[(4*i+0)*6+j] = w*m_param.f1*(p2d.x*p2.z-p2.x*p2d.z)/(p2.z*p2.z); // left u'
+            J[(4*i+1)*6+j] = w*m_param.f1*(p2d.y*p2.z-p2.y*p2d.z)/(p2.z*p2.z); // left v'
+            J[(4*i+2)*6+j] = w*m_param.f2*(p2d.x*p2.z-(p2.x-m_param.baseline)*p2d.z)/(p2.z*p2.z); // right u'
+            J[(4*i+3)*6+j] = w*m_param.f2*(p2d.y*p2.z-p2.y*p2d.z)/(p2.z*p2.z); // right v'
     }
 
     observations[4*i+0] = matches[selection[i]].f3.x;
@@ -167,7 +172,7 @@ void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2
     predictions[4*i+3] = m_param.f2*p2.y/p2.z+m_param.cv2; // right v
 
     for(int j=0;j<4;j++)
-        residuals[4*i+j] = observations[4*i+j]-predictions[4*i+j];
+        residuals[4*i+j] = w*(observations[4*i+j]-predictions[4*i+j]);
   }
 }
 
@@ -208,7 +213,7 @@ vector<int> VisualOdometryStereo::randomIndexes(int nb_samples, int nb_tot) {
   return samples_idx;
 }
 
-bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>& matches, const std::vector<int>& selection){
+bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>& matches, const std::vector<int>& selection, bool weight){
 
     if (selection.size()<3) // if less than 3 points triangulation impossible
         return false;
@@ -218,7 +223,7 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
 
     do {
 
-        projectionUpdate(matches,selection);
+        projectionUpdate(matches,selection,weight);
 
         // init
         cv::Mat A(6,6,CV_64F);

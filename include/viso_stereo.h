@@ -62,8 +62,8 @@ private:
     std::vector<double> residuals;
     cv::Mat m_pose;
 
-    bool optimize(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection);
-    void projectionUpdate(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection);
+    bool optimize(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);
+    void projectionUpdate(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);
     std::vector<int> computeInliers(const std::vector<StereoOdoMatches<cv::Point2f>>& matches);
     std::vector<int> randomIndexes(int nb_samples, int nb_tot);
 };
