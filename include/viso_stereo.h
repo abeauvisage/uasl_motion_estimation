@@ -55,11 +55,11 @@ private:
 
     parameters m_param;
 
-    std::vector<double> J;
+    cv::Mat J;
     std::vector<double> x;
-    std::vector<double> observations;
-    std::vector<double> predictions;
-    std::vector<double> residuals;
+    cv::Mat observations;
+    cv::Mat predictions;
+    cv::Mat residuals;
     cv::Mat m_pose;
 
     bool optimize(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);

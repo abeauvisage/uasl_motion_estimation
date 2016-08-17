@@ -27,10 +27,11 @@ int main()
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/seq_11_01_3_rec4";
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/KAIST_new2_rectified";
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/seq_MO_original_rectified";
-    string dir = "/home/abeauvisage/Documents/datasets/16_05_26/test_16_05_26-a_rec";
+//    string dir = "/home/abeauvisage/Documents/datasets/16_05_26/test_16_05_26-a_rec";
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/16_03_14/test_16_03_14_2_rectified";
+    string dir = "/home/abeauvisage/Documents/datasets/test_16_08_14";
 
-    ifstream data(dir+"/matches_10_new.txt");
+    ifstream data(dir+"/matches.txt");
     ifstream gps(dir+"/gps.txt");
 
     ofstream file,proj;
@@ -77,18 +78,21 @@ int main()
 //    param.calib.cv    = 514.299013570319/2;
 //    param.base  = 0.2460029;
 
-    param.f1     = 5.9578119773793446e+02;
-    param.f2     = 5.9578119773793446e+02;
-    param.cu1    = 3.3541476821899414e+02;
-    param.cu2    = 3.3541476821899414e+02;
-    param.cv1    = 2.3775906753540039e+02;
-    param.cv2    = 2.3775906753540039e+02;
-    param.baseline  = 2.8330214554049502e-01;
+//    param.f1     = 5.9578119773793446e+02;
+//    param.f2     = 5.9578119773793446e+02;
+//    param.cu1    = 3.3541476821899414e+02;
+//    param.cu2    = 3.3541476821899414e+02;
+//    param.cv1    = 2.3775906753540039e+02;
+//    param.cv2    = 2.3775906753540039e+02;
+//    param.baseline  = 2.8330214554049502e-01;
 
-//    param.calib.f     = 5.9720550594991914e+02;
-//    param.calib.cu    = 2.4728222656250000e+02;
-//    param.calib.cv    = 2.5273866081237793e+02;
-//    param.base  = 3.5054506217404402e-01;
+    param.f1     = 5.9255299209557393e+02;
+    param.f2     = 5.9255299209557393e+02;
+    param.cu1    = 3.3553755187988281e+02;
+    param.cu2    = 3.3553755187988281e+02;
+    param.cv1    = 2.3892620849609375e+02;
+    param.cv2    = 2.3892620849609375e+02;
+    param.baseline  = 3.0877265416681990e-01;
 
 
 
@@ -119,9 +123,9 @@ int main()
 
     /**************/
 
-    int skip =10;
+    int skip =1;
     int test_frame=0;
-    int nframe=250;  //dataset 03_07 -> d1: 250 d2: 230 d4-> 600
+    int nframe=30;  //dataset 03_07 -> d1: 250 d2: 230 d4-> 600
 
     /***************/
     string init_gx,init_gy;
@@ -175,8 +179,8 @@ int main()
                     stringstream num;num <<  std::setfill('0') << std::setw(5) << nframe; // frame number with 5 digit format
                     cout << "### frame  " << nframe << " ###" << endl;
 
-                    Mat imgLc = imread(dir+"/cam0_image"+num.str()+"_rectified.png",0);
-                    Mat imgRc = imread(dir+"/cam1_image"+num.str()+"_rectified.png",0);
+                    Mat imgLc = imread(dir+"/cam0_image"+num.str()+"_rec.png",0);
+                    Mat imgRc = imread(dir+"/cam1_image"+num.str()+"_rec.png",0);
 
 
                     cv::Mat imgL_color(imgLc.size(),CV_8UC3),imgR_color(imgLc.size(),CV_8UC3);
