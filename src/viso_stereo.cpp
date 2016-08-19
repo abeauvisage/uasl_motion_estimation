@@ -82,6 +82,41 @@ vector<int> VisualOdometryStereo::computeInliers(const vector<StereoOdoMatches<P
     return inliers_idx;
 }
 
+cv::Mat VisualOdometryStereo::applyFunction(const vector<StereoOdoMatches<Point2f>>& matches, const vector<int>& selection){
+
+    cv::Mat res = cv::Mat::zeros(4*selection.size(),1,CV_64F);
+
+    Point3d p1,p2;
+
+    // compute R, dR/dx dR/dy and dR/dz
+
+    double tx = x[3], ty = x[4], tz = x[5];
+    double sx = sin(x[0]), cx = cos(x[0]), sy = sin(x[1]), cy = cos(x[1]), sz = sin(x[2]), cz = cos(x[2]);
+
+
+    /*** R matrix ***/
+
+    double R_[9] = {    +cy*cz,             -cy*sz,             +sy,
+                        +sx*sy*cz+cx*sz,    -sx*sy*sz+cx*cz,    -sx*cy,
+                        -cx*sy*cz+sx*sz,    +cx*sy*sz+sx*cz,    +cx*cy};
+
+    Mat R(3,3,CV_64FC1,&R_);
+
+    for (unsigned int i=0; i<selection.size(); i++) {
+
+        p1 = pts3D[selection[i]];
+
+        double* R_ptr = R.ptr<double>();
+        p2 = Point3d(R_ptr[0]*p1.x+R_ptr[1]*p1.y+R_ptr[2]*p1.z+tx, R_ptr[3]*p1.x+R_ptr[4]*p1.y+R_ptr[5]*p1.z+ty, R_ptr[6]*p1.x+R_ptr[7]*p1.y+R_ptr[8]*p1.z+tz);
+
+        res.at<double>(4*i+0) = matches[selection[i]].f3.x-m_param.f1*p2.x/p2.z+m_param.cu1;
+        res.at<double>(4*i+1) = matches[selection[i]].f3.y-m_param.f1*p2.y/p2.z+m_param.cv1;
+        res.at<double>(4*i+2) = matches[selection[i]].f4.x-m_param.f2*(p2.x-m_param.baseline)/p2.z+m_param.cu2;
+        res.at<double>(4*i+3) = matches[selection[i]].f4.y-m_param.f2*p2.y/p2.z+m_param.cv2;
+    }
+    return res;
+}
+
 void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2f>>& matches, const vector<int>& selection, bool weight){
 
     J          = cv::Mat::zeros(6,4*selection.size(),CV_64F);
@@ -238,6 +273,7 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
 
     int k=0;
     int result=0;
+    double lambda=1e-2;
 
     do {
 
@@ -253,20 +289,54 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
             B.at<double>(i) = b.at<double>(0);
         }
 
+        if(m_param.method == LM){
+            B += lambda * Mat::diag(Mat::diag(A));
+        }
 
-        // perform elimination
-        if (solve(A,B,X,DECOMP_QR)) {
-            bool converged = true;
-            for (int32_t m=0; m<6; m++) {
-              x[m] += m_param.step_size*X.at<double>(m,0);
-              if (fabs(X.at<double>(m,0))>m_param.eps)
-                converged = false;
+        if(solve(A,B,X,DECOMP_QR)){
+
+            if(m_param.method == GN){   // Gauss-Newton
+//                x += X;
+                double min, max;
+                cv::minMaxLoc(X,&min,&max);
+                if(max < m_param.eps)
+                    result = 1;
             }
-            if (converged)
-              result = 1;
+            else{                       // Levenberg-Marquart
+                Mat x_test ;//= x + X;
+                Mat r = applyFunction(matches,x_test);
+                Mat rho = (residuals.t()*residuals - r.t()*r)/(X.t()*(lambda*X+B));
+                if(rho.at<double>(0) > 1e-7){ //threshold
+                    lambda = max(lambda/9,1.e-7);
+//                    x = x_test;
+                }
+                else
+                    lambda = min(lambda*11,1.e7);
 
-        } else
+                double min, max, m1,m2,m3;
+                cv::minMaxLoc(X,&min,&max);
+                cv::minMaxLoc(B,&min,&m1);
+                cv::minMaxLoc(x_test/*x*/,&min,&m2);
+                if(max < m_param.e1 || m1 < m_param.e2 || m2 < m_param.e3)
+                    result = 1;
+
+            }
+        }else
             result = -1;
+
+//        // perform elimination
+//        if (solve(A,B,X,DECOMP_QR)) {
+//            bool converged = true;
+//            for (int m=0; m<6; m++) {
+//              x[m] += m_param.step_size*X.at<double>(m,0);
+//              if (fabs(X.at<double>(m,0))>m_param.eps)
+//                converged = false;
+//            }
+//            if (converged)
+//              result = 1;
+//
+//        } else
+//            result = -1;
 
     }while(k++ < m_param.max_iter && result==0);
 

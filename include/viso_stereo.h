@@ -10,8 +10,11 @@ class VisualOdometryStereo {
 
 public:
 
+    enum Method { GN, LM};
+
     struct parameters  {
         double  baseline;
+        Method method;
         int n_ransac;
         double  inlier_threshold;
         bool    reweighting;
@@ -19,9 +22,10 @@ public:
         double cu1,cu2;
         double cv1,cv2;
         double step_size;
-        double eps;
+        double eps,e1,e2,e3,e4;
         int max_iter;
         parameters () {
+            method = GN;
             f1=1;f2=1;
             cu1=0;cu2=0;
             cv1=0;cv2=0;
@@ -31,6 +35,10 @@ public:
             reweighting = true;
             step_size = 1;
             eps = 1e-8;
+            e1 = 1e-8;
+            e2 = 1e-8;
+            e3 = 1e-8;
+            e4 = 1e-8;
             max_iter=20;
         }
     };
@@ -64,6 +72,7 @@ private:
 
     bool optimize(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);
     void projectionUpdate(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);
+    cv::Mat applyFunction(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection);
     std::vector<int> computeInliers(const std::vector<StereoOdoMatches<cv::Point2f>>& matches);
     std::vector<int> randomIndexes(int nb_samples, int nb_tot);
 };
