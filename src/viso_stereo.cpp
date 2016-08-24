@@ -19,7 +19,7 @@ bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& mat
     if(nb_matches<6)
         return false;
 
-    x = vector<double>(6,0);
+    x = Mat::zeros(6,1,CV_64F);
 
     pts3D.clear();
 
@@ -36,8 +36,7 @@ bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& mat
 
         selection = randomIndexes(3,nb_matches);
         if((matches[selection[0]].f3.x*(matches[selection[1]].f3.y-matches[selection[2]].f3.y)+matches[selection[1]].f3.x*(matches[selection[2]].f3.y-matches[selection[0]].f3.y)+matches[selection[2]].f3.x*(matches[selection[0]].f3.y-matches[selection[1]].f3.y))/2 > 1000){
-            for (int j=0; j<6; j++)
-                x[j] = 0;
+            x = Mat::zeros(6,1,CV_64F);
 
             if (optimize(matches,selection,false)) { // if optimization succeeded and more inliers obtained, inliers are saved
                 vector<int> inliers_tmp = computeInliers(matches);
@@ -47,14 +46,16 @@ bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& mat
         }
     }
 
-    for(int i=0;i<6;i++)
-        x[i]=0;
+    x = Mat::zeros(6,1,CV_64F);
+
+//    for (int i=0; i<nb_matches; i++)
+//        inliers_idx.push_back(i);
 
 
     /** final optimization **/
 
     if (inliers_idx.size()>=6) // check that more than 6 inliers have been obtained
-        if (optimize(matches,inliers_idx,true)) // optimize using inliers
+        if (optimize(matches,inliers_idx,false)) // optimize using inliers
             return true;
         else
             return false;
@@ -82,16 +83,16 @@ vector<int> VisualOdometryStereo::computeInliers(const vector<StereoOdoMatches<P
     return inliers_idx;
 }
 
-cv::Mat VisualOdometryStereo::applyFunction(const vector<StereoOdoMatches<Point2f>>& matches, const vector<int>& selection){
+cv::Mat VisualOdometryStereo::applyFunction(const vector<StereoOdoMatches<Point2f>>& matches, cv::Mat& x_,  const vector<int>& selection){
 
     cv::Mat res = cv::Mat::zeros(4*selection.size(),1,CV_64F);
 
     Point3d p1,p2;
 
     // compute R, dR/dx dR/dy and dR/dz
-
-    double tx = x[3], ty = x[4], tz = x[5];
-    double sx = sin(x[0]), cx = cos(x[0]), sy = sin(x[1]), cy = cos(x[1]), sz = sin(x[2]), cz = cos(x[2]);
+    double* x_ptr = x_.ptr<double>();
+    double tx = x_ptr[3], ty = x_ptr[4], tz = x_ptr[5];
+    double sx = sin(x_ptr[0]), cx = cos(x_ptr[0]), sy = sin(x_ptr[1]), cy = cos(x_ptr[1]), sz = sin(x_ptr[2]), cz = cos(x_ptr[2]);
 
 
     /*** R matrix ***/
@@ -128,8 +129,9 @@ void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2
 
     // compute R, dR/dx dR/dy and dR/dz
 
-    double tx = x[3], ty = x[4], tz = x[5];
-    double sx = sin(x[0]), cx = cos(x[0]), sy = sin(x[1]), cy = cos(x[1]), sz = sin(x[2]), cz = cos(x[2]);
+    double* x_ptr = x.ptr<double>();
+    double tx = x_ptr[3], ty = x_ptr[4], tz = x_ptr[5];
+    double sx = sin(x_ptr[0]), cx = cos(x_ptr[0]), sy = sin(x_ptr[1]), cy = cos(x_ptr[1]), sz = sin(x_ptr[2]), cz = cos(x_ptr[2]);
 
 
     /*** R matrix ***/
@@ -225,14 +227,16 @@ void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2
 
 cv::Mat VisualOdometryStereo::getMotion(){
 
-    double sx = sin(x[0]), cx = cos(x[0]), sy = sin(x[1]), cy = cos(x[1]), sz = sin(x[2]), cz = cos(x[2]); //compute sine cosine from the state vector
+    double* x_ptr = x.ptr<double>();
+    double tx = x_ptr[3], ty = x_ptr[4], tz = x_ptr[5];
+    double sx = sin(x_ptr[0]), cx = cos(x_ptr[0]), sy = sin(x_ptr[1]), cy = cos(x_ptr[1]), sz = sin(x_ptr[2]), cz = cos(x_ptr[2]); //compute sine cosine from the state vector
 
     //create rigid-body transformation matrix (R|T) from state vector
     cv::Mat Rt(4,4,CV_64F);
     double* Rt_ptr = Rt.ptr<double>();
-    Rt_ptr[0]  = +cy*cz;          Rt_ptr[1]  = -cy*sz;          Rt_ptr[2]  = +sy;    Rt_ptr[3]  = x[3];
-    Rt_ptr[4]  = +sx*sy*cz+cx*sz; Rt_ptr[5]  = -sx*sy*sz+cx*cz; Rt_ptr[6]  = -sx*cy; Rt_ptr[7]  = x[4];
-    Rt_ptr[8]  = -cx*sy*cz+sx*sz; Rt_ptr[9]  = +cx*sy*sz+sx*cz; Rt_ptr[10] = +cx*cy; Rt_ptr[11] = x[5];
+    Rt_ptr[0]  = +cy*cz;          Rt_ptr[1]  = -cy*sz;          Rt_ptr[2]  = +sy;    Rt_ptr[3]  = tx;
+    Rt_ptr[4]  = +sx*sy*cz+cx*sz; Rt_ptr[5]  = -sx*sy*sz+cx*cz; Rt_ptr[6]  = -sx*cy; Rt_ptr[7]  = ty;
+    Rt_ptr[8]  = -cx*sy*cz+sx*sz; Rt_ptr[9]  = +cx*sy*sz+sx*cz; Rt_ptr[10] = +cx*cy; Rt_ptr[11] = tz;
     Rt_ptr[12] = 0;               Rt_ptr[13] = 0;               Rt_ptr[14] = 0;      Rt_ptr[15] = 1;
     //create rigid-body transformation matrix (R|T) from state vector
 //    double Rt_[16] = {   +cy*cz,             -cy*sz,             +sy,    x[3],
@@ -289,26 +293,26 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
             B.at<double>(i) = b.at<double>(0);
         }
 
-        if(m_param.method == LM){
-            B += lambda * Mat::diag(Mat::diag(A));
-        }
+        if(m_param.method == LM)
+            A += lambda * Mat::diag(A.diag());
 
         if(solve(A,B,X,DECOMP_QR)){
 
             if(m_param.method == GN){   // Gauss-Newton
-//                x += X;
+                x += X;
                 double min, max;
                 cv::minMaxLoc(X,&min,&max);
                 if(max < m_param.eps)
                     result = 1;
             }
             else{                       // Levenberg-Marquart
-                Mat x_test ;//= x + X;
-                Mat r = applyFunction(matches,x_test);
+                Mat x_test = x + X;
+                Mat r = applyFunction(matches,x_test,selection);
                 Mat rho = (residuals.t()*residuals - r.t()*r)/(X.t()*(lambda*X+B));
-                if(rho.at<double>(0) > 1e-7){ //threshold
+                if(rho.at<double>(0) > m_param.e4){ //threshold
                     lambda = max(lambda/9,1.e-7);
-//                    x = x_test;
+                    x = x_test;
+                    cout << "updated!" << endl;
                 }
                 else
                     lambda = min(lambda*11,1.e7);
@@ -316,7 +320,7 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
                 double min, max, m1,m2,m3;
                 cv::minMaxLoc(X,&min,&max);
                 cv::minMaxLoc(B,&min,&m1);
-                cv::minMaxLoc(x_test/*x*/,&min,&m2);
+                cv::minMaxLoc(x_test/x,&min,&m2);
                 if(max < m_param.e1 || m1 < m_param.e2 || m2 < m_param.e3)
                     result = 1;
 
@@ -324,11 +328,12 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
         }else
             result = -1;
 
-//        // perform elimination
+        // perform elimination
 //        if (solve(A,B,X,DECOMP_QR)) {
 //            bool converged = true;
 //            for (int m=0; m<6; m++) {
-//              x[m] += m_param.step_size*X.at<double>(m,0);
+//              double* x_ptr = x.ptr<double>();
+//              x_ptr[m] += m_param.step_size*X.at<double>(m,0);
 //              if (fabs(X.at<double>(m,0))>m_param.eps)
 //                converged = false;
 //            }

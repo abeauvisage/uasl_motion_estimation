@@ -35,10 +35,10 @@ public:
             reweighting = true;
             step_size = 1;
             eps = 1e-8;
-            e1 = 1e-8;
-            e2 = 1e-8;
-            e3 = 1e-8;
-            e4 = 1e-8;
+            e1 = 1e-3;
+            e2 = 1e-3;
+            e3 = 1e-1;
+            e4 = 1e-1;
             max_iter=20;
         }
     };
@@ -64,7 +64,7 @@ private:
     parameters m_param;
 
     cv::Mat J;
-    std::vector<double> x;
+    cv::Mat x;
     cv::Mat observations;
     cv::Mat predictions;
     cv::Mat residuals;
@@ -72,7 +72,7 @@ private:
 
     bool optimize(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);
     void projectionUpdate(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);
-    cv::Mat applyFunction(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection);
+    cv::Mat applyFunction(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, cv::Mat& x_, const std::vector<int32_t>& selection);
     std::vector<int> computeInliers(const std::vector<StereoOdoMatches<cv::Point2f>>& matches);
     std::vector<int> randomIndexes(int nb_samples, int nb_tot);
 };

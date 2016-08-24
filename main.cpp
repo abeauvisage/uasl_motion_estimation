@@ -93,12 +93,14 @@ int main()
     param.cv1    = 2.3892620849609375e+02;
     param.cv2    = 2.3892620849609375e+02;
     param.baseline  = 3.0877265416681990e-01;
+//    param.n_ransac = 0;
+    param.method = VisualOdometryStereo::GN;
 
 
 
 //    param.optim = 2;
 //        param.reweighting = false;
-//    param.inlier_threshold = 1.5;
+    param.inlier_threshold = 3;
 
     VisualOdometryStereo viso(param);
     Mat pose = Mat::eye(Size(4,4),CV_64F);
