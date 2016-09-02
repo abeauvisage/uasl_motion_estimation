@@ -51,7 +51,7 @@ bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& mat
 //    for (int i=0; i<nb_matches; i++)
 //        inliers_idx.push_back(i);
 
-
+    cout << "nb inliers: " << inliers_idx.size() << endl;
     /** final optimization **/
 
     if (inliers_idx.size()>=6) // check that more than 6 inliers have been obtained
@@ -307,12 +307,13 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
             }
             else{                       // Levenberg-Marquart
                 Mat x_test = x + X;
+
                 Mat r = applyFunction(matches,x_test,selection);
                 Mat rho = (residuals.t()*residuals - r.t()*r)/(X.t()*(lambda*X+B));
-                if(rho.at<double>(0) > m_param.e4){ //threshold
+                if(abs(rho.at<double>(0)) > m_param.e4){ //threshold
                     lambda = max(lambda/9,1.e-7);
                     x = x_test;
-                    cout << "updated!" << endl;
+//                    cout << "updated!" << endl;
                 }
                 else
                     lambda = min(lambda*11,1.e7);
@@ -353,8 +354,9 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
 
 void VisualOdometryStereo::updatePose(){
     Mat tmp_pose = getMotion();
-    if(abs(tmp_pose.at<double>(0,3)) < 10 && abs(tmp_pose.at<double>(2,3)) < 10){
+    if(abs(tmp_pose.at<double>(0,3)) < 2 && abs(tmp_pose.at<double>(2,3)) < 2){
         Mat inv;invert(tmp_pose,inv);
+        std::cout << inv << std::endl;
         m_pose *= inv;
     }
 }

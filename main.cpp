@@ -29,9 +29,9 @@ int main()
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/seq_MO_original_rectified";
 //    string dir = "/home/abeauvisage/Documents/datasets/16_05_26/test_16_05_26-a_rec";
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/16_03_14/test_16_03_14_2_rectified";
-    string dir = "/home/abeauvisage/Documents/datasets/test_16_08_14";
+    string dir = "/home/abeauvisage/Documents/datasets/16_08_30/test_16_08_30-a_rec";
 
-    ifstream data(dir+"/matches.txt");
+    ifstream data(dir+"/matches_7.csv");
     ifstream gps(dir+"/gps.txt");
 
     ofstream file,proj;
@@ -86,21 +86,30 @@ int main()
 //    param.cv2    = 2.3775906753540039e+02;
 //    param.baseline  = 2.8330214554049502e-01;
 
-    param.f1     = 5.9255299209557393e+02;
-    param.f2     = 5.9255299209557393e+02;
-    param.cu1    = 3.3553755187988281e+02;
-    param.cu2    = 3.3553755187988281e+02;
-    param.cv1    = 2.3892620849609375e+02;
-    param.cv2    = 2.3892620849609375e+02;
-    param.baseline  = 3.0877265416681990e-01;
+//    param.f1     = 5.9255299209557393e+02;
+//    param.f2     = 5.9255299209557393e+02;
+//    param.cu1    = 3.3553755187988281e+02;
+//    param.cu2    = 3.3553755187988281e+02;
+//    param.cv1    = 2.3892620849609375e+02;
+//    param.cv2    = 2.3892620849609375e+02;
+//    param.baseline  = 3.0877265416681990e-01;
 //    param.n_ransac = 0;
-    param.method = VisualOdometryStereo::GN;
+
+//calib 16_08_30
+    param.f1     = 5.7900686502448991e+02;
+    param.f2     = 5.7900686502448991e+02;
+    param.cu1    = 3.4719164657592773e+02;
+    param.cu2    = 3.4719164657592773e+02;
+    param.cv1    = 2.3975083160400391e+02;
+    param.cv2    = 2.3975083160400391e+02;
+    param.baseline  = 2.8724344758286230e-01;
+    param.method = VisualOdometryStereo::LM;
 
 
 
 //    param.optim = 2;
 //        param.reweighting = false;
-    param.inlier_threshold = 3;
+    param.inlier_threshold = 10;
 
     VisualOdometryStereo viso(param);
     Mat pose = Mat::eye(Size(4,4),CV_64F);
@@ -125,9 +134,9 @@ int main()
 
     /**************/
 
-    int skip =1;
+    int skip =7;
     int test_frame=0;
-    int nframe=30;  //dataset 03_07 -> d1: 250 d2: 230 d4-> 600
+    int nframe=1;  //dataset 03_07 -> d1: 250 d2: 230 d4-> 600
 
     /***************/
     string init_gx,init_gy;
@@ -270,21 +279,21 @@ int main()
                 nframe+=skip;
                 p_matched.clear();
                 matched.clear();
-                waitKey(0);
+                waitKey(10);
             }
             else{
                 stringstream ss(line);
 
                 string m11,m12,m21,m22,m31,m32,m41,m42,f;
-                getline(ss,m11,' ');
-                getline(ss,m12,' ');
-                getline(ss,m21,' ');
-                getline(ss,m22,' ');
-                getline(ss,m31,' ');
-                getline(ss,m32,' ');
-                getline(ss,m41,' ');
-                getline(ss,m42,' ');
-                getline(ss,f,' ');
+                getline(ss,m11,',');
+                getline(ss,m12,',');
+                getline(ss,m21,',');
+                getline(ss,m22,',');
+                getline(ss,m31,',');
+                getline(ss,m32,',');
+                getline(ss,m41,',');
+                getline(ss,m42,',');
+
                 if(stof(m12) > 10 && stof(m22) > 10){
 //                if( param.base*param.calib.f/(stof(m11)-stof(m21)) > 0 && param.base*param.calib.f/(stof(m11)-stof(m21)) < 30)
                     p_matched.push_back(Matcher::p_match(stof(m11),stof(m12),0,stof(m21),stof(m22),0,stof(m31),stof(m32),0,stof(m41),stof(m42),0));
@@ -308,5 +317,5 @@ int main()
     cout << "distance: " << g.getLength() << endl;
 
     file.close();
-    return waitKey(0);
+    return waitKey();
 }
