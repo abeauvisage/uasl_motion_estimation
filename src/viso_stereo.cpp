@@ -2,10 +2,13 @@
 
 #include <math.h>
 #include <iostream>
+#include <fstream>
 #include <opencv2/highgui.hpp>
 
 using namespace std;
 using namespace cv;
+
+extern ofstream logFile;
 
 VisualOdometryStereo::VisualOdometryStereo (parameters param) : m_param(param) {
     srand(0);
@@ -31,25 +34,34 @@ bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& mat
 
     inliers_idx.clear();
 
-    for (int i=0;i<m_param.n_ransac;i++) {
-        vector<int> selection;
+    if(m_param.ransac){
+    cout << "ransac" << endl;
 
-        selection = randomIndexes(3,nb_matches);
-        if((matches[selection[0]].f3.x*(matches[selection[1]].f3.y-matches[selection[2]].f3.y)+matches[selection[1]].f3.x*(matches[selection[2]].f3.y-matches[selection[0]].f3.y)+matches[selection[2]].f3.x*(matches[selection[0]].f3.y-matches[selection[1]].f3.y))/2 > 1000){
-            x = Mat::zeros(6,1,CV_64F);
+        for (int i=0;i<m_param.n_ransac;i++) {
+            vector<int> selection;
+            selection = randomIndexes(3,nb_matches);
+            if((matches[selection[0]].f3.x*(matches[selection[1]].f3.y-matches[selection[2]].f3.y)+matches[selection[1]].f3.x*(matches[selection[2]].f3.y-matches[selection[0]].f3.y)+matches[selection[2]].f3.x*(matches[selection[0]].f3.y-matches[selection[1]].f3.y))/2 > 1000){
+                x = Mat::zeros(6,1,CV_64F);
 
-            if (optimize(matches,selection,false)) { // if optimization succeeded and more inliers obtained, inliers are saved
-                vector<int> inliers_tmp = computeInliers(matches);
-                if (inliers_tmp.size()>inliers_idx.size())
-                    inliers_idx = inliers_tmp;
+                if (optimize(matches,selection,false)) { // if optimization succeeded and more inliers obtained, inliers are saved
+                    vector<int> inliers_tmp = computeInliers(matches);
+                    if (inliers_tmp.size()>inliers_idx.size())
+                        inliers_idx = inliers_tmp;
+                }
             }
         }
+
+    }else{
+        cout << "non ransac" << endl;
+        std::vector<int> selection(nb_matches);
+        std::iota (std::begin(selection), std::end(selection), 0);
+//        for(int i =0;i<100;i++)
+//        if (optimize(matches,selection,false))
+//            selection = computeInliers(matches);
+        inliers_idx = selection;
     }
 
     x = Mat::zeros(6,1,CV_64F);
-
-//    for (int i=0; i<nb_matches; i++)
-//        inliers_idx.push_back(i);
 
     cout << "nb inliers: " << inliers_idx.size() << endl;
     /** final optimization **/
@@ -76,11 +88,32 @@ vector<int> VisualOdometryStereo::computeInliers(const vector<StereoOdoMatches<P
         double score=0;
         for(int j=0;j<4;j++)
             score += pow(residuals.at<double>(4*i+j),2);
-        if (score < pow(m_param.inlier_threshold,2))
+//            cout << score << " ";
+        if (score < pow(m_param.inlier_threshold,2)){
             inliers_idx.push_back(i);
+//            cout  << "ok" << endl;
+        }
     }
 
     return inliers_idx;
+}
+void VisualOdometryStereo::computeReprojErrors(const vector<StereoOdoMatches<Point2f>>& matches, const std::vector<int>& inliers) {
+
+    projectionUpdate(matches,inliers,false);
+
+    double mean_score = 0;
+    for (int i=0; i<inliers.size(); i++){
+        double score=0;
+        for(int j=0;j<4;j++)
+            score += pow(residuals.at<double>(4*i+j),2);
+
+        mean_score += score;
+        logFile << score << ",";
+
+    }
+    logFile << endl;
+    mean_score /= inliers_idx.size();
+    cout << inliers_idx.size() << " mean reproj: " << mean_score << endl;
 }
 
 cv::Mat VisualOdometryStereo::applyFunction(const vector<StereoOdoMatches<Point2f>>& matches, cv::Mat& x_,  const vector<int>& selection){
@@ -356,7 +389,6 @@ void VisualOdometryStereo::updatePose(){
     Mat tmp_pose = getMotion();
     if(abs(tmp_pose.at<double>(0,3)) < 2 && abs(tmp_pose.at<double>(2,3)) < 2){
         Mat inv;invert(tmp_pose,inv);
-        std::cout << inv << std::endl;
         m_pose *= inv;
     }
 }

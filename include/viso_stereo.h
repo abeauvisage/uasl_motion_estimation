@@ -16,6 +16,7 @@ public:
         double  baseline;
         Method method;
         int n_ransac;
+        bool ransac;
         double  inlier_threshold;
         bool    reweighting;
         double f1,f2;
@@ -32,6 +33,7 @@ public:
             baseline = 1.0;
             n_ransac = 200;
             inlier_threshold = 2.0;
+            ransac=true;
             reweighting = true;
             step_size = 1;
             eps = 1e-8;
@@ -55,6 +57,7 @@ public:
     cv::Mat getPose(){return m_pose;};
     std::vector<cv::Point3d> getPts3D(){return pts3D;}
     std::vector<int> getInliers_idx(){return inliers_idx;}
+    void computeReprojErrors(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int>& inliers);
 
 private:
 
