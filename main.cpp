@@ -29,7 +29,7 @@ int main()
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/seq_MO_original_rectified";
 //    string dir = "/home/abeauvisage/Documents/datasets/16_05_26/test_16_05_26-a_rec";
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/16_03_14/test_16_03_14_2_rectified";
-    string dir = "/home/abeauvisage/Documents/datasets/16_08_30/test_16_08_30-a_rec";
+    string dir = "/home/abeauvisage/Documents/datasets/16_08_30/test_16_08_30-b_rec";
 
     ifstream data(dir+"/matches_7.csv");
     ifstream gps(dir+"/gps.txt");

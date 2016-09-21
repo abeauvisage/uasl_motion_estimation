@@ -50,6 +50,7 @@ bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& mat
                 }
             }
         }
+//        drawStereoOdomatches
 
     }else{
         cout << "non ransac" << endl;
@@ -387,7 +388,7 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
 
 void VisualOdometryStereo::updatePose(){
     Mat tmp_pose = getMotion();
-    if(abs(tmp_pose.at<double>(0,3)) < 2 && abs(tmp_pose.at<double>(2,3)) < 2){
+    if(abs(tmp_pose.at<double>(0,3)) < 2 && abs(tmp_pose.at<double>(2,3)) < 2 && tmp_pose.at<double>(2,3) < 0){
         Mat inv;invert(tmp_pose,inv);
         m_pose *= inv;
     }
