@@ -1,8 +1,11 @@
 #include "viso_stereo.h"
 
 #include <math.h>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <numeric>
+#include <algorithm>
 #include <opencv2/highgui.hpp>
 
 using namespace std;

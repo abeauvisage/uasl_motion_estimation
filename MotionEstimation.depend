@@ -325,7 +325,7 @@
 	"Graph2D.h"
 	"matcher.h"
 
-1471554713 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/viso_stereo.h
+1474808786 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/viso_stereo.h
 	<iostream>
 	"opencv2/core/core.hpp"
 	"featureType.h"
@@ -345,6 +345,16 @@
 
 1470150537 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/matcher.h
 
-1470150537 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/Graph2D.cpp
+1471600347 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/Graph2D.cpp
 	"Graph2D.h"
+
+1474809062 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/viso_stereo.cpp
+	"viso_stereo.h"
+	<math.h>
+	<cstdlib>
+	<iostream>
+	<fstream>
+	<numeric>
+	<algorithm>
+	<opencv2/highgui.hpp>
 
