@@ -3,14 +3,14 @@
 
 #include <iostream>
 
-#include "opencv2/core/core.hpp"
+#include "viso.h"
 #include "featureType.h"
 
-class StereoVisualOdometry {
+class StereoVisualOdometry: public VisualOdometry {
 
 public:
 
-    enum Method { GN, LM};
+    enum Method {GN, LM};
 
     struct parameters  {
         double  baseline;
@@ -50,11 +50,8 @@ public:
     ~StereoVisualOdometry(){};
 
     bool process(const std::vector<StereoOdoMatches<cv::Point2f>>& matches);
+    virtual cv::Mat getMotion();
 
-    void updatePose();
-
-    cv::Mat getMotion();
-    cv::Mat getPose(){return m_pose;};
     std::vector<cv::Point3d> getPts3D(){return pts3D;}
     std::vector<int> getInliers_idx(){return inliers_idx;}
     void computeReprojErrors(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int>& inliers);
@@ -71,7 +68,7 @@ private:
     cv::Mat observations;
     cv::Mat predictions;
     cv::Mat residuals;
-    cv::Mat m_pose;
+
 
     bool optimize(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);
     void projectionUpdate(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);

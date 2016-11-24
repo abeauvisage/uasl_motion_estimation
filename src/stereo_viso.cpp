@@ -13,9 +13,8 @@ using namespace cv;
 
 extern ofstream logFile;
 
-StereoVisualOdometry::StereoVisualOdometry (parameters param) : m_param(param) {
+StereoVisualOdometry::StereoVisualOdometry (parameters param) : VisualOdometry(), m_param(param) {
     srand(0);
-    m_pose = Mat::eye(4,4,CV_64F);
 }
 
 
@@ -262,29 +261,6 @@ void StereoVisualOdometry::projectionUpdate(const vector<StereoOdoMatches<Point2
 
 }
 
-cv::Mat StereoVisualOdometry::getMotion(){
-
-    double* x_ptr = x.ptr<double>();
-    double tx = x_ptr[3], ty = x_ptr[4], tz = x_ptr[5];
-    double sx = sin(x_ptr[0]), cx = cos(x_ptr[0]), sy = sin(x_ptr[1]), cy = cos(x_ptr[1]), sz = sin(x_ptr[2]), cz = cos(x_ptr[2]); //compute sine cosine from the state vector
-
-    //create rigid-body transformation matrix (R|T) from state vector
-    cv::Mat Rt(4,4,CV_64F);
-    double* Rt_ptr = Rt.ptr<double>();
-    Rt_ptr[0]  = +cy*cz;          Rt_ptr[1]  = -cy*sz;          Rt_ptr[2]  = +sy;    Rt_ptr[3]  = tx;
-    Rt_ptr[4]  = +sx*sy*cz+cx*sz; Rt_ptr[5]  = -sx*sy*sz+cx*cz; Rt_ptr[6]  = -sx*cy; Rt_ptr[7]  = ty;
-    Rt_ptr[8]  = -cx*sy*cz+sx*sz; Rt_ptr[9]  = +cx*sy*sz+sx*cz; Rt_ptr[10] = +cx*cy; Rt_ptr[11] = tz;
-    Rt_ptr[12] = 0;               Rt_ptr[13] = 0;               Rt_ptr[14] = 0;      Rt_ptr[15] = 1;
-    //create rigid-body transformation matrix (R|T) from state vector
-//    double Rt_[16] = {   +cy*cz,             -cy*sz,             +sy,    x[3],
-//                        +sx*sy*cz+cx*sz,    -sx*sy*sz+cx*cz,    -sx*cy, x[4],
-//                        -cx*sy*cz+sx*sz,    +cx*sy*sz+sx*cz,    +cx*cy, x[5],
-//                        0,                  0,                  0,      1};
-//    Rt = cv::Mat(4,4,CV_64F,Rt_);
-
-    return Rt;
-}
-
 vector<int> StereoVisualOdometry::randomIndexes(int nb_samples, int nb_tot) {
 
     assert(nb_samples < nb_tot);
@@ -389,10 +365,26 @@ bool StereoVisualOdometry::optimize(const std::vector<StereoOdoMatches<Point2f>>
         return true;
 }
 
-void StereoVisualOdometry::updatePose(){
-    Mat tmp_pose = getMotion();
-    if(abs(tmp_pose.at<double>(0,3)) < 2 && abs(tmp_pose.at<double>(2,3)) < 2 && tmp_pose.at<double>(2,3) < 0){
-        Mat inv;invert(tmp_pose,inv);
-        m_pose *= inv;
-    }
+cv::Mat StereoVisualOdometry::getMotion(){
+
+    double* x_ptr = x.ptr<double>();
+    double tx = x_ptr[3], ty = x_ptr[4], tz = x_ptr[5];
+    double sx = sin(x_ptr[0]), cx = cos(x_ptr[0]), sy = sin(x_ptr[1]), cy = cos(x_ptr[1]), sz = sin(x_ptr[2]), cz = cos(x_ptr[2]); //compute sine cosine from the state vector
+
+    //create rigid-body transformation matrix (R|T) from state vector
+    cv::Mat Rt(4,4,CV_64F);
+    double* Rt_ptr = Rt.ptr<double>();
+    Rt_ptr[0]  = +cy*cz;          Rt_ptr[1]  = -cy*sz;          Rt_ptr[2]  = +sy;    Rt_ptr[3]  = tx;
+    Rt_ptr[4]  = +sx*sy*cz+cx*sz; Rt_ptr[5]  = -sx*sy*sz+cx*cz; Rt_ptr[6]  = -sx*cy; Rt_ptr[7]  = ty;
+    Rt_ptr[8]  = -cx*sy*cz+sx*sz; Rt_ptr[9]  = +cx*sy*sz+sx*cz; Rt_ptr[10] = +cx*cy; Rt_ptr[11] = tz;
+    Rt_ptr[12] = 0;               Rt_ptr[13] = 0;               Rt_ptr[14] = 0;      Rt_ptr[15] = 1;
+    //create rigid-body transformation matrix (R|T) from state vector
+//    double Rt_[16] = {   +cy*cz,             -cy*sz,             +sy,    x[3],
+//                        +sx*sy*cz+cx*sz,    -sx*sy*sz+cx*cz,    -sx*cy, x[4],
+//                        -cx*sy*cz+sx*sz,    +cx*sy*sz+sx*cz,    +cx*cy, x[5],
+//                        0,                  0,                  0,      1};
+//    Rt = cv::Mat(4,4,CV_64F,Rt_);
+
+    return Rt;
 }
+
