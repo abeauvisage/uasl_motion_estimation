@@ -7,9 +7,8 @@
 //#include <opencv2/viz.hpp>
 #include <iomanip>
 
-#include "viso_stereo.h"
+#include "stereo_viso.h"
 #include "Graph2D.h"
-#include "matcher.h"
 
 using namespace std;
 using namespace cv;
@@ -46,7 +45,7 @@ int main()
     g.addLegend("gps",2);
     vector<CvPoint2D32f> pts;
 
-    VisualOdometryStereo::parameters param;
+    StereoVisualOdometry::parameters param;
 
 //    param.calib.f  = 1162.1022; // focal length in pixels
 //    param.calib.cu = 247.034; // principal point (u-coordinate) in pixels
@@ -118,9 +117,9 @@ int main()
     param.cv1    = 159.740;
     param.cv2    = 159.740;
     param.baseline  = 0.122;
-    param.method = VisualOdometryStereo::GN;
+    param.method = StereoVisualOdometry::GN;
 //    param.reweighting = true;
-//    param.method = VisualOdometryStereo::LM;
+//    param.method = StereoVisualOdometry::LM;
     param.ransac = true;
     param.inlier_threshold = 2;
 
@@ -129,7 +128,7 @@ int main()
 //        param.reweighting = false;
 //    param.inlier_threshold = 10;
 
-    VisualOdometryStereo viso(param);
+    StereoVisualOdometry viso(param);
     Mat pose = Mat::eye(Size(4,4),CV_64F);
 
     string line;
@@ -179,7 +178,6 @@ int main()
 //    waitKey(0);
 
     if(data.is_open()){
-        vector<Matcher::p_match> p_matched;
         vector<StereoOdoMatches<cv::Point2f>> matched;
         double mean_matches=0;
         double mean_inliers=0;
@@ -221,11 +219,6 @@ int main()
                     imgRc.convertTo(imgR_color,CV_8UC3);
                     cv::cvtColor(imgR_color,imgR_color,CV_GRAY2BGR);
 
-                    for(int i=0;i<p_matched.size();i++){
-                        circle(imgL_color,Point(p_matched[i].u1c,p_matched[i].v1c),3,cv::Scalar(0,0,255));
-                        circle(imgR_color,Point(p_matched[i].u2c,p_matched[i].v2c),3,cv::Scalar(0,0,255));
-                    }
-
                     cv::line(imgL_color,Point(param.cu1,0),Point(param.cu1,imgL_color.rows),cv::Scalar(0,0,0));
                     cv::line(imgL_color,Point(0,param.cv1),Point(imgL_color.cols,param.cv1),cv::Scalar(0,0,0));
                     cv::line(imgR_color,Point(param.cu2,0),Point(param.cu2,imgL_color.rows),cv::Scalar(0,0,0));
@@ -255,18 +248,13 @@ int main()
                     vector<int> indices = viso.getInliers_idx();
                     cout << "nb inliers " << indices.size() << endl;
                     mean_inliers += indices.size();
-                    mean_matches += p_matched.size();
                     nb++;
 
                     for(int i=0;i<indices.size();i++){
                         int icolor = (unsigned) rng;
                         cv::Scalar color( icolor&255, (icolor>>8)&255, (icolor>>16)&255 );
-                        circle(imgL_color,Point(p_matched[indices[i]].u1c,p_matched[indices[i]].v1c),3,cv::Scalar(255,0,0));
-                        circle(imgR_color,Point(p_matched[indices[i]].u2c,p_matched[indices[i]].v2c),3,cv::Scalar(255,0,0));
-    //                    cout << param.base*param.calib.f/(p_matched[i].u1c-p_matched[i].u2c) << " " << p_matched[i].u1c-p_matched[i].u2c << endl;
-    //                    imshow("imgL",imgL_color);
-    //                    imshow("imgR",imgR_color);
-    //                    waitKey(0);
+                        circle(imgL_color,Point(matched[indices[i]].f3.x,matched[indices[i]].f3.y),3,cv::Scalar(255,0,0));
+                        circle(imgR_color,Point(matched[indices[i]].f4.x,matched[indices[i]].f4.y),3,cv::Scalar(255,0,0));
                     }
 
                     imshow("imgL",imgL_color);
@@ -279,7 +267,6 @@ int main()
                     point.x=(float)x;point.y=(float)y;
                     pts.push_back(point);
 
-    //                circle(traj, Point((int)(x*5+ 600), (int)(y*5+ 1000)) ,1, CV_RGB(255,0,0), 2);
                     Point2f p1(x,y);
                     cout << "[" << x << "," << y << "]" << endl;
                     g.addValue(p1,1);
@@ -299,7 +286,6 @@ int main()
                 waitKey(10);
                 }
                 nframe+=skip;
-                p_matched.clear();
                 matched.clear();
             }
             else{
@@ -317,9 +303,7 @@ int main()
 
                 if(stof(m12) < 400 && stof(m12) > 100){
 //                if( param.base*param.calib.f/(stof(m11)-stof(m21)) > 0 && param.base*param.calib.f/(stof(m11)-stof(m21)) < 30)
-                    p_matched.push_back(Matcher::p_match(stof(m11),stof(m12),0,stof(m21),stof(m22),0,stof(m31),stof(m32),0,stof(m41),stof(m42),0));
                     matched.push_back(StereoOdoMatches<Point2f>(Point2f(stof(m11),stof(m12)),Point2f(stof(m21),stof(m22)),Point2f(stof(m31),stof(m32)),Point2f(stof(m41),stof(m42))));
-//                    cout << p_matched[p_matched.size()-1].u1p << "," << p_matched[p_matched.size()-1].v1p << "," << p_matched[p_matched.size()-1].u2p << "," << p_matched[p_matched.size()-1].v2p << endl;
 //                    cout << "frame: " << f << endl;
                 }
             }

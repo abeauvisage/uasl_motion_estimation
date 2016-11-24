@@ -1,4 +1,4 @@
-#include "viso_stereo.h"
+#include "stereo_viso.h"
 
 #include <math.h>
 #include <cstdlib>
@@ -13,13 +13,13 @@ using namespace cv;
 
 extern ofstream logFile;
 
-VisualOdometryStereo::VisualOdometryStereo (parameters param) : m_param(param) {
+StereoVisualOdometry::StereoVisualOdometry (parameters param) : m_param(param) {
     srand(0);
     m_pose = Mat::eye(4,4,CV_64F);
 }
 
 
-bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& matches) {
+bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& matches) {
 
     int nb_matches = matches.size();
     if(nb_matches<6)
@@ -79,7 +79,7 @@ bool VisualOdometryStereo::process (const vector<StereoOdoMatches<Point2f>>& mat
         return false;
 }
 
-vector<int> VisualOdometryStereo::computeInliers(const vector<StereoOdoMatches<Point2f>>& matches) {
+vector<int> StereoVisualOdometry::computeInliers(const vector<StereoOdoMatches<Point2f>>& matches) {
 
     vector<int> selection;
     for (int i=0;i<matches.size();i++)
@@ -101,7 +101,7 @@ vector<int> VisualOdometryStereo::computeInliers(const vector<StereoOdoMatches<P
 
     return inliers_idx;
 }
-void VisualOdometryStereo::computeReprojErrors(const vector<StereoOdoMatches<Point2f>>& matches, const std::vector<int>& inliers) {
+void StereoVisualOdometry::computeReprojErrors(const vector<StereoOdoMatches<Point2f>>& matches, const std::vector<int>& inliers) {
 
     projectionUpdate(matches,inliers,false);
 
@@ -120,7 +120,7 @@ void VisualOdometryStereo::computeReprojErrors(const vector<StereoOdoMatches<Poi
     cout << inliers_idx.size() << " mean reproj: " << mean_score << endl;
 }
 
-cv::Mat VisualOdometryStereo::applyFunction(const vector<StereoOdoMatches<Point2f>>& matches, cv::Mat& x_,  const vector<int>& selection){
+cv::Mat StereoVisualOdometry::applyFunction(const vector<StereoOdoMatches<Point2f>>& matches, cv::Mat& x_,  const vector<int>& selection){
 
     cv::Mat res = cv::Mat::zeros(4*selection.size(),1,CV_64F);
 
@@ -155,7 +155,7 @@ cv::Mat VisualOdometryStereo::applyFunction(const vector<StereoOdoMatches<Point2
     return res;
 }
 
-void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2f>>& matches, const vector<int>& selection, bool weight){
+void StereoVisualOdometry::projectionUpdate(const vector<StereoOdoMatches<Point2f>>& matches, const vector<int>& selection, bool weight){
 
     J          = cv::Mat::zeros(6,4*selection.size(),CV_64F);
     predictions  = cv::Mat::zeros(4*selection.size(),1,CV_64F);
@@ -262,7 +262,7 @@ void VisualOdometryStereo::projectionUpdate(const vector<StereoOdoMatches<Point2
 
 }
 
-cv::Mat VisualOdometryStereo::getMotion(){
+cv::Mat StereoVisualOdometry::getMotion(){
 
     double* x_ptr = x.ptr<double>();
     double tx = x_ptr[3], ty = x_ptr[4], tz = x_ptr[5];
@@ -285,7 +285,7 @@ cv::Mat VisualOdometryStereo::getMotion(){
     return Rt;
 }
 
-vector<int> VisualOdometryStereo::randomIndexes(int nb_samples, int nb_tot) {
+vector<int> StereoVisualOdometry::randomIndexes(int nb_samples, int nb_tot) {
 
     assert(nb_samples < nb_tot);
     vector<int> samples_idx;
@@ -307,7 +307,7 @@ vector<int> VisualOdometryStereo::randomIndexes(int nb_samples, int nb_tot) {
   return samples_idx;
 }
 
-bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>& matches, const std::vector<int>& selection, bool weight){
+bool StereoVisualOdometry::optimize(const std::vector<StereoOdoMatches<Point2f>>& matches, const std::vector<int>& selection, bool weight){
 
     if (selection.size()<3) // if less than 3 points triangulation impossible
         return false;
@@ -389,7 +389,7 @@ bool VisualOdometryStereo::optimize(const std::vector<StereoOdoMatches<Point2f>>
         return true;
 }
 
-void VisualOdometryStereo::updatePose(){
+void StereoVisualOdometry::updatePose(){
     Mat tmp_pose = getMotion();
     if(abs(tmp_pose.at<double>(0,3)) < 2 && abs(tmp_pose.at<double>(2,3)) < 2 && tmp_pose.at<double>(2,3) < 0){
         Mat inv;invert(tmp_pose,inv);

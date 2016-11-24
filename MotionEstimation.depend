@@ -314,18 +314,17 @@
 	<fstream>
 	<opencv2/highgui.hpp>
 
-1479737970 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/main.cpp
+1480001886 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/main.cpp
 	<iostream>
 	<fstream>
 	<string>
 	<sstream>
 	"opencv2/opencv.hpp"
 	<iomanip>
-	"viso_stereo.h"
+	"stereo_viso.h"
 	"Graph2D.h"
-	"matcher.h"
 
-1474808786 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/viso_stereo.h
+1480001273 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/viso_stereo.h
 	<iostream>
 	"opencv2/core/core.hpp"
 	"featureType.h"
@@ -343,12 +342,12 @@
 	<sstream>
 	"opencv2/opencv.hpp"
 
-1471600347 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/matcher.h
+1480000237 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/matcher.h
 
 1479738032 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/Graph2D.cpp
 	"Graph2D.h"
 
-1474809062 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/viso_stereo.cpp
+1480001322 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/viso_stereo.cpp
 	"viso_stereo.h"
 	<math.h>
 	<cstdlib>
@@ -371,4 +370,16 @@
 
 1478200458 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/angleTypes.h
 	<opencv2/core/core.hpp>
+
+1480001032 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/utils.cpp
+	"utils.h"
+	<iostream>
+
+1480001063 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/utils.h
+	<opencv2/core/core.hpp>
+
+1480001700 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/stereo_viso.h
+	<iostream>
+	"opencv2/core/core.hpp"
+	"featureType.h"
 

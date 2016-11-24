@@ -1,12 +1,12 @@
-#ifndef VISO_STEREO_H
-#define VISO_STEREO_H
+#ifndef STEREO_VISO_H
+#define STEREO_VISO_H
 
 #include <iostream>
 
 #include "opencv2/core/core.hpp"
 #include "featureType.h"
 
-class VisualOdometryStereo {
+class StereoVisualOdometry {
 
 public:
 
@@ -46,8 +46,8 @@ public:
     };
 
 
-    VisualOdometryStereo(parameters param=parameters());
-    ~VisualOdometryStereo(){};
+    StereoVisualOdometry(parameters param=parameters());
+    ~StereoVisualOdometry(){};
 
     bool process(const std::vector<StereoOdoMatches<cv::Point2f>>& matches);
 
@@ -80,5 +80,5 @@ private:
     std::vector<int> randomIndexes(int nb_samples, int nb_tot);
 };
 
-#endif // VISO_STEREO_H
+#endif // VSTEREO_VISO_H
 
