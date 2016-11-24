@@ -79,6 +79,11 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="include/Graph2D.h" />
+		<Unit filename="include/angleTypes.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="include/featureType.h" />
 		<Unit filename="include/matcher.h" />
 		<Unit filename="include/viso_stereo.h" />
@@ -87,6 +92,10 @@
 			<Option target="Test" />
 		</Unit>
 		<Unit filename="src/Graph2D.cpp" />
+		<Unit filename="src/angleTypes.cpp">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="src/viso_stereo.cpp" />
 		<Extensions>
 			<code_completion />

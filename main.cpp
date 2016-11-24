@@ -14,6 +14,8 @@
 using namespace std;
 using namespace cv;
 
+ifstream logFile;
+
 
 cv::RNG rng( 0xFFFFFFFF );
 
@@ -29,16 +31,19 @@ int main()
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/seq_MO_original_rectified";
 //    string dir = "/home/abeauvisage/Documents/datasets/16_05_26/test_16_05_26-a_rec";
 //    string dir = "/home/abeauvisage/Insa/PhD/datasets/16_03_14/test_16_03_14_2_rectified";
-    string dir = "/home/abeauvisage/Documents/datasets/16_08_30/test_16_08_30-b_rec";
+//    string dir = "/home/abeauvisage/Documents/datasets/16_08_30/test_16_08_30-b_rec";
+    string dir = "/home/abeauvisage/Insa/PhD/datasets/seq_MO_original_rectified";
 
-    ifstream data(dir+"/matches_7.csv");
-    ifstream gps(dir+"/gps.txt");
+    ifstream data(dir+"/matches_7_bud.csv");
+    ifstream gps(dir+"/gps_traj.txt");
 
     ofstream file,proj;
     file.open(dir+"/new_coord.txt");
 //    proj.open(dir+"/projection.csv");
 
     Graph2D g("Trajectory",2);
+    g.addLegend("estimation",1);
+    g.addLegend("gps",2);
     vector<CvPoint2D32f> pts;
 
     VisualOdometryStereo::parameters param;
@@ -96,20 +101,33 @@ int main()
 //    param.n_ransac = 0;
 
 //calib 16_08_30
-    param.f1     = 5.7900686502448991e+02;
-    param.f2     = 5.7900686502448991e+02;
-    param.cu1    = 3.4719164657592773e+02;
-    param.cu2    = 3.4719164657592773e+02;
-    param.cv1    = 2.3975083160400391e+02;
-    param.cv2    = 2.3975083160400391e+02;
-    param.baseline  = 2.8724344758286230e-01;
-    param.method = VisualOdometryStereo::LM;
+//    param.f1     = 5.7900686502448991e+02;
+//    param.f2     = 5.7900686502448991e+02;
+//    param.cu1    = 3.4719164657592773e+02;
+//    param.cu2    = 3.4719164657592773e+02;
+//    param.cv1    = 2.3975083160400391e+02;
+//    param.cv2    = 2.3975083160400391e+02;
+//    param.baseline  = 2.8724344758286230e-01;
+//    param.method = VisualOdometryStereo::LM;
 
+//calib spanish
+    param.f1     = 1162.1022;
+    param.f2     = 1162.1022;
+    param.cu1    = 247.034;
+    param.cu2    = 247.034;
+    param.cv1    = 159.740;
+    param.cv2    = 159.740;
+    param.baseline  = 0.122;
+    param.method = VisualOdometryStereo::GN;
+//    param.reweighting = true;
+//    param.method = VisualOdometryStereo::LM;
+    param.ransac = true;
+    param.inlier_threshold = 2;
 
 
 //    param.optim = 2;
 //        param.reweighting = false;
-    param.inlier_threshold = 10;
+//    param.inlier_threshold = 10;
 
     VisualOdometryStereo viso(param);
     Mat pose = Mat::eye(Size(4,4),CV_64F);
@@ -136,16 +154,17 @@ int main()
 
     int skip =7;
     int test_frame=0;
-    int nframe=1;  //dataset 03_07 -> d1: 250 d2: 230 d4-> 600
+    int nframe=65;  //dataset 03_07 -> d1: 250 d2: 230 d4-> 600
 
     /***************/
     string init_gx,init_gy;
     string gpsdata;
     if(gps.is_open()){
-        getline(gps,gpsdata);
+        for(int i=0;i<nframe;i++)
+            getline(gps,gpsdata);
         stringstream ss(gpsdata);
-        getline(ss,init_gx,';');
-        getline(ss,init_gy,';');
+        getline(ss,init_gx,',');
+        getline(ss,init_gy,',');
     }
 
     /*** viz ***/
@@ -157,7 +176,7 @@ int main()
     /***********/
 
 
-    waitKey(0);
+//    waitKey(0);
 
     if(data.is_open()){
         vector<Matcher::p_match> p_matched;
@@ -175,8 +194,8 @@ int main()
                  if(gps.is_open()){
                     getline(gps,gpsdata);
                     stringstream ss(gpsdata);
-                    getline(ss,gx,';');
-                    getline(ss,gy,';');
+                    getline(ss,gx,',');
+                    getline(ss,gy,',');
 
                     for(int i=0;i<skip-1;i++)
                         getline(gps,gpsdata);
@@ -184,6 +203,8 @@ int main()
                 }
 
                 /*************/
+
+                cout << "new line" << endl;
 
                 if(nframe > test_frame){
 
@@ -214,7 +235,7 @@ int main()
 
                     if(viso.process(matched)){
                         viso.updatePose();
-                        //pose = viso.getPose();
+                        pose = viso.getPose();
                     }
                     else
                         cout << "failed" << endl;
@@ -225,8 +246,8 @@ int main()
 //                    if(abs(new_pose.at<double>(0,3)) < 10 && abs(new_pose.at<double>(2,3)) < 10)
 //                        pose *= inv;
 
-                    pose = viso.getPose();
-                    cout << pose << endl;
+//                    pose = viso.getPose();
+//                    cout << pose << endl;
 
                     x = pose.at<double>(0,3);
                     y = pose.at<double>(2,3);
@@ -264,7 +285,7 @@ int main()
                     g.addValue(p1,1);
                     if(gps.is_open()){
     //                    Point2f p2(stof(gx)-0.024667,stof(gy)-1.966435);
-                        Point2f p2(stof(gx)-stof(init_gx),stof(gy)-stof(init_gy));
+                        Point2f p2(stof(gx)+stof(init_gx),stof(gy)-stof(init_gy));
                         g.addValue(p2,2);
                         cout << "GPS " << p2 << endl;
                         cout << "diff = " << sqrt(pow(p1.x-p2.x,2)+pow(p1.y-p2.y,2)) << endl;
@@ -275,11 +296,11 @@ int main()
                         Point2f p2(pose.at<double>(2,1) + pose.at<double>(0,3),pose.at<double>(0,1) + pose.at<double>(2,3));
                         g.addValue(p2,2);
                     }
+                waitKey(10);
                 }
                 nframe+=skip;
                 p_matched.clear();
                 matched.clear();
-                waitKey(10);
             }
             else{
                 stringstream ss(line);
@@ -294,7 +315,7 @@ int main()
                 getline(ss,m41,',');
                 getline(ss,m42,',');
 
-                if(stof(m12) > 10 && stof(m22) > 10){
+                if(stof(m12) < 400 && stof(m12) > 100){
 //                if( param.base*param.calib.f/(stof(m11)-stof(m21)) > 0 && param.base*param.calib.f/(stof(m11)-stof(m21)) < 30)
                     p_matched.push_back(Matcher::p_match(stof(m11),stof(m12),0,stof(m21),stof(m22),0,stof(m31),stof(m32),0,stof(m41),stof(m42),0));
                     matched.push_back(StereoOdoMatches<Point2f>(Point2f(stof(m11),stof(m12)),Point2f(stof(m21),stof(m22)),Point2f(stof(m31),stof(m32)),Point2f(stof(m41),stof(m42))));
@@ -313,7 +334,7 @@ int main()
         mean_error += errors[i];
     mean_error /= errors.size();
 
-    cout << " Gloabal error = " << mean_error*100/g.getLength() << " %" << endl;
+    cout << " Global error = " << mean_error*100/g.getLength() << " %" << endl;
     cout << "distance: " << g.getLength() << endl;
 
     file.close();
