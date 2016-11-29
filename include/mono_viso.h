@@ -4,8 +4,10 @@
 #include "viso.h"
 #include "featureType.h"
 
-class MonoVisualOdometry : VisualOdometry
+class MonoVisualOdometry : public VisualOdometry
 {
+
+    public:
     struct parameters  {
         bool ransac;
         double prob;
@@ -16,23 +18,24 @@ class MonoVisualOdometry : VisualOdometry
         parameters () {
             ransac=true;
             prob=0.999;
-            inlier_threshold = 2.0;
+            inlier_threshold = 1.0;
             f=1;
             cu=0;
             cv=0;
         }
     };
 
-    public:
         MonoVisualOdometry(parameters param=parameters());
         ~MonoVisualOdometry(){};
 
         bool process(const std::vector<StereoMatch<cv::Point2f>>& matches);
         virtual cv::Mat getMotion(){return m_Rt;}
+        std::vector<int> getInliersIdx(){return m_inliers;}
 
     private:
         parameters m_param;
         cv::Mat m_Rt;
+        std::vector<int> m_inliers;
 };
 
 #endif // MONOVISUALODOMETRY_H

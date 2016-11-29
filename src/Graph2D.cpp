@@ -102,10 +102,10 @@ void Graph2D::plot_axis(cv::Mat& bg, const int dx, const int dy){
     bg.setTo(Scalar(255,255,255));
     line(bg,Point(m_margin+dx,m_margin),Point(m_margin+dx,height-m_margin),Scalar(0,0,0));
     line(bg,Point(width-m_margin,height-m_margin-dy),Point(m_margin,height-m_margin-dy),Scalar(0,0,0));
-    putText(bg,to_string(m_min_x),Point(m_margin+5,height-m_margin/2), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
-    putText(bg,to_string(m_max_x),Point(width-m_margin*2,height-m_margin/2), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
-    putText(bg,to_string(m_max_y),Point(5,m_margin), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
-    putText(bg,to_string(m_min_y),Point(5,height-m_margin), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
+    putText(bg,to_string(m_min_x),Point(5,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
+    putText(bg,to_string(m_max_x),Point(width-m_margin,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
+    putText(bg,to_string(m_max_y),Point(m_margin/2+dx,m_margin), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
+    putText(bg,to_string(m_min_y),Point(m_margin/2+dx,height-m_margin/2), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
 }
 
 Graph2D::~Graph2D(){

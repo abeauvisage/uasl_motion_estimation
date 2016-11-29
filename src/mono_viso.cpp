@@ -17,35 +17,42 @@ bool MonoVisualOdometry::process(const std::vector<StereoMatch<cv::Point2f>>& ma
         Mat E,R,T,mask;
         for(unsigned int i=0;i<matches.size();i++){
             in.push_back(matches[i].f1);
-            in.push_back(matches[i].f2);
+            out.push_back(matches[i].f2);
         }
         Point2d pp(m_param.cu,m_param.cv);
         E = findEssentialMat(in, out, m_param.f, pp, m_param.ransac?CV_RANSAC:CV_LMEDS, m_param.prob, m_param.inlier_threshold, mask);
         recoverPose(E, in, out, R, T, m_param.f, pp, mask);
 
         int count=0;
+        m_inliers.clear();
         for(unsigned int i = 0; i < out.size();i++)
-            if( mask.at<uchar>(i) == 1 )
+            if( mask.at<uchar>(i) == 1 ){
                 count++;
+                m_inliers.push_back(i);
+            }
 
-        if(count < 10 || fabs(T.at<double>(0)) > 0.5)
+        if(count < 10 || fabs(T.at<double>(0)) > 0.5){
+            m_Rt = Mat::eye(4,4,CV_64FC1);
             return false;
+        }
         else{
             double* Rt_ptr = m_Rt.ptr<double>();
             double* R_ptr = R.ptr<double>();
             double* T_ptr = T.ptr<double>();
             for(unsigned int i=0;i<4;i++)
                 for(unsigned int j=0;j<4;j++)
-                    if(j == 4)
+                    if(j == 3)
                         Rt_ptr[4*i+j] = T_ptr[i];
-                    else if(i == 4)
-                        Rt_ptr[4*i+j] = 0;
+                    else if(i == 3)
+                        Rt_ptr[4*i+j] = 0.0;
                     else
-                        Rt_ptr[4*i+j] = R_ptr[i];
+                        Rt_ptr[4*i+j] = R_ptr[3*i+j];
 
-            Rt_ptr[15] == 1;
+            Rt_ptr[15] = 1.0;
             return true;
         }
-    }else
+    }else{
+        m_Rt = Mat::eye(4,4,CV_64FC1);
         return false;
+    }
 }
