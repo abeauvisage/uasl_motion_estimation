@@ -10,10 +10,6 @@ using namespace std;
 
 /**** Euler class ****/
 
-void Euler::init(){
-    m_roll = 0; m_pitch = 0; m_yaw =0; m_rad = true;
-}
-
 void Euler::deg2Rad(){
     if(!m_rad){m_roll *= PI/180; m_pitch *= PI/180; m_yaw *= PI/180; m_rad = true;}
 }
@@ -22,81 +18,98 @@ void Euler::rad2Deg(){
     if(m_rad){m_roll *= 180/PI; m_pitch *= 180/PI; m_yaw *= 180/PI; m_rad = false;}
 }
 
-void Euler::show() const{
-    cout << "e = [ " << m_roll << " " << m_pitch << " " << m_yaw << " ]t" << endl;
-}
+Mat1f Euler::getMat3f(){
 
-Mat Euler::getMat3f(){
-
-		Mat R(3,3,CV_32FC1);
+		Mat1f R(3,3);
 
 		deg2Rad();
 
 		float cr = cos(m_roll), cp= cos(m_pitch), cy= cos(m_yaw);
 		float sr = sin(m_roll), sp= sin(m_pitch), sy= sin(m_yaw);
 
-		R.at<float>(0,0)= cp*cy;	R.at<float>(0,1)= sr*sp*cy-cr*sy;	R.at<float>(0,2)= cr*sp*cy+sr*sy;
-		R.at<float>(1,0)= cp*sy;	R.at<float>(1,1)= sr*sp*sy+cr*cy;	R.at<float>(1,2)= cr*sp*sy-sr*cy;
-		R.at<float>(2,0)= -sp;		R.at<float>(2,1)= sr*cp;   		    R.at<float>(2,2)= cr*cp;
+		R(0,0)= cp*cy;	R(0,1)= sr*sp*cy-cr*sy;	R(0,2)= cr*sp*cy+sr*sy;
+		R(1,0)= cp*sy;	R(1,1)= sr*sp*sy+cr*cy;	R(1,2)= cr*sp*sy-sr*cy;
+		R(2,0)= -sp;	R(2,1)= sr*cp;   		R(2,2)= cr*cp;
 
 		return R;
 }
 
-Mat Euler::getMat4f(){
+Mat1f Euler::getMat4f(){
 
-		Mat R(4,4,CV_32FC1);
+		Mat4f R(4,4);
 
 		deg2Rad();
 
 		float cr = cos(m_roll), cp= cos(m_pitch), cy= cos(m_yaw);
 		float sr = sin(m_roll), sp= sin(m_pitch), sy= sin(m_yaw);
 
-		R.at<float>(0,0)= cp*cy;	R.at<float>(0,1)= sr*sp*cy-cp*sy;	R.at<float>(0,2)= cr*sp*cy+sp*sy;	R.at<float>(0,3)= 0;
-		R.at<float>(1,0)= cp*sy;	R.at<float>(1,1)= sr*sp*sy+cp*cy;	R.at<float>(1,2)= cr*sp*sy-sp*cy;	R.at<float>(1,3)= 0;
-		R.at<float>(2,0)= -sp;		R.at<float>(2,1)= sy*sp;   		    R.at<float>(2,2)= cr*cp;			R.at<float>(2,3)= 0;
-		R.at<float>(3,0)= 0;		R.at<float>(3,1)= 0;				R.at<float>(3,2)= 0;				R.at<float>(3,3)= 1;
+		R(0,0)= cp*cy;	R(0,1)= sr*sp*cy-cp*sy;	R(0,2)= cr*sp*cy+sp*sy;	R(0,3)= 0;
+		R(1,0)= cp*sy;	R(1,1)= sr*sp*sy+cp*cy;	R(1,2)= cr*sp*sy-sp*cy;	R(1,3)= 0;
+		R(2,0)= -sp;	R(2,1)= sy*sp;   		R(2,2)= cr*cp;			R(2,3)= 0;
+		R(3,0)= 0;		R(3,1)= 0;				R(3,2)= 0;				R(3,3)= 1;
 
 		return R;
 }
 
-Mat Euler::getMat3d(){
+Mat1d Euler::getMat3d(){
 
-		Mat R(3,3,CV_64FC1);
+		Mat1d R(3,3);
 
 		deg2Rad();
 
 		double cr = cos(m_roll), cp= cos(m_pitch), cy= cos(m_yaw);
 		double sr = sin(m_roll), sp= sin(m_pitch), sy= sin(m_yaw);
 
-		R.at<double>(0,0)= cp*cy;	R.at<double>(0,1)= sr*sp*cy-cr*sy;	R.at<double>(0,2)= cr*sp*cy+sr*sy;
-		R.at<double>(1,0)= cp*sy;	R.at<double>(1,1)= sr*sp*sy+cr*cy;	R.at<double>(1,2)= cr*sp*sy-sr*cy;
-		R.at<double>(2,0)= -sp;		R.at<double>(2,1)= sr*cp;   		R.at<double>(2,2)= cr*cp;
+		R(0,0)= cp*cy;	R(0,1)= sr*sp*cy-cr*sy;	R(0,2)= cr*sp*cy+sr*sy;
+		R(1,0)= cp*sy;	R(1,1)= sr*sp*sy+cr*cy;	R(1,2)= cr*sp*sy-sr*cy;
+		R(2,0)= -sp;	R(2,1)= sr*cp;   		R(2,2)= cr*cp;
 
 		return R;
 }
 
-Mat Euler::getMat4d(){
+Mat1d Euler::getMat4d(){
 
-		Mat R(4,4,CV_64FC1);
+		Mat4d R(4,4);
 
 		deg2Rad();
 
 		double cr = cos(m_roll), cp= cos(m_pitch), cy= cos(m_yaw);
 		double sr = sin(m_roll), sp= sin(m_pitch), sy= sin(m_yaw);
 
-		R.at<double>(0,0)= cp*cy;	R.at<double>(0,1)= sr*sp*cy-cp*sy;	R.at<double>(0,2)= cr*sp*cy+sp*sy;	R.at<double>(0,3)= 0;
-		R.at<double>(1,0)= cp*sy;	R.at<double>(1,1)= sr*sp*sy+cp*cy;	R.at<double>(1,2)= cr*sp*sy-sp*cy;	R.at<double>(1,3)= 0;
-		R.at<double>(2,0)= -sp;		R.at<double>(2,1)= sy*sp;   		R.at<double>(2,2)= cr*cp;			R.at<double>(2,3)= 0;
-		R.at<double>(3,0)= 0;		R.at<double>(3,1)= 0;				R.at<double>(3,2)= 0;				R.at<double>(3,3)= 1;
+		R(0,0)= cp*cy;	R(0,1)= sr*sp*cy-cp*sy;	R(0,2)= cr*sp*cy+sp*sy;	R(0,3)= 0;
+		R(1,0)= cp*sy;	R(1,1)= sr*sp*sy+cp*cy;	R(1,2)= cr*sp*sy-sp*cy;	R(1,3)= 0;
+		R(2,0)= -sp;	R(2,1)= sy*sp;   		R(2,2)= cr*cp;			R(2,3)= 0;
+		R(3,0)= 0;		R(3,1)= 0;				R(3,2)= 0;				R(3,3)= 1;
 
 		return R;
 }
 
-void Euler::fromMat(const Mat &R){
+void Euler::fromMat(const Mat1f &R){
 
-    m_roll = atan2(R.at<float>(2,1),R.at<float>(2,2));
-    m_pitch = atan2(-R.at<float>(2,0),sqrt(pow(R.at<float>(2,1),2)+pow(R.at<float>(2,2),2)));
-    m_yaw = atan2(R.at<float>(1,0),R.at<float>(0,0));
+//    m_roll = atan2(R(2,1),R(2,2));
+//    m_pitch = atan2(-R(2,0),sqrt(pow(R(2,1),2)+pow(R(2,2),2)));
+//    m_yaw = atan2(R(1,0),(0,0));
+    m_roll = atan2(R(0,2),R(1,2));
+    m_pitch = acos(R(2,2));
+    m_yaw = atan2(R(2,0),-R(2,1));
+    m_rad = true;
+}
+
+void Euler::fromMat(const Mat1d &R){
+
+    if (!(sqrt(pow(R(0,0),2)+pow(R(1,0),2)) < 1e-6)){
+        m_roll = atan2(R(2,1),R(2,2));
+        m_pitch = atan2(-R(2,0),sqrt(pow(R(0,0),2)+pow(R(1,0),2)));
+        m_yaw = atan2(R(1,0),R(0,0));
+//        m_roll = atan2(R(1,2),R(2,2));
+//        m_pitch = acos(R(2,2));
+//        m_yaw = atan2(R(0,1),R(0,0));
+
+    }else{
+        m_roll = atan2(-R(1,2),R(1,1));
+        m_pitch = atan2(-R(2,0),sqrt(pow(R(0,0),2)+pow(R(1,0),2)));
+        m_yaw = 0;
+    }
     m_rad = true;
 }
 
@@ -139,77 +152,115 @@ void Euler::operator+=(Euler& e){
     m_yaw += e.yaw();
 }
 
-/**** Quat class ****/
 
-void Quat::init(){
-    m_w =1; m_x=0; m_y=0; m_z=0;
-}
+
+/***********************
+        Quat class
+
+************************/
 
 void Quat::norm(){
     double n = sqrt(m_w*m_w + m_x*m_x + m_y*m_y + m_z*m_z);
-    m_w /= n;
-    m_x /= n;
-    m_y /= n;
-    m_z /= n;
+    if(n != 1.0){
+        m_w /= n;
+        m_x /= n;
+        m_y /= n;
+        m_z /= n;
+    }
 }
 
-void Quat::show() const{
-    cout << "q = [ " << m_w << " " << m_x << " " << m_y << " " << m_z  << " ]t" << endl;
-}
+cv::Mat1f Quat::getMat4f() const{
 
-cv::Mat Quat::getMat4d() const{
+    Mat1f Q(4,4);
 
-    Mat Q(4,4,CV_64FC1);
-//    double q2w = m_w*m_w, q2x = m_x*m_x, q2m_y = m_y*m_y, q2m_z = m_z*m_z;
-
-    Q.at<double>(0,0)= m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z;	Q.at<double>(0,1)= 2*(m_x*m_y - m_w*m_z);			Q.at<double>(0,2)= 2*(m_x*m_z + m_w*m_y);			Q.at<double>(0,3)= 0;
-    Q.at<double>(1,0)= 2*(m_x*m_y + m_w*m_z);			Q.at<double>(1,1)= m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z;	Q.at<double>(1,2)= 2*(m_w*m_x - m_y*m_z);			Q.at<double>(1,3)= 0;
-    Q.at<double>(2,0)= 2*(m_x*m_z - m_w*m_y);			Q.at<double>(2,1)= 2*(m_w*m_x + m_y*m_z);			Q.at<double>(2,2)= m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z;	Q.at<double>(2,3)= 0;
-    Q.at<double>(3,0)= 0;						Q.at<double>(3,1)= 0;						Q.at<double>(3,2)= 0;						Q.at<double>(3,3)= 1;
+    Q(0,0)= m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z;	Q(0,1)= 2*(m_x*m_y + m_w*m_z);			        Q(0,2)= 2*(m_x*m_z - m_w*m_y);			        Q(0,3)= 0;
+    Q(1,0)= 2*(m_x*m_y - m_w*m_z);			        Q(1,1)= m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z;	Q(1,2)= 2*(m_w*m_x + m_y*m_z);			        Q(1,3)= 0;
+    Q(2,0)= 2*(m_x*m_z + m_w*m_y);			        Q(2,1)= 2*(m_w*m_x - m_y*m_z);			        Q(2,2)= m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z;	Q(2,3)= 0;
+    Q(3,0)= 0;						                Q(3,1)= 0;						                Q(3,2)= 0;						                Q(3,3)= 1;
 
     return Q;
 }
 
-cv::Mat Quat::getMat3d() const{
+cv::Mat1f Quat::getMat3f() const{
 
-//    Quat anglq;
-//    double ang = 2*acos(anglq.w());
-//    double X = anglq.x()/sqrt(1-anglq.w()*anglq.w()), Y = anglq.y()/sqrt(1-anglq.w()*anglq.w()), Z = anglq.z()/sqrt(1-anglq.w()*anglq.w());
+    Mat1f Q(3,3);
 
-    Mat Q(3,3,CV_64FC1);
-    double q2m_w = m_w*m_w, q2x = m_x*m_x, q2m_y = m_y*m_y, q2m_z = m_z*m_z;
-
-    Q.at<double>(0,0)= 1-2*(m_y*m_y+m_z*m_z);	        Q.at<double>(0,1)= 2*(m_x*m_y - m_w*m_z);			Q.at<double>(0,2)= 2*(m_x*m_z + m_w*m_y);
-    Q.at<double>(1,0)= 2*(m_x*m_y + m_w*m_z);			Q.at<double>(1,1)= 1-2*(m_x*m_x+m_z*m_z);	        Q.at<double>(1,2)= 2*(m_w*m_x - m_y*m_z);
-    Q.at<double>(2,0)= 2*(m_x*m_z - m_w*m_y);			Q.at<double>(2,1)= 2*(m_w*m_x + m_y*m_z);			Q.at<double>(2,2)= 1-2*(m_x*m_x+m_y*m_y);
-
-//    Q.at<double>(0,0)= cos(ang)+X*X*(1-cos(ang));	    Q.at<double>(0,1)= X*Y*(1-cos(ang))-Z*sin(ang);	    Q.at<double>(0,2)= X*Z*(1-cos(ang))+Y*sin(ang);
-//    Q.at<double>(1,0)= Y*X*(1-cos(ang))+Z*sin(ang);		Q.at<double>(1,1)= cos(ang)+Y*Y*(1-cos(ang));	    Q.at<double>(1,2)= Y*Z*(1-cos(ang))-X*sin(ang);
-//    Q.at<double>(2,0)= Z*X*(1-cos(ang))-Y*sin(ang);		Q.at<double>(2,1)= Z*Y*(1-cos(ang))+X*sin(ang);		Q.at<double>(2,2)= cos(ang)+Z*Z*(1-cos(ang));
-
+    Q(0,0)= m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z;	Q(0,1)= 2*(m_x*m_y + m_w*m_z);			        Q(0,2)= 2*(m_x*m_z - m_w*m_y);
+    Q(1,0)= 2*(m_x*m_y - m_w*m_z);			        Q(1,1)= m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z;	Q(1,2)= 2*(m_w*m_x + m_y*m_z);
+    Q(2,0)= 2*(m_x*m_z + m_w*m_y);			        Q(2,1)= 2*(m_w*m_x - m_y*m_z);			        Q(2,2)= m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z;
 
     return Q;
 }
 
-void Quat::fromMat(const cv::Mat& m){
-    m_w = sqrt(1+m.at<float>(0,0)+m.at<float>(1,1)+m.at<float>(2,2))/2;
-    m_x =  (m.at<float>(2,1)-m.at<float>(1,2))/(4*m_w);
-    m_y =  (m.at<float>(0,2)-m.at<float>(2,0))/(4*m_w);
-    m_z =  (m.at<float>(1,0)-m.at<float>(0,1))/(4*m_w);
+cv::Mat1d Quat::getMat4d() const{
+
+    Mat1d Q(4,4);
+
+    Q(0,0)= m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z;	Q(0,1)= 2*(m_x*m_y + m_w*m_z);			        Q(0,2)= 2*(m_x*m_z - m_w*m_y);			        Q(0,3)= 0;
+    Q(1,0)= 2*(m_x*m_y - m_w*m_z);			        Q(1,1)= m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z;	Q(1,2)= 2*(m_w*m_x + m_y*m_z);			        Q(1,3)= 0;
+    Q(2,0)= 2*(m_x*m_z + m_w*m_y);			        Q(2,1)= 2*(m_w*m_x - m_y*m_z);			        Q(2,2)= m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z;	Q(2,3)= 0;
+    Q(3,0)= 0;						                Q(3,1)= 0;						                Q(3,2)= 0;						                Q(3,3)= 1;
+
+    return Q;
+}
+
+cv::Mat1d Quat::getMat3d() const{
+
+    Mat1d Q(3,3);
+
+    Q(0,0)= m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z;	Q(0,1)= 2*(m_x*m_y + m_w*m_z);			        Q(0,2)= 2*(m_x*m_z - m_w*m_y);
+    Q(1,0)= 2*(m_x*m_y - m_w*m_z);			        Q(1,1)= m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z;	Q(1,2)= 2*(m_w*m_x + m_y*m_z);
+    Q(2,0)= 2*(m_x*m_z + m_w*m_y);			        Q(2,1)= 2*(m_w*m_x - m_y*m_z);			        Q(2,2)= m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z;
+
+    return Q;
+}
+
+void Quat::fromMat(const cv::Mat& M){
+
+    assert((M.type() == CV_32F || M.type() == CV_64F) && M.channels() == 1);
+
+    //define type of matrix M
+    if(M.type() == CV_64F){
+        #define DOUBLE
+    }
+
+    #ifdef DOUBLE
+        Mat1d m = M;
+    #else
+        Mat1f m = M;
+    #endif
+
+
+    if(m(1,1) > -m(2,2) && m(0,0) > - m(1,1) && m(0,0) > -m(2,2)){
+        double norm = sqrt(1+m(0,0)+m(1,1)+m(2,2));
+        m_w = norm/2;
+        m_x = (m(1,2)-m(2,1))/(2*norm);
+        m_y = (m(2,0)-m(0,2))/(2*norm);
+        m_z = (m(0,1)-m(1,0))/(2*norm);
+    } else if (m(1,1) < -m(2,2) && m(0,0) > m(1,1) && m(0,0) > m(2,2)){
+        double norm = sqrt(1+m(0,0)-m(1,1)-m(2,2));
+        m_w = (m(1,2)-m(2,1))/(2*norm);
+        m_x = norm/2;
+        m_y = (m(0,1)+m(1,0))/(2*norm);
+        m_z = (m(2,0)+m(0,2))/(2*norm);
+    } else if (m(1,1) > m(2,2) && m(0,0) < m(1,1) && m(0,0) < -m(2,2)){
+        double norm = sqrt(1-m(0,0)+m(1,1)-m(2,2));
+        m_w = (m(2,0)-m(0,2))/(2*norm);
+        m_x = (m(0,1)+m(1,0))/(2*norm);
+        m_y = norm/2;
+        m_z = (m(1,2)+m(2,1))/(2*norm);
+    } else{
+        double norm = sqrt(1-m(0,0)-m(1,1)+m(2,2));
+        m_w = (m(0,1)-m(1,0))/(2*norm);
+        m_x = (m(2,0)+m(0,2))/(2*norm);
+        m_y = (m(1,2)+m(2,1))/(2*norm);
+        m_z = norm/2;
+    }
 }
 
 Euler Quat::getEuler(){
     norm();
-    double t0 = -2.0f * (m_y*m_y + m_z*m_z)+1.0f;
-    double t1 = +2.0f * (m_x*m_y - m_w*m_z);
-    double t2 = -2.0f * (m_x*m_z + m_w*m_y);
-    double t3 = +2.0f * (m_y*m_z - m_w*m_x);
-    double t4 = -2.0f * (m_x*m_x + m_y*m_y)+1.0f;
-
-    t2 = t2 > 1.0f?1.0f:t2;
-    t2 = t2 < -1.0f?-1.0f:t2;
-
-    Euler e(asin(t2),atan2(t3,t4),atan2(t1,t0));
+    Euler e(atan2(2*m_y*m_z+2*m_w*m_x,m_z*m_z-m_y*m_y-m_x*m_x+m_w*m_w),-asin(2*m_x*m_z-2*m_w*m_y),atan2(2*m_x*m_y+2*m_w*m_z,m_x*m_x+m_w*m_w-m_z*m_z-m_y*m_y));
 
     return e;
 }
@@ -236,4 +287,16 @@ void Quat::operator-=(const Quat& q){
     m_y -= q.y();
     m_z -= q.z();
     norm();
+}
+
+
+ostream& operator<<(ostream& os, const Euler& e){
+    os << "[" << e.m_roll << "," << e.m_pitch << "," << e.m_yaw << ",";
+    if(e.m_rad) os << "rad";else os << "deg"; os << "]" << endl;
+    return os;
+}
+
+ostream& operator<<(ostream& os, const Quat& q){
+    os << "[" << q.m_w << "|" << q.m_x << "," << q.m_y << "," << q.m_z << "] , angle: " << 2*acos(q.m_w) << endl;
+    return os;
 }

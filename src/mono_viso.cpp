@@ -1,6 +1,6 @@
 #include "mono_viso.h"
 
-#include "opencv2/calib3d/calib3d.hpp"
+#include <opencv2/calib3d.hpp>
 
 using namespace cv;
 
@@ -23,6 +23,8 @@ bool MonoVisualOdometry::process(const std::vector<StereoMatch<cv::Point2f>>& ma
         E = findEssentialMat(in, out, m_param.f, pp, m_param.ransac?CV_RANSAC:CV_LMEDS, m_param.prob, m_param.inlier_threshold, mask);
         recoverPose(E, in, out, R, T, m_param.f, pp, mask);
 
+        cout << "T: " << T.t() << endl;
+
         int count=0;
         m_inliers.clear();
         for(unsigned int i = 0; i < out.size();i++)
@@ -31,11 +33,14 @@ bool MonoVisualOdometry::process(const std::vector<StereoMatch<cv::Point2f>>& ma
                 m_inliers.push_back(i);
             }
 
-        if(count < 10 || fabs(T.at<double>(0)) > 0.5){
+        cout << m_inliers.size() << endl;
+
+        if(count < 10 /*|| fabs(T.at<double>(0)) > 0.5*/){
             m_Rt = Mat::eye(4,4,CV_64FC1);
             return false;
         }
         else{
+//            Mat rot_T = -R * T;
             double* Rt_ptr = m_Rt.ptr<double>();
             double* R_ptr = R.ptr<double>();
             double* T_ptr = T.ptr<double>();
