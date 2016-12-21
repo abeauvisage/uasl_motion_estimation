@@ -5,55 +5,65 @@
 
 #include <opencv2/core.hpp>
 
+#define PI 3.14156592
+
+template <typename T>
 class Quat;
+
+template<typename T>
 class Euler {
 
 private:
 
-	double m_roll;
-	double m_pitch;
-	double m_yaw;
-	bool m_rad;
+	T m_roll;
+	T m_pitch;
+	T m_yaw;
 
-    void deg2Rad();
-	void rad2Deg();
+    inline void deg2Rad(){m_roll *= PI/180; m_pitch *= PI/180; m_yaw *= PI/180;}
+	inline void rad2Deg(){m_roll *= 180/PI; m_pitch *= 180/PI; m_yaw *= 180/PI;}
+	inline void computeCosSin(T& cr, T& sr, T& cp, T& sp, T& cy, T& sy) const{cr=cos(m_roll);sr=sin(m_roll);cp=cos(m_pitch);sp=sin(m_pitch);cy=cos(m_yaw);sy=sin(m_yaw);}
 
 public:
 
-	Euler(double r=0, double p=0, double y=0, bool rad=true ): m_roll(r), m_pitch(p), m_yaw(y), m_rad(rad){}
+	Euler(T r=0, T p=0, T y=0, bool rad=true ): m_roll(r), m_pitch(p), m_yaw(y) {if(!rad)deg2Rad();}
 	Euler(const cv::Mat& M){fromMat(M);}
-	Euler(const Euler& e): m_roll(e.roll()), m_pitch(e.pitch()), m_yaw(e.yaw()), m_rad(e.isRad()){}
+	Euler(const Euler& e): m_roll(e.roll()), m_pitch(e.pitch()), m_yaw(e.yaw()){}
 
-	bool isRad() const { return m_rad;}
-	friend std::ostream& operator<<(std::ostream& os, const Euler& e);
-	std::string to_str(bool rad);
+	//displaying
+	friend std::ostream& operator<<(std::ostream& os, const Euler<T>& e){
+        os << "[" << e.m_roll << "," << e.m_pitch << "," << e.m_yaw << ", rad]" << std::endl;
+        return os;
+    }
+	std::string getDegrees();
 
 	//conversions
-	cv::Mat1f getMat3f();
-	cv::Mat1f getMat4f();
-	cv::Mat1d getMat3d();
-	cv::Mat1d getMat4d();
-	cv::Mat getMat();
+	cv::Matx<T,3,3> getR3() const;
+	cv::Matx<T,4,4> getR4() const;
+	cv::Matx<T,3,3> getE() const;
+	cv::Matx<T,3,3> getdRdr() const;
+	cv::Matx<T,3,3> getdRdp() const;
+	cv::Matx<T,3,3> getdRdy() const;
 	void fromMat(const cv::Mat& R);
-    Quat getQuat();
+    Quat<T> getQuat() const;
 
     //operator
     void operator+=(Euler& e);
 
     //access
-    double roll() const {return m_roll;}
-    double pitch() const {return m_pitch;}
-    double yaw() const {return m_yaw;}
+    T roll() const {return m_roll;}
+    T pitch() const {return m_pitch;}
+    T yaw() const {return m_yaw;}
 };
 
+template <typename T>
 class Quat {
 
 private:
 
-	double m_w;
-	double m_x;
-	double m_y;
-	double m_z;
+	T m_w;
+	T m_x;
+	T m_y;
+	T m_z;
 
 public:
 
@@ -65,34 +75,33 @@ public:
 	//normalize, conjugate and display functions
 	void norm();
 	Quat conj() const {return Quat(m_w,-m_x,-m_y,-m_z);}
-	friend std::ostream& operator<<(std::ostream& os, const Quat& e);
+	friend std::ostream& operator<<(std::ostream& os, const Quat<T>& q){
+        os << "[" << q.m_w << "|" << q.m_x << "," << q.m_y << "," << q.m_z << "] angle: " << 2*acos(q.m_w) << std::endl;
+        return os;
+    }
 
     // conversions
-    cv::Matx44f getQMatf() const;
-    cv::Matx44d getQMatd() const;
-    cv::Matx44f getQ_Matf() const;
-    cv::Matx44d getQ_Matd() const;
-    cv::Matx44d getdQdq0() const;
-	cv::Matx44d getdQ_dq0() const;
-	cv::Matx44d getdQdq1() const;
-	cv::Matx44d getdQ_dq1() const;
-	cv::Matx44d getdQdq2() const;
-	cv::Matx44d getdQ_dq2() const;
-	cv::Matx44d getdQdq3() const;
-	cv::Matx44d getdQ_dq3() const;
+    inline cv::Matx<T,4,4> getQ() const;
+    inline cv::Matx<T,4,4> getQ_() const;
+    inline cv::Matx<T,4,4> getdQdq0() const;
+	inline cv::Matx<T,4,4> getdQ_dq0() const;
+	inline cv::Matx<T,4,4> getdQdq1() const;
+	inline cv::Matx<T,4,4> getdQ_dq1() const;
+	inline cv::Matx<T,4,4> getdQdq2() const;
+	inline cv::Matx<T,4,4> getdQ_dq2() const;
+	inline cv::Matx<T,4,4> getdQdq3() const;
+	inline cv::Matx<T,4,4> getdQ_dq3() const;
 
-	cv::Mat1f getMat3f() const;
-	cv::Mat1f getMat4f();
-	cv::Mat1d getMat3d() const;
-	cv::Mat1d getMat4d() const;
+	inline cv::Matx<T,3,3> getR3() const;
+	inline cv::Matx<T,4,4> getR4() const;
 	void fromMat(const cv::Mat& M);
-	Euler getEuler();
+	Euler<T> getEuler();
 
 	//operators
 	void operator*=(const Quat& q);
 	Quat operator*(const Quat& q);
-	cv::Vec3d operator*(const cv::Vec3d& v);
-	cv::Vec4d operator*(const cv::Vec4d& v);
+	cv::Vec<T,3> operator*(const cv::Vec<T,3>& v);
+	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v);
 	void operator+=(const Quat& q);
 	void operator-=(const Quat& q);
 
@@ -104,6 +113,3 @@ public:
 };
 
 #endif // UTILS_H_INCLUDED
-
-//Euler operator+(const Euler& e1, const Euler& e2);
-
