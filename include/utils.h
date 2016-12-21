@@ -21,18 +21,20 @@ private:
 public:
 
 	Euler(double r=0, double p=0, double y=0, bool rad=true ): m_roll(r), m_pitch(p), m_yaw(y), m_rad(rad){}
+	Euler(const cv::Mat& M){fromMat(M);}
 	Euler(const Euler& e): m_roll(e.roll()), m_pitch(e.pitch()), m_yaw(e.yaw()), m_rad(e.isRad()){}
 
 	bool isRad() const { return m_rad;}
 	friend std::ostream& operator<<(std::ostream& os, const Euler& e);
+	std::string to_str(bool rad);
 
 	//conversions
 	cv::Mat1f getMat3f();
 	cv::Mat1f getMat4f();
 	cv::Mat1d getMat3d();
 	cv::Mat1d getMat4d();
-	void fromMat(const cv::Mat1f &R);
-	void fromMat(const cv::Mat1d &R);
+	cv::Mat getMat();
+	void fromMat(const cv::Mat& R);
     Quat getQuat();
 
     //operator
@@ -56,7 +58,7 @@ private:
 public:
 
     // constructors and copy constructor
-	Quat(double w=1, double x=0, double y=0, double z=0): m_w(w), m_x(x), m_y(y), m_z(z){norm();}
+	Quat(double w=1, double x=0, double y=0, double z=0): m_w(w), m_x(x), m_y(y), m_z(z){}
 	Quat(const cv::Mat& M){fromMat(M);norm();}
 	Quat(const Quat& q): m_w(q.w()), m_x(q.x()), m_y(q.y()), m_z(q.z()){norm();}
 
@@ -66,8 +68,21 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const Quat& e);
 
     // conversions
+    cv::Matx44f getQMatf() const;
+    cv::Matx44d getQMatd() const;
+    cv::Matx44f getQ_Matf() const;
+    cv::Matx44d getQ_Matd() const;
+    cv::Matx44d getdQdq0() const;
+	cv::Matx44d getdQ_dq0() const;
+	cv::Matx44d getdQdq1() const;
+	cv::Matx44d getdQ_dq1() const;
+	cv::Matx44d getdQdq2() const;
+	cv::Matx44d getdQ_dq2() const;
+	cv::Matx44d getdQdq3() const;
+	cv::Matx44d getdQ_dq3() const;
+
 	cv::Mat1f getMat3f() const;
-	cv::Mat1f getMat4f() const;
+	cv::Mat1f getMat4f();
 	cv::Mat1d getMat3d() const;
 	cv::Mat1d getMat4d() const;
 	void fromMat(const cv::Mat& M);
@@ -75,6 +90,9 @@ public:
 
 	//operators
 	void operator*=(const Quat& q);
+	Quat operator*(const Quat& q);
+	cv::Vec3d operator*(const cv::Vec3d& v);
+	cv::Vec4d operator*(const cv::Vec4d& v);
 	void operator+=(const Quat& q);
 	void operator-=(const Quat& q);
 
@@ -88,3 +106,4 @@ public:
 #endif // UTILS_H_INCLUDED
 
 //Euler operator+(const Euler& e1, const Euler& e2);
+

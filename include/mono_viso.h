@@ -31,10 +31,12 @@ class MonoVisualOdometry : public VisualOdometry
         bool process(const std::vector<StereoMatch<cv::Point2f>>& matches);
         virtual cv::Mat getMotion(){return m_Rt;}
         std::vector<int> getInliersIdx(){return m_inliers;}
+        cv::Mat getEssentialMat(){return m_E;}
 
     private:
         parameters m_param;
         cv::Mat m_Rt;
+        cv::Mat m_E;
         std::vector<int> m_inliers;
 };
 

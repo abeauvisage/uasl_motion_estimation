@@ -4,7 +4,6 @@
 #include <sstream>
 
 #include "opencv2/opencv.hpp"
-//#include <opencv2/viz.hpp>
 #include <iomanip>
 
 #include "stereo_viso.h"
@@ -38,7 +37,6 @@ int main()
 
     ofstream file,proj;
     file.open(dir+"/new_coord.txt");
-//    proj.open(dir+"/projection.csv");
 
     Graph2D g("Trajectory",2);
     g.addLegend("estimation",1);
@@ -166,17 +164,6 @@ int main()
         getline(ss,init_gy,',');
     }
 
-    /*** viz ***/
-
-//    viz::Viz3d myWindow("coordinate frame");
-//    myWindow.showWidget("coordinate widget", viz::WCoordinateSystem());
-//    myWindow.spin();
-
-    /***********/
-
-
-//    waitKey(0);
-
     if(data.is_open()){
         vector<StereoOdoMatches<cv::Point2f>> matched;
         double mean_matches=0;
@@ -227,20 +214,12 @@ int main()
                     /**** processing 3D pts ****/
 
                     if(viso.process(matched)){
-                        viso.updatePose();
-                        pose = viso.getPose();
+                        Mat motion = viso.getMotion();
+                        pose *= motion.inv();
                     }
                     else
                         cout << "failed" << endl;
-//
-//                    Mat new_pose =viso.getMotion();
-//                    proj << new_pose << endl;
-//                    Mat inv;invert(new_pose,inv);
-//                    if(abs(new_pose.at<double>(0,3)) < 10 && abs(new_pose.at<double>(2,3)) < 10)
-//                        pose *= inv;
 
-//                    pose = viso.getPose();
-//                    cout << pose << endl;
 
                     x = pose.at<double>(0,3);
                     y = pose.at<double>(2,3);
