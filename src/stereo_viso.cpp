@@ -18,13 +18,16 @@ StereoVisualOdometry::StereoVisualOdometry (parameters param) : VisualOdometry()
 }
 
 
-bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& matches) {
+bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& matches, cv::Mat x_initial) {
+
+    if (x_initial.rows!=6 || x_initial.cols!=1 || x_initial.type() != CV_64F)
+        x_initial = Mat::zeros(6,1,CV_64F);
 
     int nb_matches = matches.size();
     if(nb_matches<6)
         return false;
 
-    x = Mat::zeros(6,1,CV_64F);
+    x = x_initial;
 
     pts3D.clear();
 
@@ -43,7 +46,7 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& mat
             vector<int> selection;
             selection = randomIndexes(3,nb_matches);
             if((matches[selection[0]].f3.x*(matches[selection[1]].f3.y-matches[selection[2]].f3.y)+matches[selection[1]].f3.x*(matches[selection[2]].f3.y-matches[selection[0]].f3.y)+matches[selection[2]].f3.x*(matches[selection[0]].f3.y-matches[selection[1]].f3.y))/2 > 1000){
-                x = Mat::zeros(6,1,CV_64F);
+                x = x_initial;
 
                 if (optimize(matches,selection,false)) { // if optimization succeeded and more inliers obtained, inliers are saved
                     vector<int> inliers_tmp = computeInliers(matches);
@@ -64,7 +67,7 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& mat
         inliers_idx = selection;
     }
 
-    x = Mat::zeros(6,1,CV_64F);
+    x = x_initial;
 
     cout << "nb inliers: " << inliers_idx.size() << endl;
     /** final optimization **/
@@ -326,7 +329,6 @@ bool StereoVisualOdometry::optimize(const std::vector<StereoOdoMatches<Point2f>>
                 if(abs(rho.at<double>(0)) > m_param.e4){ //threshold
                     lambda = max(lambda/9,1.e-7);
                     x = x_test;
-//                    cout << "updated!" << endl;
                 }
                 else
                     lambda = min(lambda*11,1.e7);
@@ -378,12 +380,6 @@ cv::Mat StereoVisualOdometry::getMotion(){
     Rt_ptr[4]  = +sx*sy*cz+cx*sz; Rt_ptr[5]  = -sx*sy*sz+cx*cz; Rt_ptr[6]  = -sx*cy; Rt_ptr[7]  = ty;
     Rt_ptr[8]  = -cx*sy*cz+sx*sz; Rt_ptr[9]  = +cx*sy*sz+sx*cz; Rt_ptr[10] = +cx*cy; Rt_ptr[11] = tz;
     Rt_ptr[12] = 0;               Rt_ptr[13] = 0;               Rt_ptr[14] = 0;      Rt_ptr[15] = 1;
-    //create rigid-body transformation matrix (R|T) from state vector
-//    double Rt_[16] = {   +cy*cz,             -cy*sz,             +sy,    x[3],
-//                        +sx*sy*cz+cx*sz,    -sx*sy*sz+cx*cz,    -sx*cy, x[4],
-//                        -cx*sy*cz+sx*sz,    +cx*sy*sz+sx*cz,    +cx*cy, x[5],
-//                        0,                  0,                  0,      1};
-//    Rt = cv::Mat(4,4,CV_64F,Rt_);
 
     return Rt;
 }

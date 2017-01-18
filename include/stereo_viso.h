@@ -49,7 +49,7 @@ public:
     StereoVisualOdometry(parameters param=parameters());
     ~StereoVisualOdometry(){};
 
-    bool process(const std::vector<StereoOdoMatches<cv::Point2f>>& matches);
+    bool process(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, cv::Mat x_initial = cv::Mat::zeros(6,1,CV_64F));
     virtual cv::Mat getMotion();
 
     std::vector<cv::Point3d> getPts3D(){return pts3D;}

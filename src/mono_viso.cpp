@@ -16,13 +16,19 @@ bool MonoVisualOdometry::process(const std::vector<StereoMatch<cv::Point2f>>& ma
 
         vector<Point2f> in,out;
         Mat E,R,T,mask;
-        for(unsigned int i=0;i<matches.size();i++){
-            in.push_back(matches[i].f1);
-            out.push_back(matches[i].f2);
-        }
+        for(unsigned int i=0;i<matches.size();i++)
+            if(matches[i].f1.x > 0 && matches[i].f2.x > 0){
+                in.push_back(Point2f(matches[i].f1.x,matches[i].f1.y));
+                out.push_back(Point2f(matches[i].f2.x,matches[i].f2.y));
+            }
+
         Point2d pp(m_param.cu,m_param.cv);
         m_E = findEssentialMat(in, out, m_param.f, pp, m_param.ransac?CV_RANSAC:CV_LMEDS, m_param.prob, m_param.inlier_threshold, mask);
 
+        if(m_E.empty()){
+            m_Rt = Mat::eye(4,4,CV_64FC1);
+            return false;
+        }
         recoverPose(m_E, in, out, R, T, m_param.f, pp, mask);
 
         int count=0;
@@ -33,7 +39,6 @@ bool MonoVisualOdometry::process(const std::vector<StereoMatch<cv::Point2f>>& ma
                 m_inliers.push_back(i);
             }
 
-        cout << m_inliers.size() << endl;
 
         if(count < 10 /*|| fabs(T.at<double>(0)) > 0.5*/){
             m_Rt = Mat::eye(4,4,CV_64FC1);
