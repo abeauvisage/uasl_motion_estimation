@@ -363,6 +363,16 @@ Quat<T> Quat<T>::operator*(const Quat& q){
 }
 
 template <typename T>
+Quat<T> Quat<T>::operator*(const double d){
+    return Quat(m_w*d,m_x*d,m_y*d,m_z*d);
+}
+
+template <typename T>
+Quat<T> Quat<T>::operator+(const Quat& q){
+    return Quat(m_w+q.w(),m_x+q.x(),m_y+q.y(),m_z+q.z());
+}
+
+template <typename T>
 void Quat<T>::operator+=(const Quat<T>& q){
     m_w += q.w();
     m_x += q.x();

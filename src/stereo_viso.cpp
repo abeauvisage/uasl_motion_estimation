@@ -40,7 +40,6 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& mat
     inliers_idx.clear();
 
     if(m_param.ransac){
-    cout << "ransac" << endl;
 
         for (int i=0;i<m_param.n_ransac;i++) {
             vector<int> selection;
@@ -58,7 +57,6 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& mat
 //        drawStereoOdomatches
 
     }else{
-        cout << "non ransac" << endl;
         std::vector<int> selection(nb_matches);
         std::iota (std::begin(selection), std::end(selection), 0);
 //        for(int i =0;i<100;i++)
@@ -69,7 +67,6 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& mat
 
     x = x_initial;
 
-    cout << "nb inliers: " << inliers_idx.size() << endl;
     /** final optimization **/
 
     if (inliers_idx.size()>=6) // check that more than 6 inliers have been obtained

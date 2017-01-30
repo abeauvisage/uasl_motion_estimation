@@ -4,7 +4,7 @@ using namespace cv;
 using namespace std;
 
 
-Graph2D::Graph2D(string name, const int nb): m_name(name), m_nb_curves(nb)
+Graph2D::Graph2D(string name, const int nb, bool orth): m_name(name), m_nb_curves(nb), m_orthogonal(orth)
 {
     m_min_x=0.0;
     m_min_y=0.0;
@@ -79,6 +79,17 @@ void Graph2D::addValue(cv::Point2f& v, int idx){
         m_max_x = v.x;
     if(v.y > m_max_y)
         m_max_y = v.y;
+
+    if(m_orthogonal){
+        if(m_max_x > m_max_y)
+            m_max_y = m_max_x;
+        else
+            m_max_x = m_max_y;
+        if(m_min_x < m_min_y)
+            m_min_y = m_min_x;
+        else
+            m_min_x = m_min_y;
+    }
 
     refresh();
 }

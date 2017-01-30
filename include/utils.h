@@ -68,7 +68,7 @@ private:
 public:
 
     // constructors and copy constructor
-	Quat(double w=1, double x=0, double y=0, double z=0): m_w(w), m_x(x), m_y(y), m_z(z){}
+	Quat(T w=1, T x=0, T y=0, T z=0): m_w(w), m_x(x), m_y(y), m_z(z){}
 	Quat(const cv::Mat& M){fromMat(M);norm();}
 	Quat(const Quat& q): m_w(q.w()), m_x(q.x()), m_y(q.y()), m_z(q.z()){norm();}
 
@@ -99,9 +99,12 @@ public:
 
 	//operators
 	void operator*=(const Quat& q);
+	void operator*=(const double& d){m_w*=d;m_x*=d;m_y*=d;m_z*=d;}
 	Quat operator*(const Quat& q);
+	Quat operator*(const double d);
 	cv::Vec<T,3> operator*(const cv::Vec<T,3>& v);
 	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v);
+	Quat operator+(const Quat& q);
 	void operator+=(const Quat& q);
 	void operator-=(const Quat& q);
 

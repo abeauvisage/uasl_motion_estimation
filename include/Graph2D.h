@@ -9,7 +9,7 @@
 class Graph2D
 {
     public:
-        Graph2D(std::string name, const int nb=1);
+        Graph2D(std::string name, const int nb=1, bool orth=true);
         void refresh();
         void addValue(cv::Point2f& v, int idx=1);
         void addLegend(std::string s, int idx=1){m_legend[idx-1]=s;}
@@ -37,6 +37,7 @@ class Graph2D
     float m_max_x;
     float m_max_y;
     float m_length;
+    bool m_orthogonal;
 
     // functions
     static cv::Scalar randomColor(cv::RNG& rng){int icolor=(unsigned)rng;return cv::Scalar(icolor&255,(icolor>>8)&255,(icolor>>16)&255);}
