@@ -355,7 +355,7 @@ void Quat<T>::operator*=(const Quat& q){
 }
 
 template <typename T>
-Quat<T> Quat<T>::operator*(const Quat& q){
+Quat<T> Quat<T>::operator*(const Quat& q) const{
     return Quat(m_w*q.w()-(m_x*q.x()+m_y*q.y()+m_z*q.z()),
                 m_x*q.w()+m_w*q.x()-m_z*q.y()+m_y*q.z(),
                 m_y*q.w()+m_z*q.x()+m_w*q.y()-m_x*q.z(),
@@ -363,12 +363,12 @@ Quat<T> Quat<T>::operator*(const Quat& q){
 }
 
 template <typename T>
-Quat<T> Quat<T>::operator*(const double d){
+Quat<T> Quat<T>::operator*(const double d) const{
     return Quat(m_w*d,m_x*d,m_y*d,m_z*d);
 }
 
 template <typename T>
-Quat<T> Quat<T>::operator+(const Quat& q){
+Quat<T> Quat<T>::operator+(const Quat& q) const{
     return Quat(m_w+q.w(),m_x+q.x(),m_y+q.y(),m_z+q.z());
 }
 
@@ -387,6 +387,15 @@ void Quat<T>::operator-=(const Quat<T>& q){
     m_x -= q.x();
     m_y -= q.y();
     m_z -= q.z();
+    norm();
+}
+
+template <typename T>
+void Quat<T>::operator/=(double nb){
+    m_w /=nb;
+    m_x /=nb;
+    m_y /=nb;
+    m_z /=nb;
     norm();
 }
 

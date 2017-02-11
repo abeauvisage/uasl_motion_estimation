@@ -84,7 +84,9 @@
 		</Compiler>
 		<Unit filename="include/Graph2D.h" />
 		<Unit filename="include/Graph3D.h" />
+		<Unit filename="include/data_utils.h" />
 		<Unit filename="include/featureType.h" />
+		<Unit filename="include/fileIO.h" />
 		<Unit filename="include/mono_viso.h" />
 		<Unit filename="include/motionEstimation.h" />
 		<Unit filename="include/stereo_viso.h" />
@@ -96,6 +98,7 @@
 		</Unit>
 		<Unit filename="src/Graph2D.cpp" />
 		<Unit filename="src/Graph3D.cpp" />
+		<Unit filename="src/fileIO.cpp" />
 		<Unit filename="src/mono_viso.cpp" />
 		<Unit filename="src/stereo_viso.cpp" />
 		<Unit filename="src/utils.cpp" />

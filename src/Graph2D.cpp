@@ -4,7 +4,7 @@ using namespace cv;
 using namespace std;
 
 
-Graph2D::Graph2D(string name, const int nb, bool orth): m_name(name), m_nb_curves(nb), m_orthogonal(orth)
+Graph2D::Graph2D(string name, const int nb, bool orth, cv::Size s): m_name(name), m_nb_curves(nb), m_orthogonal(orth),width(s.width),height(s.height)
 {
     m_min_x=0.0;
     m_min_y=0.0;
@@ -22,7 +22,7 @@ Graph2D::Graph2D(string name, const int nb, bool orth): m_name(name), m_nb_curve
         m_legend.push_back("");
     }
 
-    namedWindow(m_name,0);
+    namedWindow(m_name,WINDOW_FREERATIO);
     plot_background();
 }
 
@@ -60,6 +60,7 @@ void Graph2D::refresh(){
     }
     plot_legend();
     imshow(m_name,m_image);
+    waitKey(10);
 }
 
 void Graph2D::addValue(cv::Point2f& v, int idx){

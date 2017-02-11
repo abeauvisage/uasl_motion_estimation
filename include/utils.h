@@ -100,13 +100,14 @@ public:
 	//operators
 	void operator*=(const Quat& q);
 	void operator*=(const double& d){m_w*=d;m_x*=d;m_y*=d;m_z*=d;}
-	Quat operator*(const Quat& q);
-	Quat operator*(const double d);
+	Quat operator*(const Quat& q) const;
+	Quat operator*(const double d) const;
 	cv::Vec<T,3> operator*(const cv::Vec<T,3>& v);
 	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v);
-	Quat operator+(const Quat& q);
+	Quat operator+(const Quat& q) const;
 	void operator+=(const Quat& q);
 	void operator-=(const Quat& q);
+	void operator/=(double nb);
 
 	//access
 	double w() const {return m_w;}

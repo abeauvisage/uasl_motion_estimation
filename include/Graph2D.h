@@ -4,14 +4,17 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
 
 class Graph2D
 {
     public:
-        Graph2D(std::string name, const int nb=1, bool orth=true);
+        Graph2D(std::string name, const int nb=1, bool orth=true, cv::Size s=cv::Size(640,480));
         void refresh();
         void addValue(cv::Point2f& v, int idx=1);
+        void addValue(double v, int idx=1){cv::Point2f p(count,v);addValue(p,idx);count++;}
         void addLegend(std::string s, int idx=1){m_legend[idx-1]=s;}
         void clearGraph();
         void saveGraph(std::string filename){imwrite(filename,m_image);}
@@ -21,8 +24,8 @@ class Graph2D
     private:
 
     // attributes
-    int height=480;
-    int width=640;
+    int height;
+    int width;
     int m_nb_curves;
     cv::Mat m_image;
     std::vector<std::vector<cv::Point2f>> m_values;
@@ -31,6 +34,7 @@ class Graph2D
 //    std::vector<float> m_length;
     int m_margin = 90;
     float m_max_pts = 50;
+    int count=0;
     std::string m_name;
     float m_min_x;
     float m_min_y;
