@@ -3,6 +3,7 @@
 using namespace cv;
 using namespace std;
 
+namespace me{
 
 Graph2D::Graph2D(string name, const int nb, bool orth, cv::Size s): m_name(name), m_nb_curves(nb), m_orthogonal(orth),width(s.width),height(s.height)
 {
@@ -122,4 +123,6 @@ void Graph2D::plot_axis(cv::Mat& bg, const int dx, const int dy){
 
 Graph2D::~Graph2D(){
     destroyWindow(m_name);
+}
+
 }

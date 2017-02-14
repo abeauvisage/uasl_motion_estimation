@@ -8,6 +8,8 @@
 
 #include <istream>
 
+namespace me{
+
 class Graph3D
 {
     public:
@@ -34,5 +36,7 @@ class Graph3D
     std::vector<cv::Affine3d> m_poses;
 
 };
+
+}
 
 #endif // GRAPH3D_H

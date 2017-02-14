@@ -6,7 +6,7 @@
 using namespace std;
 using namespace cv;
 
-
+namespace me{
 
 int loadYML(string filename){
 
@@ -185,4 +185,6 @@ int loadImages(std::string& dir, int nb){
     }
 
     return 1;
+}
+
 }

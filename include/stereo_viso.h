@@ -6,6 +6,8 @@
 #include "viso.h"
 #include "featureType.h"
 
+namespace me{
+
 class StereoVisualOdometry: public VisualOdometry {
 
 public:
@@ -77,5 +79,6 @@ private:
     std::vector<int> randomIndexes(int nb_samples, int nb_tot);
 };
 
+}
 #endif // VSTEREO_VISO_H
 

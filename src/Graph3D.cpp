@@ -8,6 +8,8 @@
 using namespace std;
 using namespace cv;
 
+namespace me{
+
 Graph3D::Graph3D(const string& name, bool traj, bool coordSyst) : m_viz(name), m_traj(traj), m_coordSyst(coordSyst)
 {
     m_poses.push_back(Matx44d::eye());
@@ -71,4 +73,6 @@ std::istream& operator>>(std::istream& is, Graph3D& g){
     g.m_viz.showWidget("Text Widget",text);
 
     return is;
+}
+
 }

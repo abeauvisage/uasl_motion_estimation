@@ -5,6 +5,8 @@
 
 #include "utils.h"
 
+namespace me{
+
 struct ImuData{
 
     //accelerometer
@@ -65,5 +67,6 @@ struct GpsData{
 //
 //}
 
+}
 
 #endif // DATA_UTILS_H_INCLUDED

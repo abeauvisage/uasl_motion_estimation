@@ -11,6 +11,8 @@
 #include "mono_viso.h"
 #include "data_utils.h"
 
+namespace me{
+
 enum SetupType{stereo,mono};
 enum FilterType{EKF,EKFE,RCEKF,Linear};
 
@@ -38,5 +40,7 @@ int readImuData(ImuData& data);
 int readGpsData(GpsData& data);
 int getNextImuData(double stamp, ImuData& data);
 int getNextGpsData(double stamp, GpsData& data);
+
+}
 
 #endif // FILEIO_H_INCLUDED

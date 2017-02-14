@@ -4,6 +4,8 @@
 
 using namespace cv;
 
+namespace me{
+
 MonoVisualOdometry::MonoVisualOdometry(parameters param) : VisualOdometry(), m_param(param)
 {
     m_Rt = Mat::eye(4,4,CV_64FC1);
@@ -72,4 +74,6 @@ bool MonoVisualOdometry::process(const std::vector<StereoMatch<cv::Point2f>>& ma
         cerr << "not enough matches!" << endl;
         return false;
     }
+}
+
 }

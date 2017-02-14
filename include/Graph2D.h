@@ -8,6 +8,8 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 
+namespace me{
+
 class Graph2D
 {
     public:
@@ -49,5 +51,7 @@ class Graph2D
     void plot_legend();
     void plot_axis(cv::Mat& bg, const int dx, const int dy);
 };
+
+}
 
 #endif // GRAPH2D_H

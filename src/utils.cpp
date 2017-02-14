@@ -7,6 +7,8 @@
 using namespace cv;
 using namespace std;
 
+namespace me{
+
 
 /******************
 
@@ -421,3 +423,5 @@ template class Euler<float>;
 template class Euler<double>;
 template class Quat<float>;
 template class Quat<double>;
+
+}

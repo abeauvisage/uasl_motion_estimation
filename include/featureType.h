@@ -11,6 +11,8 @@
 
 using namespace std;
 
+namespace me{
+
 template <typename T>
 void printVector(T * data, size_t s, size_t width = 0)
 {
@@ -178,5 +180,7 @@ struct StereoOdoMatches{
 	StereoOdoMatches(const T& feat1, const T& feat2, const T& feat3, const T& feat4, float score=-1):f1(feat1),f2(feat2),f3(feat3),f4(feat4), m_score(score){}
 	StereoOdoMatches(const StereoOdoMatches& som):f1(som.f1),f2(som.f2),f3(som.f3),f4(som.f4), m_score(som.m_score){}
 };
+
+}
 
 #endif

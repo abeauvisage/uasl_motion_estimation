@@ -4,6 +4,8 @@
 #include "viso.h"
 #include "featureType.h"
 
+namespace me{
+
 class MonoVisualOdometry : public VisualOdometry
 {
 
@@ -39,5 +41,7 @@ class MonoVisualOdometry : public VisualOdometry
         cv::Mat m_E;
         std::vector<int> m_inliers;
 };
+
+}
 
 #endif // MONOVISUALODOMETRY_H

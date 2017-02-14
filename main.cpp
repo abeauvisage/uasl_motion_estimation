@@ -11,6 +11,7 @@
 
 using namespace std;
 using namespace cv;
+using namespace me;
 
 ifstream logFile;
 

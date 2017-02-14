@@ -88,7 +88,6 @@
 		<Unit filename="include/featureType.h" />
 		<Unit filename="include/fileIO.h" />
 		<Unit filename="include/mono_viso.h" />
-		<Unit filename="include/motionEstimation.h" />
 		<Unit filename="include/stereo_viso.h" />
 		<Unit filename="include/utils.h" />
 		<Unit filename="include/viso.h" />
@@ -102,7 +101,6 @@
 		<Unit filename="src/mono_viso.cpp" />
 		<Unit filename="src/stereo_viso.cpp" />
 		<Unit filename="src/utils.cpp" />
-		<Unit filename="src/viso.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />

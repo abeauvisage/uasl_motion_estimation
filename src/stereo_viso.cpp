@@ -13,6 +13,8 @@ using namespace cv;
 
 extern ofstream logFile;
 
+namespace me{
+
 StereoVisualOdometry::StereoVisualOdometry (parameters param) : VisualOdometry(), m_param(param) {
     srand(0);
 }
@@ -381,3 +383,4 @@ cv::Mat StereoVisualOdometry::getMotion(){
     return Rt;
 }
 
+}

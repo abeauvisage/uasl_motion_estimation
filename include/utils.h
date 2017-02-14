@@ -7,6 +7,8 @@
 
 #define PI 3.14156592
 
+namespace me{
+
 template <typename T>
 class Quat;
 
@@ -115,5 +117,7 @@ public:
 	double y() const {return m_y;}
 	double z() const {return m_z;}
 };
+
+}
 
 #endif // UTILS_H_INCLUDED
