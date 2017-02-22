@@ -8,6 +8,13 @@ using namespace cv;
 
 namespace me{
 
+SetupType st;
+FilterType ft;
+FrameInfo fi;
+MonoVisualOdometry::parameters param_mono;
+StereoVisualOdometry::parameters param_stereo;
+std::string appendix;
+
 int loadYML(string filename){
 
     FileStorage configFile(filename, FileStorage::READ);
@@ -27,9 +34,9 @@ int loadYML(string filename){
 
     // defining frame rate
     FileNode frames = configFile["frames"];
-    fframe = frames["start"];
-    lframe = frames["stop"];
-    skip = frames["rate"];
+    fi.fframe = frames["start"];
+    fi.lframe = frames["stop"];
+    fi.skip = frames["rate"];
 
     //defining calibration parameters
     FileNode calib = configFile["calib"];
@@ -37,9 +44,17 @@ int loadYML(string filename){
         calib["focal"] >> param_stereo.f1;
         calib["focal"] >> param_stereo.f2;
         calib["cu"] >> param_stereo.cu1;
+        if(param_stereo.cu1 == 0)
+            calib["cu1"] >> param_stereo.cu1;
         calib["cu"] >> param_stereo.cu2;
+        if(param_stereo.cu2 == 0)
+            calib["cu2"] >> param_stereo.cu2;
         calib["cv"] >> param_stereo.cv1;
+        if(param_stereo.cv1 == 0)
+            calib["cv1"] >> param_stereo.cv1;
         calib["cv"] >> param_stereo.cv2;
+        if(param_stereo.cv2 == 0)
+            calib["cv2"] >> param_stereo.cv2;
         calib["baseline"] >> param_stereo.baseline;
         calib["ransac"] >> param_stereo.ransac;
         calib["threshold"] >> param_stereo.inlier_threshold;
@@ -65,7 +80,7 @@ int loadYML(string filename){
         ft = EKFE;
     if(filter == "RCEKF")
         ft = RCEKF;
-    configFile["rectification"] >> rectification;
+    configFile["appendix"] >> appendix;
 
     return 1;
 }
@@ -141,15 +156,12 @@ int getNextImuData(double stamp, ImuData& data){
     if(!imufile.is_open() || imufile.eof())
         return 0;
     data = ImuData();
-//    int ok = 1;
     int count=0;
     ImuData rdata;
     while(data.stamp <= stamp && readImuData(rdata)){
 
         data+=rdata;
         count++;
-        cout << count << endl;
-        cout << setprecision(12) << rdata.stamp << endl;
     }
     data /=count;
     if(imufile.eof())
@@ -168,23 +180,20 @@ int getNextGpsData(double stamp, GpsData& data){
     return 1;
 }
 
-int loadImages(std::string& dir, int nb){
+pair<Mat,Mat> loadImages(std::string& dir, int nb){
 
+    pair<Mat,Mat> imgs;
     stringstream num;num <<  std::setfill('0') << std::setw(5) << nb;
-    imgL = imread(dir+"/cam0_image"+num.str()+"_"+rectification+".png",0);
-    if(imgL.empty()){
-        cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+rectification+".png" << endl;
-        return 0;
-    }
+    imgs.first = imread(dir+"/cam0_image"+num.str()+"_"+appendix+".png",0);
+    if(imgs.first.empty())
+        cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+appendix+".png" << endl;
     if(st == stereo){
-        imgR = imread(dir+"/cam1_image"+num.str()+"_"+rectification+".png",0);
-        if(imgL.empty()){
-            cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+rectification+".png" << endl;
-            return 0;
-        }
+        imgs.second = imread(dir+"/cam1_image"+num.str()+"_"+appendix+".png",0);
+        if(imgs.second.empty())
+            cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+appendix+".png" << endl;
     }
 
-    return 1;
+    return imgs;
 }
 
 }

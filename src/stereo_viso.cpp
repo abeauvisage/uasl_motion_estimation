@@ -1,5 +1,7 @@
 #include "stereo_viso.h"
 
+#include "fileIO.h"
+
 #include <math.h>
 #include <cstdlib>
 #include <iostream>
@@ -10,8 +12,6 @@
 
 using namespace std;
 using namespace cv;
-
-extern ofstream logFile;
 
 namespace me{
 
@@ -34,7 +34,7 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& mat
     pts3D.clear();
 
     for (int i=0; i<nb_matches; i++) {
-        double d = matches[i].f1.x - matches[i].f2.x;
+        double d = (matches[i].f1.x-m_param.cu1) - (matches[i].f2.x-m_param.cu2);
         d = (d>0)?d:0.00001; // to avoid divison by 0;
         pts3D.push_back(Point3d((matches[i].f1.x-m_param.cu1)*m_param.baseline/d, (matches[i].f1.y-m_param.cv1)*m_param.baseline/d, m_param.f1*m_param.baseline/d));
     }
@@ -113,10 +113,10 @@ void StereoVisualOdometry::computeReprojErrors(const vector<StereoOdoMatches<Poi
             score += pow(residuals.at<double>(4*i+j),2);
 
         mean_score += score;
-        logFile << score << ",";
+        writeLogFile(to_string(score)+",");
 
     }
-    logFile << endl;
+    writeLogFile("\n");
     mean_score /= inliers_idx.size();
     cout << inliers_idx.size() << " mean reproj: " << mean_score << endl;
 }

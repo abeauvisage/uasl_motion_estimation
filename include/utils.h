@@ -12,6 +12,14 @@ namespace me{
 template <typename T>
 class Quat;
 
+template <typename T>
+class Euler;
+
+typedef Euler<double> Euld;
+typedef Euler<float> Eulf;
+typedef Quat<double> Quatd;
+typedef Quat<float> Quatf;
+
 template<typename T>
 class Euler {
 
