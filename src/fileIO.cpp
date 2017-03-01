@@ -137,17 +137,17 @@ int readImuData(ImuData& data){
 }
 
 int readGpsData(GpsData& data){
-    if(!gpsfile.is_open())
+    if(!gpsfile.is_open() || gpsfile.eof())
         return 0;
     char c;
     double stamp,lon,lat,alt;
-    int status;
-    gpsfile >> stamp >> c >> lon >> c >> lat >> c >> alt>> c >> status >> c;
+//    int status;
+    gpsfile >> stamp >> c >> lat >> c >> lon >> c >> alt>> c;
     data.stamp = stamp;
     data.lon = lon;
     data.lat = lat;
     data.alt = alt;
-    data.status = status;
+//    data.status = status;
     return 1;
 }
 
@@ -172,7 +172,7 @@ int getNextImuData(double stamp, ImuData& data){
 
 int getNextGpsData(double stamp, GpsData& data){
 
-    if(!gpsfile.is_open())
+    if(!gpsfile.is_open() || gpsfile.eof())
         return 0;
     do{
         readGpsData(data);

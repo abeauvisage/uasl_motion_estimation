@@ -87,6 +87,7 @@
 		<Unit filename="include/data_utils.h" />
 		<Unit filename="include/featureType.h" />
 		<Unit filename="include/fileIO.h" />
+		<Unit filename="include/gps_utils.h" />
 		<Unit filename="include/mono_viso.h" />
 		<Unit filename="include/stereo_viso.h" />
 		<Unit filename="include/utils.h" />

@@ -58,6 +58,8 @@ public:
 
     //operator
     void operator+=(Euler& e);
+    cv::Vec<T,3> operator*(const cv::Vec<T,3>& v);
+	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v);
 
     //access
     T roll() const {return m_roll;}

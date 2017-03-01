@@ -16,11 +16,14 @@ class Graph2D
         Graph2D(std::string name, const int nb=1, bool orth=true, cv::Size s=cv::Size(640,480));
         void refresh();
         void addValue(cv::Point2f& v, int idx=1);
+        void addValue(cv::Point2d& v, int idx=1){cv::Point2f pf(v.x,v.y);addValue(pf,idx);}
         void addValue(double v, int idx=1){cv::Point2f p(count,v);addValue(p,idx);count++;}
         void addLegend(std::string s, int idx=1){m_legend[idx-1]=s;}
         void clearGraph();
         void saveGraph(std::string filename){imwrite(filename,m_image);}
         float getLength(){return m_length;}
+        float getNbValues(int idx){return m_values[idx].size();}
+        float getNbCurves(){return m_nb_curves;}
         ~Graph2D();
 
     private:

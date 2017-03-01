@@ -167,6 +167,16 @@ void Euler<T>::operator+=(Euler& e){
 }
 
 template <typename T>
+cv::Vec<T,3> Euler<T>::operator*(const cv::Vec<T,3>& v){
+    return getR3() * v;
+}
+
+template <typename T>
+cv::Vec<T,4> Euler<T>::operator*(const cv::Vec<T,4>& v){
+    return getR4() * v;
+}
+
+template <typename T>
 std::string Euler<T>::getDegrees(){
 
     std::stringstream ss;
