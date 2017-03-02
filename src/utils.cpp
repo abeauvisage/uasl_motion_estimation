@@ -22,9 +22,9 @@ Matx<T,3,3> Euler<T>::getR3() const{
     T cr,sr,cp,sp,cy,sy;
     computeCosSin(cr,sr,cp,sp,cy,sy);
 
-    return typename Matx<T,3,3>::Matx(  cp*cy,          cp*sy,	        -sp,
-                                        sp*sr*cy-cr*sy, sr*sp*sy+cr*cy, cp*sr,
-                                        cr*sp*cy+sr*sy, cr*sp*sy-sr*cy, cp*cr);
+    return typename Matx<T,3,3>::Matx(  cp*cy,          -cp*sy,	        sp,
+                                        sp*sr*cy-cr*sy, -sr*sp*sy+cr*cy, -cp*sr,
+                                        -cr*sp*cy+sr*sy, cr*sp*sy-sr*cy, cp*cr);
 }
 
 template <typename T>
@@ -33,9 +33,9 @@ Matx<T,4,4> Euler<T>::getR4() const{
     T cr,sr,cp,sp,cy,sy;
     computeCosSin(cr,sr,cp,sp,cy,sy);
 
-    return typename Matx<T,4,4>::Matx(  cp*cy,          cp*sy,	        -sp,    0,
-                                        sp*sr*cy-cr*sy, sr*sp*sy+cr*cy, cp*sr,  0,
-                                        cr*sp*cy+sr*sy, cr*sp*sy-sr*cy, cp*cr,  0,
+    return typename Matx<T,4,4>::Matx(  cp*cy,          -cp*sy,	        sp,    0,
+                                        sp*sr*cy-cr*sy, -sr*sp*sy+cr*cy, -cp*sr,  0,
+                                        -cr*sp*cy+sr*sy, cr*sp*sy-sr*cy, cp*cr,  0,
                                         0,              0,              0,      1);
 }
 
@@ -56,8 +56,8 @@ Matx<T,3,3> Euler<T>::getdRdr() const{
     computeCosSin(cr,sr,cp,sp,cy,sy);
 
     return typename Matx<T,3,3>::Matx(   0,                  0,              0,
-                                        cr*sp*cy+sr*sy,     cr*sp*sy-sr*cy, cr*cp,
-                                        -sr*sp*cy+cr*sy,    -sr*sp-sr*cy,   -sr*cp);
+                                        cr*sp*cy-sr*sy,     -cr*sp*sy-sr*cy, -cr*cp,
+                                        sr*sp*cy+cr*sy,    -sr*sp*sy+cr*cy,   -sr*cp);
 
 }
 
@@ -67,9 +67,9 @@ Matx<T,3,3> Euler<T>::getdRdp() const{
     T cr,sr,cp,sp,cy,sy;
     computeCosSin(cr,sr,cp,sp,cy,sy);
 
-    return typename Matx<T,3,3>::Matx(  -cy*sp,     -sy*sp,     -cp,
-                                        sr*cp*cy,   sr*cp*sy,   -sr*sp,
-                                        cr*cp*cy,   cr*cp*sy,   -cr*sp);
+    return typename Matx<T,3,3>::Matx(  -cy*sp,     sy*sp,     cp,
+                                        sr*cp*cy,   -sr*cp*sy,   sr*sp,
+                                        -cr*cp*cy,   cr*cp*sy,   -cr*sp);
 
 }
 
@@ -79,9 +79,9 @@ Matx<T,3,3> Euler<T>::getdRdy() const{
     T cr,sr,cp,sp,cy,sy;
     computeCosSin(cr,sr,cp,sp,cy,sy);
 
-    return typename Matx<T,3,3>::Matx(  -cp*sy,             cp*cy,          0,
-                                        -sr*sp*sy-cr*cy,    sr*sp*cy,       0,
-                                        -cr*sp*sy+sr*cy,    cr*sp*cy+sr*sy, 0);
+    return typename Matx<T,3,3>::Matx(  -cp*sy,             -cp*cy,          0,
+                                        -sr*sp*sy+cr*cy,    -sr*sp*cy-cr*sy,       0,
+                                        cr*sp*sy+sr*cy,    cr*sp*cy+sr*sy, 0);
 
 }
 

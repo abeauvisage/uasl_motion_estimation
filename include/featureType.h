@@ -6,12 +6,35 @@
 #include <cstdint>
 #include <iostream>
 #include <cstring>
+#include <assert.h>
+
+#include <opencv2/core.hpp>
 
 #define DESCRIPTOR_SIZE 32
 
 using namespace std;
 
 namespace me{
+
+typedef cv::Matx21d pt2D;
+typedef cv::Matx31d pt3D;
+typedef cv::Matx31d ptH2D;
+typedef cv::Matx41d ptH3D;
+
+inline void normalize(ptH2D& pt){
+    pt(0)/=pt(2);
+    pt(1)/=pt(2);
+    pt(2)/=pt(2);
+    assert(pt(2) == 1);
+}
+
+inline void normalize(ptH3D& pt){
+    pt(0)/=pt(3);
+    pt(1)/=pt(3);
+    pt(2)/=pt(3);
+    pt(3)/=pt(3);
+    assert(pt(3) == 1);
+}
 
 template <typename T>
 void printVector(T * data, size_t s, size_t width = 0)
@@ -170,16 +193,19 @@ struct StereoMatch{
 };
 
 template <typename T>
-struct StereoOdoMatches{
-    T f1;
-    T f2;
+struct StereoOdoMatches : public StereoMatch<T>{
     T f3;
     T f4;
-    float m_score;
     StereoOdoMatches(){};
-	StereoOdoMatches(const T& feat1, const T& feat2, const T& feat3, const T& feat4, float score=-1):f1(feat1),f2(feat2),f3(feat3),f4(feat4), m_score(score){}
-	StereoOdoMatches(const StereoOdoMatches& som):f1(som.f1),f2(som.f2),f3(som.f3),f4(som.f4), m_score(som.m_score){}
+	StereoOdoMatches(const T& feat1, const T& feat2, const T& feat3, const T& feat4, float score=-1):StereoMatch<T>(feat1,feat2,score),f3(feat3),f4(feat4){}
+	StereoOdoMatches(const StereoOdoMatches& som):StereoMatch<T>(som.f1,som.f2,som.m_score),f3(som.f3),f4(som.f4){}
 };
+
+typedef StereoMatch<cv::Point2f> StereoMatchf;
+typedef StereoMatch<cv::Point2d> StereoMatchd;
+typedef StereoOdoMatches<cv::Point2f> StereoOdoMatchesf;
+typedef StereoOdoMatches<cv::Point2d> StereoOdoMatchesd;
+
 
 }
 

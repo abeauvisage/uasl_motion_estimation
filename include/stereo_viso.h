@@ -51,32 +51,37 @@ public:
     StereoVisualOdometry(parameters param=parameters());
     ~StereoVisualOdometry(){};
 
-    bool process(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, cv::Mat x_initial = cv::Mat::zeros(6,1,CV_64F));
+    bool process(const std::vector<StereoOdoMatchesf>& matches, cv::Mat init = cv::Mat::zeros(6,1,CV_64F));
     virtual cv::Mat getMotion();
 
-    std::vector<cv::Point3d> getPts3D(){return pts3D;}
-    std::vector<int> getInliers_idx(){return inliers_idx;}
-    void computeReprojErrors(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int>& inliers);
+    std::vector<ptH3D> getPts3D(){return m_pts3D;}
+    std::vector<int> getInliers_idx(){return m_inliers_idx;}
+    std::vector<std::pair<ptH2D,ptH2D>> getPredictions(){return reproject(m_state,m_inliers_idx);}
+
 
 private:
 
-    std::vector<cv::Point3d> pts3D;
-    std::vector<int> inliers_idx; // inliers indexes
+    std::vector<ptH3D> m_pts3D;
+    std::vector<float> m_disparities;
+    std::vector<int> m_inliers_idx; // inliers indexes
 
     parameters m_param;
 
-    cv::Mat J;
-    cv::Mat x;
-    cv::Mat observations;
-    cv::Mat predictions;
-    cv::Mat residuals;
+    cv::Mat m_J;
+    cv::Matx61d m_state;
+    std::vector<std::pair<ptH2D,ptH2D>> m_obs;
+    cv::Mat m_res;
 
-
-    bool optimize(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);
-    void projectionUpdate(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, const std::vector<int32_t>& selection, bool weight);
-    cv::Mat applyFunction(const std::vector<StereoOdoMatches<cv::Point2f>>& matches, cv::Mat& x_, const std::vector<int32_t>& selection);
-    std::vector<int> computeInliers(const std::vector<StereoOdoMatches<cv::Point2f>>& matches);
-    std::vector<int> randomIndexes(int nb_samples, int nb_tot);
+    void project3D(const std::vector<StereoMatchf>& features);
+    void project3D(const std::vector<StereoOdoMatchesf>& features);
+    bool optimize(const std::vector<int>& selection, bool weight);
+//    void projectionUpdate(const std::vector<StereoOdoMatchesf>& matches, const std::vector<int>& selection, bool weight);
+    void computeReprojErrors(const std::vector<int>& inliers);
+    std::vector<std::pair<ptH2D,ptH2D>> reproject(cv::Matx61d& state, const std::vector<int>& selection);
+    void updateObservations(const std::vector<StereoOdoMatchesf>& matches);
+    void updateJacobian(const vector<int>& selection);
+    std::vector<int> computeInliers();
+    std::vector<int> selectRandomIndexes(int nb_samples, int nb_tot);
 };
 
 }
