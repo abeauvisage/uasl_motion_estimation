@@ -5,13 +5,13 @@ using namespace std;
 
 namespace me{
 
-Graph2D::Graph2D(string name, const int nb, bool orth, cv::Size s): m_name(name), m_nb_curves(nb), m_orthogonal(orth),width(s.width),height(s.height)
+Graph2D::Graph2D(string name, const int nb, bool orth, Type t, cv::Size s): m_name(name), m_nb_curves(nb), m_orthogonal(orth),width(s.width),height(s.height), m_type(t)
 {
     m_min_x=0.0;
     m_min_y=0.0;
     m_max_x=0.0;
     m_max_y=0.0;
-    m_length=0.0;
+    m_length = vector<float>(nb,0.0);
 
     RNG rng(0xFFFFFFFF);
 
@@ -53,9 +53,10 @@ void Graph2D::refresh(){
         float pitch = trunc(m_values.size()/m_max_pts)+1;
         for(int i=0;i< m_values[k].size();i+=pitch){
             Point2f p(round(m_margin+(m_values[k][i].x-m_min_x)*(width-m_margin-m_margin)/(m_max_x-m_min_x)),round(height-m_margin-(m_values[k][i].y-m_min_y)*(height-m_margin-m_margin)/(m_max_y-m_min_y)));
-            circle(m_image, p ,1, /*CV_RGB(255,255/m_nb_curves*k,0)*/m_colours[k], 2);
+            if(m_type == DOT)
+                circle(m_image, p ,1,m_colours[k], 2);
             if(i>0)
-                line(m_image,prev,p,/*Scalar(0,255/m_nb_curves*k,255)*/m_colours[k]);
+                line(m_image,prev,p,m_colours[k],m_type+1);
             prev=p;
         }
     }
@@ -69,8 +70,8 @@ void Graph2D::addValue(cv::Point2f& v, int idx){
     if(idx < 1)
         idx =1;
 
-    if(idx ==1 && m_values[0].size()>0)
-        m_length += (float) sqrt(pow(v.x-m_values[0][m_values[0].size()-1].x,2)+pow(v.y-m_values[0][m_values[0].size()-1].y,2));
+    if(m_values[idx-1].size()>0)
+        m_length[idx-1] += (float) sqrt(pow(v.x-m_values[idx-1][m_values[idx-1].size()-1].x,2)+pow(v.y-m_values[idx-1][m_values[idx-1].size()-1].y,2));
     m_values[idx-1].push_back(v);
 
     if(v.x < m_min_x)
@@ -115,10 +116,10 @@ void Graph2D::plot_axis(cv::Mat& bg, const int dx, const int dy){
     bg.setTo(Scalar(255,255,255));
     line(bg,Point(m_margin+dx,m_margin),Point(m_margin+dx,height-m_margin),Scalar(0,0,0));
     line(bg,Point(width-m_margin,height-m_margin-dy),Point(m_margin,height-m_margin-dy),Scalar(0,0,0));
-    putText(bg,to_string(m_min_x),Point(5,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
-    putText(bg,to_string(m_max_x),Point(width-m_margin,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
-    putText(bg,to_string(m_max_y),Point(m_margin/2+dx,m_margin), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
-    putText(bg,to_string(m_min_y),Point(m_margin/2+dx,height-m_margin/2), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
+    putText(bg,to_string(m_min_x).substr(0,to_string(m_min_x).rfind(".")+3),Point(5,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
+    putText(bg,to_string(m_max_x).substr(0,to_string(m_max_x).rfind(".")+3),Point(width-m_margin+5,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
+    putText(bg,to_string(m_max_y).substr(0,to_string(m_max_y).rfind(".")+3),Point(m_margin/2+dx,m_margin-5), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
+    putText(bg,to_string(m_min_y).substr(0,to_string(m_min_y).rfind(".")+3),Point(m_margin/2+dx,height-m_margin/2), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
 }
 
 Graph2D::~Graph2D(){

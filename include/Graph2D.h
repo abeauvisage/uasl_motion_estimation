@@ -12,8 +12,14 @@ namespace me{
 
 class Graph2D
 {
+
+
+
     public:
-        Graph2D(std::string name, const int nb=1, bool orth=true, cv::Size s=cv::Size(640,480));
+
+        enum Type{DOT,LINE};
+
+        Graph2D(std::string name, const int nb=1, bool orth=true, Type t=DOT, cv::Size s=cv::Size(640,480));
         void refresh();
         void addValue(cv::Point2f& v, int idx=1);
         void addValue(cv::Point2d& v, int idx=1){cv::Point2f pf(v.x,v.y);addValue(pf,idx);}
@@ -21,8 +27,8 @@ class Graph2D
         void addLegend(std::string s, int idx=1){m_legend[idx-1]=s;}
         void clearGraph();
         void saveGraph(std::string filename){imwrite(filename,m_image);}
-        float getLength(){return m_length;}
-        float getNbValues(int idx){return m_values[idx].size();}
+        float getLength(int idx=1){return m_length[idx-1];}
+        float getNbValues(int idx){return m_values[idx-1].size();}
         float getNbCurves(){return m_nb_curves;}
         ~Graph2D();
 
@@ -36,8 +42,8 @@ class Graph2D
     std::vector<std::vector<cv::Point2f>> m_values;
     std::vector<cv::Scalar> m_colours;
     std::vector<std::string> m_legend;
-//    std::vector<float> m_length;
-    int m_margin = 90;
+    std::vector<float> m_length;
+    int m_margin = 60;
     float m_max_pts = 50;
     int count=0;
     std::string m_name;
@@ -45,8 +51,9 @@ class Graph2D
     float m_min_y;
     float m_max_x;
     float m_max_y;
-    float m_length;
+//    float m_length;
     bool m_orthogonal;
+    Type m_type;
 
     // functions
     static cv::Scalar randomColor(cv::RNG& rng){int icolor=(unsigned)rng;return cv::Scalar(icolor&255,(icolor>>8)&255,(icolor>>16)&255);}
