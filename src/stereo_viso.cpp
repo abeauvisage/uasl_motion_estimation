@@ -46,7 +46,7 @@ void StereoVisualOdometry::project3D(const vector<StereoOdoMatchesf>& features){
 bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv::Mat init) {
 
     //if init not correct, initialize every state parameter to 0
-    if (init.rows!=6 || init.cols!=1 || init.type() != CV_64F)
+//    if (init.rows!=6 || init.cols!=1 || init.type() != CV_64F)
         init = Mat::zeros(6,1,CV_64F);
 
     // need at least 6 matches
@@ -56,12 +56,10 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
     m_state = init;
     m_inliers_idx.clear();
 
-
     project3D(matches);
     updateObservations(matches);
 
     /**** selecting matches ****/
-
     // if ransac, selecting 3 random matches until nb iterations has been reached
     if(m_param.ransac)
         for (int i=0;i<m_param.n_ransac;i++) {
@@ -71,10 +69,13 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
             if((matches[selection[0]].f3.x*(matches[selection[1]].f3.y-matches[selection[2]].f3.y)+matches[selection[1]].f3.x*(matches[selection[2]].f3.y-matches[selection[0]].f3.y)+matches[selection[2]].f3.x*(matches[selection[0]].f3.y-matches[selection[1]].f3.y))/2 > 1000){
                 m_state = init;
                 if (optimize(selection,false)) { // if optimization succeeded and more inliers obtained, inliers are saved
+                    cout << "RANSAC worked" << endl;
                     vector<int> inliers_tmp = computeInliers();
                     if (inliers_tmp.size()>m_inliers_idx.size())
                         m_inliers_idx = inliers_tmp;
                 }
+                else
+                    cout << "RANSAC failed" << endl;
             }
         }
     else{ // if not ransac, selecting every matches
@@ -144,20 +145,23 @@ std::vector<std::pair<ptH2D,ptH2D>> StereoVisualOdometry::reproject(cv::Matx61d&
 
     Euld r(state(0),state(1),state(2));
 
-    /*** R matrix ***/
+    /*** Tr matrix ***/
 
     Matx44d Tr = r.getR4();
     Tr(0,3) = state(3);
     Tr(1,3) = state(4);
     Tr(2,3) = state(5);
 
+    //computing projection matrices
     Matx34d P1(m_param.f1,0,m_param.cu1,0,0,m_param.f1,m_param.cv1,0,0,0,1,0);
     Matx34d P2(m_param.f2,0,m_param.cu2,-m_param.baseline*m_param.f2,0,m_param.f2,m_param.cv2,0,0,0,1,0);
 
+
     for (unsigned int i=0; i<selection.size(); i++) {
         ptH3D pt = Tr*m_pts3D[selection[i]];
-        ptH2D lpt=P1*pt,rpt=P2*pt;
-        normalize(lpt);normalize(rpt);
+//        ptH2D lpt=P1*pt,rpt=P2*pt;
+        ptH2D lpt(m_param.f1*pt(0)/pt(2)+m_param.cu1,m_param.f1*pt(1)/pt(2)+m_param.cv1),rpt(m_param.f2*(pt(0)-m_param.baseline)/pt(2)+m_param.cu2,m_param.f2*pt(1)/pt(2)+m_param.cv2);
+//        normalize(lpt);normalize(rpt);
         reproj_pts.push_back(pair<ptH2D,ptH2D>(lpt,rpt));
     }
 
@@ -191,7 +195,7 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
     if (selection.size()<3) // if less than 3 points triangulation impossible
         return false;
 
-    m_param.method=LM;
+//    m_param.method=LM;
     int k=0;
     int result=0;
     double lambda=1e-2;
@@ -209,9 +213,6 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
 
         updateJacobian(selection);
 
-//        cout << m_J << endl;
-//        cout << residuals << endl;
-
         // init
         cv::Mat A = m_J * m_J.t();
         cv::Mat B(6,1,CV_64F);
@@ -226,21 +227,24 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
             A += lambda * Mat::diag(A.diag());
 
         if(solve(A,B,X,DECOMP_QR)){
-        cout << "Solution " << X << endl;
+//        cout << "Solution " << X.t() << endl;
             if(m_param.method == GN){   // Gauss-Newton
                 m_state += (Matx61d)(X);
-                cout << "new state " << m_state << endl;
+                cout << "GN" << endl;
+//                cout << "new state " << m_state.t() << endl;
                 double min, max;
                 cv::minMaxLoc(X,&min,&max);
-                if(max < m_param.eps)
+                if(max < m_param.eps){
                     result = 1;
+                    cout << max << endl;
+                }
             }
             else{
                                         // Levenberg-Marquart
-                cout << "not GN" << endl;
+                cout << "LM" << endl;
                 Matx61d x_test = m_state + (Matx61d)(X);
-                cout << m_state.t() << endl;
-                cout << x_test.t() << endl;
+                //cout << m_state.t() << endl;
+                //cout << x_test.t() << endl;
 
                 Mat r(4*selection.size(),1,CV_64F);
                 vector<pair<ptH2D,ptH2D>> pred_ = reproject(x_test,selection);
@@ -250,9 +254,9 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
                     r.at<double>(i*4+2) = m_obs[selection[i]].second(0)-pred_[i].second(0);
                     r.at<double>(i*4+3) = m_obs[selection[i]].second(1)-pred_[i].second(1);
                 }
-                cout << (residuals.t()*residuals - r.t()*r) << endl;
+                //cout << (residuals.t()*residuals - r.t()*r) << endl;
                 Mat rho = (residuals.t()*residuals - r.t()*r)/(X.t()*(lambda*X+B));
-                cout << fabs(rho.at<double>(0)) << " thresh " << m_param.e4 << endl;
+                //cout << fabs(rho.at<double>(0)) << " thresh " << m_param.e4 << endl;
                 if(fabs(rho.at<double>(0)) > m_param.e4){ //threshold
                     lambda = max(lambda/9,1.e-7);
                     m_state = x_test;
@@ -276,7 +280,7 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
     }while(k++ < m_param.max_iter && result==0);
 
     cout << k << "/" << m_param.max_iter << endl;
-    cout << "Final Solution " << m_state.t() << endl;
+    //cout << "Final Solution " << m_state.t() << endl;
     if(result == -1 || k== m_param.max_iter)
         return false;
     else

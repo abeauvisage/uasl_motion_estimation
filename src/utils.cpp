@@ -23,8 +23,8 @@ Matx<T,3,3> Euler<T>::getR3() const{
     computeCosSin(cr,sr,cp,sp,cy,sy);
 
     return typename Matx<T,3,3>::Matx(  cp*cy,          -cp*sy,	        sp,
-                                        sp*sr*cy-cr*sy, -sr*sp*sy+cr*cy, -cp*sr,
-                                        -cr*sp*cy+sr*sy, cr*sp*sy-sr*cy, cp*cr);
+                                        sp*sr*cy+cr*sy, -sr*sp*sy+cr*cy, -cp*sr,
+                                        -cr*sp*cy+sr*sy, cr*sp*sy+sr*cy, cp*cr);
 }
 
 template <typename T>
@@ -34,8 +34,8 @@ Matx<T,4,4> Euler<T>::getR4() const{
     computeCosSin(cr,sr,cp,sp,cy,sy);
 
     return typename Matx<T,4,4>::Matx(  cp*cy,          -cp*sy,	        sp,    0,
-                                        sp*sr*cy-cr*sy, -sr*sp*sy+cr*cy, -cp*sr,  0,
-                                        -cr*sp*cy+sr*sy, cr*sp*sy-sr*cy, cp*cr,  0,
+                                        sp*sr*cy+cr*sy, -sr*sp*sy+cr*cy, -cp*sr,  0,
+                                        -cr*sp*cy+sr*sy, cr*sp*sy+sr*cy, cp*cr,  0,
                                         0,              0,              0,      1);
 }
 
