@@ -58,7 +58,7 @@ int loadYML(string filename){
         calib["baseline"] >> param_stereo.baseline;
         calib["ransac"] >> param_stereo.ransac;
         calib["threshold"] >> param_stereo.inlier_threshold;
-        if(calib["focal"] == "GN")
+        if(calib["method"] == "GN")
             param_stereo.method = StereoVisualOdometry::GN;
         else
             param_stereo.method = StereoVisualOdometry::LM;

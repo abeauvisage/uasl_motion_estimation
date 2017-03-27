@@ -56,7 +56,10 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& mat
                 }
             }
         }
-//        drawStereoOdomatches
+        cout << "[ME] inliers: " << inliers_idx.size() << endl;
+//        for(int i =0;i<inliers_idx.size();i++){
+//            cout << matches[inliers_idx[i]].f1  << matches[inliers_idx[i]].f2  << matches[inliers_idx[i]].f3  << matches[inliers_idx[i]].f4  << endl;
+//        }
 
     }else{
         std::vector<int> selection(nb_matches);
@@ -70,6 +73,7 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& mat
     x = x_initial;
 
     /** final optimization **/
+    cout << "final optim" << endl;
 
     if (inliers_idx.size()>=6) // check that more than 6 inliers have been obtained
         if (optimize(matches,inliers_idx,false)) // optimize using inliers
@@ -315,9 +319,11 @@ bool StereoVisualOdometry::optimize(const std::vector<StereoOdoMatches<Point2f>>
 
             if(m_param.method == GN){   // Gauss-Newton
                 x += X;
+                cout << "X " << X.t() << endl;
                 double min, max;
                 cv::minMaxLoc(X,&min,&max);
-                if(max < m_param.eps)
+//                cout << max << endl;
+                if(max < m_param.eps && !isinf(max))
                     result = 1;
             }
             else{                       // Levenberg-Marquart
@@ -360,7 +366,8 @@ bool StereoVisualOdometry::optimize(const std::vector<StereoOdoMatches<Point2f>>
 
     }while(k++ < m_param.max_iter && result==0);
 
-    if(result == -1 || k== m_param.max_iter)
+    cout << k << "/" << result << endl;
+    if(result == -1 || k > m_param.max_iter)
         return false;
     else
         return true;
