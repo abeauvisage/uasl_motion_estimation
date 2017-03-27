@@ -17,16 +17,13 @@ using namespace cv;
 
 namespace me{
 
-StereoVisualOdometry::StereoVisualOdometry (parameters param) : VisualOdometry(), m_param(param) {
-    srand(0);
-}
-
 void StereoVisualOdometry::project3D(const vector<StereoMatchf>& features){
     m_pts3D.clear();
     m_disparities.clear();
 
     for(unsigned int i=0;i<features.size();i++){
-        ptH3D pt3D((features[i].f1.x-m_param.cu1)*m_param.baseline,(features[i].f1.y-m_param.cv1)*m_param.baseline,m_param.f1*m_param.baseline,(features[i].f1.x-m_param.cu1) - (features[i].f2.x-m_param.cu2));
+        double d = (features[i].f1.x-m_param.cu1) - (features[i].f2.x-m_param.cu2);
+        ptH3D pt3D((features[i].f1.x-m_param.cu1)*m_param.baseline,(features[i].f1.y-m_param.cv1)*m_param.baseline,m_param.f1*m_param.baseline, d > 0 ? d : 0.00001);
         normalize(pt3D);
         m_pts3D.push_back(pt3D);
     }
@@ -37,7 +34,8 @@ void StereoVisualOdometry::project3D(const vector<StereoOdoMatchesf>& features){
     m_disparities.clear();
 
     for(unsigned int i=0;i<features.size();i++){
-        ptH3D pt3D((features[i].f1.x-m_param.cu1)*m_param.baseline,(features[i].f1.y-m_param.cv1)*m_param.baseline,m_param.f1*m_param.baseline,(features[i].f1.x-m_param.cu1) - (features[i].f2.x-m_param.cu2));
+        double d = (features[i].f1.x-m_param.cu1) - (features[i].f2.x-m_param.cu2);
+        ptH3D pt3D((features[i].f1.x-m_param.cu1)*m_param.baseline,(features[i].f1.y-m_param.cv1)*m_param.baseline,m_param.f1*m_param.baseline, d > 0 ? d : 0.00001);
         normalize(pt3D);
         m_pts3D.push_back(pt3D);
     }
@@ -56,6 +54,11 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
     m_state = init;
     m_inliers_idx.clear();
 
+    cout << "cu " << m_param.cu1 << endl;
+    cout << "cv " << m_param.cv1 << endl;
+    cout << "cu " << m_param.cu2 << endl;
+    cout << "cv " << m_param.cv2 << endl;
+
     project3D(matches);
     updateObservations(matches);
 
@@ -69,13 +72,10 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
             if((matches[selection[0]].f3.x*(matches[selection[1]].f3.y-matches[selection[2]].f3.y)+matches[selection[1]].f3.x*(matches[selection[2]].f3.y-matches[selection[0]].f3.y)+matches[selection[2]].f3.x*(matches[selection[0]].f3.y-matches[selection[1]].f3.y))/2 > 1000){
                 m_state = init;
                 if (optimize(selection,false)) { // if optimization succeeded and more inliers obtained, inliers are saved
-                    cout << "RANSAC worked" << endl;
                     vector<int> inliers_tmp = computeInliers();
                     if (inliers_tmp.size()>m_inliers_idx.size())
                         m_inliers_idx = inliers_tmp;
                 }
-                else
-                    cout << "RANSAC failed" << endl;
             }
         }
     else{ // if not ransac, selecting every matches
@@ -88,10 +88,10 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
 
     /** final optimization **/
 
+    cout << "final optimization" << endl;
+
     if (m_inliers_idx.size()>=6){ // check that more than 6 inliers have been obtained
         if (optimize(m_inliers_idx,false)) // optimize using inliers
-//        m_inliers_idx = computeInliers();
-//        cout << m_inliers_idx.size() << "nb inliers" << endl;
             return true;
         else
             return false;
@@ -132,11 +132,8 @@ void StereoVisualOdometry::computeReprojErrors(const std::vector<int>& inliers) 
     for (unsigned int i=0; i<inliers.size(); i++){
         double score = pow(pred[i].first(0)-m_obs[inliers[i]].first(0),2)+pow(pred[i].first(1)-m_obs[inliers[i]].first(1),2)+pow(pred[i].second(0)-m_obs[inliers[i]].second(0),2)+pow(pred[i].second(1)-m_obs[inliers[i]].second(1),2);
         mean_score += score;
-        writeLogFile(to_string(score)+",");
     }
-    writeLogFile("\n");
     mean_score /= inliers.size();
-    cout << " mean reproj: " << mean_score << endl;
 }
 
 std::vector<std::pair<ptH2D,ptH2D>> StereoVisualOdometry::reproject(cv::Matx61d& state,  const vector<int>& selection){
@@ -159,9 +156,8 @@ std::vector<std::pair<ptH2D,ptH2D>> StereoVisualOdometry::reproject(cv::Matx61d&
 
     for (unsigned int i=0; i<selection.size(); i++) {
         ptH3D pt = Tr*m_pts3D[selection[i]];
-//        ptH2D lpt=P1*pt,rpt=P2*pt;
-        ptH2D lpt(m_param.f1*pt(0)/pt(2)+m_param.cu1,m_param.f1*pt(1)/pt(2)+m_param.cv1),rpt(m_param.f2*(pt(0)-m_param.baseline)/pt(2)+m_param.cu2,m_param.f2*pt(1)/pt(2)+m_param.cv2);
-//        normalize(lpt);normalize(rpt);
+        ptH2D lpt=P1*pt,rpt=P2*pt;
+        normalize(lpt);normalize(rpt);
         reproj_pts.push_back(pair<ptH2D,ptH2D>(lpt,rpt));
     }
 
@@ -195,13 +191,12 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
     if (selection.size()<3) // if less than 3 points triangulation impossible
         return false;
 
-//    m_param.method=LM;
     int k=0;
     int result=0;
     double lambda=1e-2;
 
     do {
-
+        // computing residuals (error between predicted and observed features)
         vector<pair<ptH2D,ptH2D>> pred = reproject(m_state,selection);
         Mat residuals(4*selection.size(),1,CV_64F);
         for(unsigned int i=0;i<selection.size();i++){
@@ -211,6 +206,7 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
             residuals.at<double>(i*4+3) = m_obs[selection[i]].second(1)-pred[i].second(1);
         }
 
+        //computing the jacobian
         updateJacobian(selection);
 
         // init
@@ -226,25 +222,20 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
         if(m_param.method == LM)
             A += lambda * Mat::diag(A.diag());
 
+        //solve A X = B (X = inv(J^2) * J * residual, for GN with step = 1)
         if(solve(A,B,X,DECOMP_QR)){
-//        cout << "Solution " << X.t() << endl;
-            if(m_param.method == GN){   // Gauss-Newton
+            if(m_param.method == GN){
+                // Gauss-Newton
                 m_state += (Matx61d)(X);
-                cout << "GN" << endl;
-//                cout << "new state " << m_state.t() << endl;
                 double min, max;
                 cv::minMaxLoc(X,&min,&max);
                 if(max < m_param.eps){
                     result = 1;
-                    cout << max << endl;
                 }
             }
             else{
-                                        // Levenberg-Marquart
-                cout << "LM" << endl;
+                // Levenberg-Marquart
                 Matx61d x_test = m_state + (Matx61d)(X);
-                //cout << m_state.t() << endl;
-                //cout << x_test.t() << endl;
 
                 Mat r(4*selection.size(),1,CV_64F);
                 vector<pair<ptH2D,ptH2D>> pred_ = reproject(x_test,selection);
@@ -254,9 +245,7 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
                     r.at<double>(i*4+2) = m_obs[selection[i]].second(0)-pred_[i].second(0);
                     r.at<double>(i*4+3) = m_obs[selection[i]].second(1)-pred_[i].second(1);
                 }
-                //cout << (residuals.t()*residuals - r.t()*r) << endl;
                 Mat rho = (residuals.t()*residuals - r.t()*r)/(X.t()*(lambda*X+B));
-                //cout << fabs(rho.at<double>(0)) << " thresh " << m_param.e4 << endl;
                 if(fabs(rho.at<double>(0)) > m_param.e4){ //threshold
                     lambda = max(lambda/9,1.e-7);
                     m_state = x_test;
@@ -272,16 +261,11 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
                     result = 1;
 
             }
-        }else{
+        }else
             result = -1;
-            cout << "GN Failed" << endl;
-        }
-
     }while(k++ < m_param.max_iter && result==0);
 
-    cout << k << "/" << m_param.max_iter << endl;
-    //cout << "Final Solution " << m_state.t() << endl;
-    if(result == -1 || k== m_param.max_iter)
+    if(result == -1 || k== m_param.max_iter) // if failed or reached max iterations, return false (didn't work)
         return false;
     else
         return true;
@@ -316,7 +300,7 @@ void StereoVisualOdometry::updateJacobian(const vector<int>& selection){
         pt3D pt_(pt(0),pt(1),pt(2));
         pt3D dpt_next;
 
-        for(unsigned j=0;j<6;j++){
+        for(unsigned j=0;j<6;j++){ // derivation depending on element of the state (euler angles and translation)
             switch(j){
                 case 0: {dpt_next = dRdx*pt_;break;}
                 case 1: {dpt_next = dRdy*pt_;break;}
@@ -329,13 +313,13 @@ void StereoVisualOdometry::updateJacobian(const vector<int>& selection){
             m_J.at<double>(j,i*4+1) = m_param.f1*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
             m_J.at<double>(j,i*4+2) = m_param.f2*(dpt_next(0)*pt_next(2)-(pt_next(0)-m_param.baseline)*dpt_next(2))/(pt_next(2)*pt_next(2));
             m_J.at<double>(j,i*4+3) = m_param.f2*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
-        }
+       }
     }
 }
 
 cv::Mat StereoVisualOdometry::getMotion(){
 
-    Euld r(m_state(0),m_state(0),m_state(0));
+    Euld r(m_state(0),m_state(1),m_state(2));
 
     Matx44d Rt = r.getR4();
     Rt(0,3) = m_state(3);

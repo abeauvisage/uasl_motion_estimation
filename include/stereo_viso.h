@@ -48,7 +48,7 @@ public:
     };
 
 
-    StereoVisualOdometry(parameters param=parameters());
+    StereoVisualOdometry(parameters param=parameters()):m_param(param){};
     ~StereoVisualOdometry(){};
 
     bool process(const std::vector<StereoOdoMatchesf>& matches, cv::Mat init = cv::Mat::zeros(6,1,CV_64F));
