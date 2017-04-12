@@ -53,7 +53,6 @@ bool MonoVisualOdometry::process(const std::vector<StereoMatch<cv::Point2f>>& ma
             return false;
         }
         else{
-//            Mat rot_T = -R * T;
             double* Rt_ptr = m_Rt.ptr<double>();
             double* R_ptr = R.ptr<double>();
             double* T_ptr = T.ptr<double>();

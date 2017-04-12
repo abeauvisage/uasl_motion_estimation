@@ -44,7 +44,7 @@ void StereoVisualOdometry::project3D(const vector<StereoOdoMatchesf>& features){
 bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv::Mat init) {
 
     //if init not correct, initialize every state parameter to 0
-//    if (init.rows!=6 || init.cols!=1 || init.type() != CV_64F)
+    if (init.rows!=6 || init.cols!=1 || init.type() != CV_64F)
         init = Mat::zeros(6,1,CV_64F);
 
     // need at least 6 matches
@@ -54,11 +54,6 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
     m_state = init;
     m_inliers_idx.clear();
 
-    cout << "cu " << m_param.cu1 << endl;
-    cout << "cv " << m_param.cv1 << endl;
-    cout << "cu " << m_param.cu2 << endl;
-    cout << "cv " << m_param.cv2 << endl;
-
     project3D(matches);
     updateObservations(matches);
 
@@ -67,7 +62,7 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
     if(m_param.ransac)
         for (int i=0;i<m_param.n_ransac;i++) {
             vector<int> selection;
-            selection = selectRandomIndexes(3,matches.size());
+            selection = selectRandomIndices(3,matches.size());
             //selecting random matches scattered in the image
             if((matches[selection[0]].f3.x*(matches[selection[1]].f3.y-matches[selection[2]].f3.y)+matches[selection[1]].f3.x*(matches[selection[2]].f3.y-matches[selection[0]].f3.y)+matches[selection[2]].f3.x*(matches[selection[0]].f3.y-matches[selection[1]].f3.y))/2 > 1000){
                 m_state = init;
@@ -88,8 +83,6 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
 
     /** final optimization **/
 
-    cout << "final optimization" << endl;
-
     if (m_inliers_idx.size()>=6){ // check that more than 6 inliers have been obtained
         if (optimize(m_inliers_idx,false)) // optimize using inliers
             return true;
@@ -104,7 +97,7 @@ vector<int> StereoVisualOdometry::computeInliers() {
 
     //selecting all matches
     vector<int> selection;
-    for (int i=0;i<m_obs.size();i++)
+    for (unsigned int i=0;i<m_obs.size();i++)
         selection.push_back(i);
 
     // predictions
@@ -113,27 +106,13 @@ vector<int> StereoVisualOdometry::computeInliers() {
 
     //compute residual and get inlier indexes
     vector<int> inliers_idx;
-    for (int i=0; i<m_obs.size(); i++){
+    for (unsigned int i=0; i<m_obs.size(); i++){
         double score = pow(pred[i].first(0)-m_obs[i].first(0),2)+pow(pred[i].first(1)-m_obs[i].first(1),2)+pow(pred[i].second(0)-m_obs[i].second(0),2)+pow(pred[i].second(1)-m_obs[i].second(1),2);
         if (score < pow(m_param.inlier_threshold,2))
             inliers_idx.push_back(i);
     }
 
     return inliers_idx;
-}
-
-
-void StereoVisualOdometry::computeReprojErrors(const std::vector<int>& inliers) {
-
-    vector<pair<ptH2D,ptH2D>> pred = reproject(m_state,inliers);
-    assert(pred.size() == inliers.size());
-
-    double mean_score = 0;
-    for (unsigned int i=0; i<inliers.size(); i++){
-        double score = pow(pred[i].first(0)-m_obs[inliers[i]].first(0),2)+pow(pred[i].first(1)-m_obs[inliers[i]].first(1),2)+pow(pred[i].second(0)-m_obs[inliers[i]].second(0),2)+pow(pred[i].second(1)-m_obs[inliers[i]].second(1),2);
-        mean_score += score;
-    }
-    mean_score /= inliers.size();
 }
 
 std::vector<std::pair<ptH2D,ptH2D>> StereoVisualOdometry::reproject(cv::Matx61d& state,  const vector<int>& selection){
@@ -164,7 +143,7 @@ std::vector<std::pair<ptH2D,ptH2D>> StereoVisualOdometry::reproject(cv::Matx61d&
     return reproj_pts;
 }
 
-vector<int> StereoVisualOdometry::selectRandomIndexes(int nb_samples, int nb_tot) {
+vector<int> StereoVisualOdometry::selectRandomIndices(int nb_samples, int nb_tot) {
 
     assert(nb_samples < nb_tot);
     vector<int> samples_idx;
@@ -253,7 +232,7 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
                 else
                     lambda = min(lambda*11,1.e7);
 
-                double min, max, m1,m2,m3;
+                double min, max, m1,m2;
                 cv::minMaxLoc(X,&min,&max);
                 cv::minMaxLoc(B,&min,&m1);
                 cv::minMaxLoc((Mat)x_test/(Mat)m_state,&min,&m2);

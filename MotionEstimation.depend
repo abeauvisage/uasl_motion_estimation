@@ -1,44 +1,17 @@
 # depslib dependency file v1.0
-1490620217 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/Graph2D.cpp
-	"Graph2D.h"
+1491992591 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/fileIO.cpp
+	"fileIO.h"
+	<iostream>
+	<iomanip>
 
-1490620216 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/Graph2D.h
-	<vector>
+1491992493 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/fileIO.h
 	<string>
-	<sstream>
-	"opencv2/core.hpp"
-	"opencv2/highgui.hpp"
-	"opencv2/imgproc.hpp"
-
-1485888414 /usr/local/include/opencv2/opencv.hpp
-	"opencv2/opencv_modules.hpp"
-	"opencv2/core.hpp"
-	"opencv2/calib3d.hpp"
-	"opencv2/features2d.hpp"
-	"opencv2/flann.hpp"
-	"opencv2/highgui.hpp"
-	"opencv2/imgcodecs.hpp"
-	"opencv2/imgproc.hpp"
-	"opencv2/ml.hpp"
-	"opencv2/objdetect.hpp"
-	"opencv2/photo.hpp"
-	"opencv2/shape.hpp"
-	"opencv2/stitching.hpp"
-	"opencv2/superres.hpp"
-	"opencv2/video.hpp"
-	"opencv2/videoio.hpp"
-	"opencv2/videostab.hpp"
-	"opencv2/viz.hpp"
-	"opencv2/cudaarithm.hpp"
-	"opencv2/cudabgsegm.hpp"
-	"opencv2/cudacodec.hpp"
-	"opencv2/cudafeatures2d.hpp"
-	"opencv2/cudafilters.hpp"
-	"opencv2/cudaimgproc.hpp"
-	"opencv2/cudaobjdetect.hpp"
-	"opencv2/cudaoptflow.hpp"
-	"opencv2/cudastereo.hpp"
-	"opencv2/cudawarping.hpp"
+	<fstream>
+	<opencv2/core.hpp>
+	<opencv2/highgui.hpp>
+	"stereo_viso.h"
+	"mono_viso.h"
+	"data_utils.h"
 
 1485888414 /usr/local/include/opencv2/core.hpp
 	"opencv2/core/cvdef.h"
@@ -91,6 +64,8 @@
 	"opencv2/core/cvdef.h"
 	"opencv2/core/cvstd.hpp"
 	"opencv2/core/neon_utils.hpp"
+
+1485905557 /usr/local/include/opencv2/opencv_modules.hpp
 
 1485888414 /usr/local/include/opencv2/core/cvstd.hpp
 	"opencv2/core/cvdef.h"
@@ -155,9 +130,41 @@
 	"opencv2/opencv.hpp"
 	<time.h>
 
-1485880694 /usr/local/include/opencv2/xfeatures2d.hpp
+1485888414 /usr/local/include/opencv2/opencv.hpp
+	"opencv2/opencv_modules.hpp"
+	"opencv2/core.hpp"
+	"opencv2/calib3d.hpp"
 	"opencv2/features2d.hpp"
-	"opencv2/xfeatures2d/nonfree.hpp"
+	"opencv2/flann.hpp"
+	"opencv2/highgui.hpp"
+	"opencv2/imgcodecs.hpp"
+	"opencv2/imgproc.hpp"
+	"opencv2/ml.hpp"
+	"opencv2/objdetect.hpp"
+	"opencv2/photo.hpp"
+	"opencv2/shape.hpp"
+	"opencv2/stitching.hpp"
+	"opencv2/superres.hpp"
+	"opencv2/video.hpp"
+	"opencv2/videoio.hpp"
+	"opencv2/videostab.hpp"
+	"opencv2/viz.hpp"
+	"opencv2/cudaarithm.hpp"
+	"opencv2/cudabgsegm.hpp"
+	"opencv2/cudacodec.hpp"
+	"opencv2/cudafeatures2d.hpp"
+	"opencv2/cudafilters.hpp"
+	"opencv2/cudaimgproc.hpp"
+	"opencv2/cudaobjdetect.hpp"
+	"opencv2/cudaoptflow.hpp"
+	"opencv2/cudastereo.hpp"
+	"opencv2/cudawarping.hpp"
+
+1485888414 /usr/local/include/opencv2/calib3d.hpp
+	"opencv2/core.hpp"
+	"opencv2/features2d.hpp"
+	"opencv2/core/affine.hpp"
+	"opencv2/calib3d/calib3d_c.h"
 
 1485888414 /usr/local/include/opencv2/features2d.hpp
 	"opencv2/core.hpp"
@@ -172,18 +179,10 @@
 
 1485888414 /usr/local/include/opencv2/flann/config.h
 
-1485880694 /usr/local/include/opencv2/xfeatures2d/nonfree.hpp
-	"opencv2/features2d.hpp"
+1485888414 /usr/local/include/opencv2/core/affine.hpp
+	<opencv2/core.hpp>
 
-1485888414 /usr/local/include/opencv2/core/operations.hpp
-	<cstdio>
-
-1485888414 /usr/local/include/opencv2/core/cvstd.inl.hpp
-	<complex>
-	<ostream>
-
-1485888414 /usr/local/include/opencv2/core/utility.hpp
-	"opencv2/core.hpp"
+1485888414 /usr/local/include/opencv2/calib3d/calib3d_c.h
 	"opencv2/core/core_c.h"
 
 1485888414 /usr/local/include/opencv2/core/core_c.h
@@ -202,211 +201,9 @@
 	<float.h>
 	"opencv2/core.hpp"
 
-1485888414 /usr/local/include/opencv2/core/optim.hpp
+1485888414 /usr/local/include/opencv2/core/utility.hpp
 	"opencv2/core.hpp"
-
-1485888414 /usr/local/include/opencv2/imgproc.hpp
-	"opencv2/core.hpp"
-	<opencv2/core.hpp>
-	<opencv2/imgproc.hpp>
-	<opencv2/imgcodecs.hpp>
-	<opencv2/highgui.hpp>
-	<iostream>
-	<opencv2/imgproc.hpp>
-	<opencv2/highgui.hpp>
-	<opencv2/imgproc.hpp>
-	<opencv2/highgui.hpp>
-	<math.h>
-	<opencv2/imgproc.hpp>
-	<opencv2/highgui.hpp>
-	"opencv2/imgproc.hpp"
-	"opencv2/highgui.hpp"
-	"opencv2/imgproc/imgproc_c.h"
-
-1485888414 /usr/local/include/opencv2/imgcodecs.hpp
-	"opencv2/core.hpp"
-	<opencv2/opencv.hpp>
-
-1485888414 /usr/local/include/opencv2/highgui.hpp
-	"opencv2/core.hpp"
-	"opencv2/imgcodecs.hpp"
-	"opencv2/videoio.hpp"
-	"opencv2/highgui/highgui_c.h"
-
-1485888414 /usr/local/include/opencv2/videoio.hpp
-	"opencv2/core.hpp"
-
-1485888414 /usr/local/include/opencv2/highgui/highgui_c.h
 	"opencv2/core/core_c.h"
-	"opencv2/imgproc/imgproc_c.h"
-	"opencv2/imgcodecs/imgcodecs_c.h"
-	"opencv2/videoio/videoio_c.h"
-
-1485888414 /usr/local/include/opencv2/imgproc/imgproc_c.h
-	"opencv2/imgproc/types_c.h"
-
-1485888414 /usr/local/include/opencv2/imgproc/types_c.h
-	"opencv2/core/core_c.h"
-
-1485888414 /usr/local/include/opencv2/imgcodecs/imgcodecs_c.h
-	"opencv2/core/core_c.h"
-
-1485888414 /usr/local/include/opencv2/videoio/videoio_c.h
-	"opencv2/core/core_c.h"
-
-1485888414 /usr/local/include/opencv2/photo.hpp
-	"opencv2/core.hpp"
-	"opencv2/imgproc.hpp"
-	"opencv2/photo/photo_c.h"
-
-1485888414 /usr/local/include/opencv2/photo/photo_c.h
-	"opencv2/core/core_c.h"
-
-1485888414 /usr/local/include/opencv2/video.hpp
-	"opencv2/video/tracking.hpp"
-	"opencv2/video/background_segm.hpp"
-	"opencv2/video/tracking_c.h"
-
-1485888414 /usr/local/include/opencv2/video/tracking.hpp
-	"opencv2/core.hpp"
-	"opencv2/imgproc.hpp"
-
-1485888414 /usr/local/include/opencv2/video/background_segm.hpp
-	"opencv2/core.hpp"
-
-1485888414 /usr/local/include/opencv2/video/tracking_c.h
-	"opencv2/imgproc/types_c.h"
-
-1485888414 /usr/local/include/opencv2/objdetect.hpp
-	"opencv2/core.hpp"
-	"opencv2/objdetect/detection_based_tracker.hpp"
-	"opencv2/objdetect/objdetect_c.h"
-
-1485888414 /usr/local/include/opencv2/objdetect/detection_based_tracker.hpp
-	<vector>
-
-1485888414 /usr/local/include/opencv2/objdetect/objdetect_c.h
-	"opencv2/core/core_c.h"
-	<deque>
-	<vector>
-
-1485888414 /usr/local/include/opencv2/calib3d.hpp
-	"opencv2/core.hpp"
-	"opencv2/features2d.hpp"
-	"opencv2/core/affine.hpp"
-	"opencv2/calib3d/calib3d_c.h"
-
-1485888414 /usr/local/include/opencv2/core/affine.hpp
-	<opencv2/core.hpp>
-
-1485888414 /usr/local/include/opencv2/calib3d/calib3d_c.h
-	"opencv2/core/core_c.h"
-
-1485888414 /usr/local/include/opencv2/ml.hpp
-	"opencv2/core.hpp"
-	<float.h>
-	<map>
-	<iostream>
-
-1487069848 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/Graph3D.cpp
-	"Graph3D.h"
-	<opencv2/highgui.hpp>
-	<iostream>
-	"utils.h"
-
-1487069620 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/Graph3D.h
-	<string>
-	<opencv2/core.hpp>
-	<opencv2/viz.hpp>
-	<istream>
-
-1485888414 /usr/local/include/opencv2/viz.hpp
-	<opencv2/viz/types.hpp>
-	<opencv2/viz/widgets.hpp>
-	<opencv2/viz/viz3d.hpp>
-	<opencv2/viz/vizcore.hpp>
-
-1485888414 /usr/local/include/opencv2/viz/types.hpp
-	<string>
-	<opencv2/core.hpp>
-	<opencv2/core/affine.hpp>
-
-1485888414 /usr/local/include/opencv2/viz/widgets.hpp
-	<opencv2/viz/types.hpp>
-
-1485888414 /usr/local/include/opencv2/viz/viz3d.hpp
-	<opencv2/core.hpp>
-	<opencv2/viz/types.hpp>
-	<opencv2/viz/widgets.hpp>
-
-1485888414 /usr/local/include/opencv2/viz/vizcore.hpp
-	<opencv2/viz/types.hpp>
-	<opencv2/viz/widgets.hpp>
-	<opencv2/viz/viz3d.hpp>
-
-1487069860 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/mono_viso.cpp
-	"mono_viso.h"
-	<opencv2/calib3d.hpp>
-
-1487069593 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/mono_viso.h
-	"viso.h"
-	"featureType.h"
-
-1487087264 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/viso.h
-	"opencv2/core.hpp"
-
-1490620216 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/featureType.h
-	<cstddef>
-	<cstdlib>
-	<cstdint>
-	<iostream>
-	<cstring>
-	<assert.h>
-	<opencv2/core.hpp>
-
-1490634884 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/stereo_viso.cpp
-	"stereo_viso.h"
-	"fileIO.h"
-	"utils.h"
-	<math.h>
-	<cstdlib>
-	<iostream>
-	<fstream>
-	<numeric>
-	<algorithm>
-	<opencv2/highgui.hpp>
-	<opencv2/calib3d.hpp>
-
-1490631846 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/stereo_viso.h
-	<iostream>
-	"viso.h"
-	"featureType.h"
-
-1490633587 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/utils.cpp
-	"utils.h"
-	<iostream>
-
-1488364905 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/utils.h
-	<ostream>
-	<opencv2/core.hpp>
-
-1486917901 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/viso.cpp
-	"viso.h"
-
-1487081115 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/main.cpp
-	<iostream>
-	<fstream>
-	<string>
-	<sstream>
-	"opencv2/opencv.hpp"
-	<iomanip>
-	"stereo_viso.h"
-	"Graph2D.h"
-
-1485905557 /usr/local/include/opencv2/opencv_modules.hpp
-
-1485888414 /usr/local/include/opencv2/core/ovx.hpp
-	"cvdef.h"
 
 1485888414 /usr/local/include/opencv2/flann.hpp
 	"opencv2/core.hpp"
@@ -643,6 +440,82 @@
 	"matrix.h"
 	"random.h"
 
+1485888414 /usr/local/include/opencv2/highgui.hpp
+	"opencv2/core.hpp"
+	"opencv2/imgcodecs.hpp"
+	"opencv2/videoio.hpp"
+	"opencv2/highgui/highgui_c.h"
+
+1485888414 /usr/local/include/opencv2/imgcodecs.hpp
+	"opencv2/core.hpp"
+	<opencv2/opencv.hpp>
+
+1485888414 /usr/local/include/opencv2/videoio.hpp
+	"opencv2/core.hpp"
+
+1485888414 /usr/local/include/opencv2/highgui/highgui_c.h
+	"opencv2/core/core_c.h"
+	"opencv2/imgproc/imgproc_c.h"
+	"opencv2/imgcodecs/imgcodecs_c.h"
+	"opencv2/videoio/videoio_c.h"
+
+1485888414 /usr/local/include/opencv2/imgproc/imgproc_c.h
+	"opencv2/imgproc/types_c.h"
+
+1485888414 /usr/local/include/opencv2/imgproc/types_c.h
+	"opencv2/core/core_c.h"
+
+1485888414 /usr/local/include/opencv2/imgcodecs/imgcodecs_c.h
+	"opencv2/core/core_c.h"
+
+1485888414 /usr/local/include/opencv2/videoio/videoio_c.h
+	"opencv2/core/core_c.h"
+
+1485888414 /usr/local/include/opencv2/imgproc.hpp
+	"opencv2/core.hpp"
+	<opencv2/core.hpp>
+	<opencv2/imgproc.hpp>
+	<opencv2/imgcodecs.hpp>
+	<opencv2/highgui.hpp>
+	<iostream>
+	<opencv2/imgproc.hpp>
+	<opencv2/highgui.hpp>
+	<opencv2/imgproc.hpp>
+	<opencv2/highgui.hpp>
+	<math.h>
+	<opencv2/imgproc.hpp>
+	<opencv2/highgui.hpp>
+	"opencv2/imgproc.hpp"
+	"opencv2/highgui.hpp"
+	"opencv2/imgproc/imgproc_c.h"
+
+1485888414 /usr/local/include/opencv2/ml.hpp
+	"opencv2/core.hpp"
+	<float.h>
+	<map>
+	<iostream>
+
+1485888414 /usr/local/include/opencv2/objdetect.hpp
+	"opencv2/core.hpp"
+	"opencv2/objdetect/detection_based_tracker.hpp"
+	"opencv2/objdetect/objdetect_c.h"
+
+1485888414 /usr/local/include/opencv2/objdetect/detection_based_tracker.hpp
+	<vector>
+
+1485888414 /usr/local/include/opencv2/objdetect/objdetect_c.h
+	"opencv2/core/core_c.h"
+	<deque>
+	<vector>
+
+1485888414 /usr/local/include/opencv2/photo.hpp
+	"opencv2/core.hpp"
+	"opencv2/imgproc.hpp"
+	"opencv2/photo/photo_c.h"
+
+1485888414 /usr/local/include/opencv2/photo/photo_c.h
+	"opencv2/core/core_c.h"
+
 1485888414 /usr/local/include/opencv2/shape.hpp
 	"opencv2/shape/emdL1.hpp"
 	"opencv2/shape/shape_transformer.hpp"
@@ -747,6 +620,21 @@
 1485888414 /usr/local/include/opencv2/superres/optical_flow.hpp
 	"opencv2/core.hpp"
 
+1485888414 /usr/local/include/opencv2/video.hpp
+	"opencv2/video/tracking.hpp"
+	"opencv2/video/background_segm.hpp"
+	"opencv2/video/tracking_c.h"
+
+1485888414 /usr/local/include/opencv2/video/tracking.hpp
+	"opencv2/core.hpp"
+	"opencv2/imgproc.hpp"
+
+1485888414 /usr/local/include/opencv2/video/background_segm.hpp
+	"opencv2/core.hpp"
+
+1485888414 /usr/local/include/opencv2/video/tracking_c.h
+	"opencv2/imgproc/types_c.h"
+
 1485888414 /usr/local/include/opencv2/videostab.hpp
 	"opencv2/videostab/stabilizer.hpp"
 	"opencv2/videostab/ring_buffer.hpp"
@@ -835,21 +723,131 @@
 	<vector>
 	"opencv2/imgproc.hpp"
 
-1490620217 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/fileIO.cpp
-	"fileIO.h"
-	<iostream>
-	<iomanip>
+1485888414 /usr/local/include/opencv2/viz.hpp
+	<opencv2/viz/types.hpp>
+	<opencv2/viz/widgets.hpp>
+	<opencv2/viz/viz3d.hpp>
+	<opencv2/viz/vizcore.hpp>
 
-1487778655 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/fileIO.h
+1485888414 /usr/local/include/opencv2/viz/types.hpp
 	<string>
-	<fstream>
 	<opencv2/core.hpp>
-	<opencv2/highgui.hpp>
-	"stereo_viso.h"
-	"mono_viso.h"
-	"data_utils.h"
+	<opencv2/core/affine.hpp>
 
-1487069678 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/data_utils.h
+1485888414 /usr/local/include/opencv2/viz/widgets.hpp
+	<opencv2/viz/types.hpp>
+
+1485888414 /usr/local/include/opencv2/viz/viz3d.hpp
+	<opencv2/core.hpp>
+	<opencv2/viz/types.hpp>
+	<opencv2/viz/widgets.hpp>
+
+1485888414 /usr/local/include/opencv2/viz/vizcore.hpp
+	<opencv2/viz/types.hpp>
+	<opencv2/viz/widgets.hpp>
+	<opencv2/viz/viz3d.hpp>
+
+1485880694 /usr/local/include/opencv2/xfeatures2d.hpp
+	"opencv2/features2d.hpp"
+	"opencv2/xfeatures2d/nonfree.hpp"
+
+1485880694 /usr/local/include/opencv2/xfeatures2d/nonfree.hpp
+	"opencv2/features2d.hpp"
+
+1485888414 /usr/local/include/opencv2/core/operations.hpp
+	<cstdio>
+
+1485888414 /usr/local/include/opencv2/core/cvstd.inl.hpp
+	<complex>
+	<ostream>
+
+1485888414 /usr/local/include/opencv2/core/optim.hpp
+	"opencv2/core.hpp"
+
+1485888414 /usr/local/include/opencv2/core/ovx.hpp
+	"cvdef.h"
+
+1490736917 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/stereo_viso.h
+	<iostream>
+	"viso.h"
+	"featureType.h"
+
+1490651036 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/viso.h
+	"opencv2/core.hpp"
+
+1490738555 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/featureType.h
+	<cstddef>
+	<cstdlib>
+	<cstdint>
+	<iostream>
+	<cstring>
+	<assert.h>
+	<opencv2/core.hpp>
+
+1490737605 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/mono_viso.h
+	"viso.h"
+	"featureType.h"
+
+1491993207 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/data_utils.h
 	<opencv2/core.hpp>
 	"utils.h"
+
+1491319940 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/utils.h
+	<ostream>
+	"featureType.h"
+	<opencv2/core.hpp>
+
+1491994063 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/Graph2D.cpp
+	"Graph2D.h"
+
+1491994240 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/Graph2D.h
+	<vector>
+	<string>
+	<sstream>
+	"opencv2/core.hpp"
+	"opencv2/highgui.hpp"
+	"opencv2/imgproc.hpp"
+
+1487069848 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/Graph3D.cpp
+	"Graph3D.h"
+	<opencv2/highgui.hpp>
+	<iostream>
+	"utils.h"
+
+1491994307 /home/abeauvisage/Insa/PhD/implementation/MotionEstimation/include/Graph3D.h
+	<string>
+	<opencv2/core.hpp>
+	<opencv2/viz.hpp>
+	<istream>
+
+1490737415 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/mono_viso.cpp
+	"mono_viso.h"
+	<opencv2/calib3d.hpp>
+
+1491993990 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/stereo_viso.cpp
+	"stereo_viso.h"
+	"fileIO.h"
+	"utils.h"
+	<math.h>
+	<cstdlib>
+	<iostream>
+	<fstream>
+	<numeric>
+	<algorithm>
+	<opencv2/highgui.hpp>
+	<opencv2/calib3d.hpp>
+
+1491323166 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/src/utils.cpp
+	"utils.h"
+	<iostream>
+
+1487081115 source:/home/abeauvisage/Insa/PhD/implementation/MotionEstimation/main.cpp
+	<iostream>
+	<fstream>
+	<string>
+	<sstream>
+	"opencv2/opencv.hpp"
+	<iomanip>
+	"stereo_viso.h"
+	"Graph2D.h"
 

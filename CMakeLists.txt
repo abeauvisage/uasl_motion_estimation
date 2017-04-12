@@ -3,6 +3,7 @@ project (MotionEstimation)
 set (ME_VERSION_MAJOR 1)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
 file(GLOB SOURCE_FILES ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
 find_package(OpenCV 3 REQUIRED)

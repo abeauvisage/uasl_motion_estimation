@@ -132,7 +132,6 @@ int readImuData(ImuData& data){
     double ax=0,ay=0,az=0,qw=0,qx=0,qy=0,qz=0,gx=0,gy=0,gz=0;
     imufile >> stamp >> c >> qw >> c >> qx >> c >> qy >> c >> qz >> c >> ax >> c >> ay >> c >> az >> c >> gx >> c >> gy >> c >> gz >> c;
     data.stamp = stamp;
-//    cout << setprecision(12) << stamp << endl;
     data.acc = Vec3d(ax,ay,az);
     data.gyr = Vec3d(gx,gy,gz);
     data.orientation = Quat<double>(qw,qx,qy,qz);
@@ -144,13 +143,11 @@ int readGpsData(GpsData& data){
         return 0;
     char c;
     double stamp,lon,lat,alt;
-//    int status;
     gpsfile >> stamp >> c >> lat >> c >> lon >> c >> alt>> c;
     data.stamp = stamp;
     data.lon = lon;
     data.lat = lat;
     data.alt = alt;
-//    data.status = status;
     return 1;
 }
 

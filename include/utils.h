@@ -3,19 +3,25 @@
 
 #include <ostream>
 
+#include "featureType.h"
+
 #include <opencv2/core.hpp>
 
 #define PI 3.14156592
 
 namespace me{
 
+//! template class Quat
+/*! represents a quaternion. Must be a float-point type (float or double), results with other data type are not guaranteed */
 template <typename T>
 class Quat;
 
+//! template class Euler
+/*! represents Euler angles in 3 axis (x,y,z). Must be a float-point type (float or double), results with other data type are not guaranteed */
 template <typename T>
 class Euler;
 
-typedef Euler<double> Euld;
+typedef Euler<double> Euld; //!< type Euler angles with double precision.
 typedef Euler<float> Eulf;
 typedef Quat<double> Quatd;
 typedef Quat<float> Quatf;
@@ -25,18 +31,20 @@ class Euler {
 
 private:
 
-	T m_roll;
-	T m_pitch;
-	T m_yaw;
+	T m_roll; //!< angle around the x-axis
+	T m_pitch; //!< angle around the y-axis.
+	T m_yaw; //!< angle around the z-axis.
 
-    inline void deg2Rad(){m_roll *= PI/180; m_pitch *= PI/180; m_yaw *= PI/180;}
-	inline void rad2Deg(){m_roll *= 180/PI; m_pitch *= 180/PI; m_yaw *= 180/PI;}
-	inline void computeCosSin(T& cr, T& sr, T& cp, T& sp, T& cy, T& sy) const{cr=cos(m_roll);sr=sin(m_roll);cp=cos(m_pitch);sp=sin(m_pitch);cy=cos(m_yaw);sy=sin(m_yaw);}
+    inline void deg2Rad(){m_roll *= PI/180; m_pitch *= PI/180; m_yaw *= PI/180;} //!< converting the angles into rad units.
+	inline void rad2Deg(){m_roll *= 180/PI; m_pitch *= 180/PI; m_yaw *= 180/PI;} //!< converting the angles into degrees units.
+	inline void computeCosSin(T& cr, T& sr, T& cp, T& sp, T& cy, T& sy) const{cr=cos(m_roll);sr=sin(m_roll);cp=cos(m_pitch);sp=sin(m_pitch);cy=cos(m_yaw);sy=sin(m_yaw);} //!<< computing sine and cosine for each axis.
 
 public:
-
+    /*! Main constructor. Takes 3 angles as input and the unit. By default  all angles are 0 and expressed in radians. */
 	Euler(T r=0, T p=0, T y=0, bool rad=true ): m_roll(r), m_pitch(p), m_yaw(y) {if(!rad)deg2Rad();}
+	/*! retrieves Euler angles from a rotation matrix and create an Euler object. */
 	Euler(const cv::Mat& M){fromMat(M);}
+	/*! copy constructor. */
 	Euler(const Euler& e): m_roll(e.roll()), m_pitch(e.pitch()), m_yaw(e.yaw()){}
 
 	//displaying
@@ -44,22 +52,21 @@ public:
         os << "[" << e.m_roll << "," << e.m_pitch << "," << e.m_yaw << ", rad]" << std::endl;
         return os;
     }
-	std::string getDegrees();
+	std::string getDegrees(); /*!< return the degree angles as a string (for display purposes). */
 
-	//conversions
-	cv::Matx<T,3,3> getR3() const;
-	cv::Matx<T,4,4> getR4() const;
-	cv::Matx<T,3,3> getE() const;
-	cv::Matx<T,3,3> getdRdr() const;
-	cv::Matx<T,3,3> getdRdp() const;
-	cv::Matx<T,3,3> getdRdy() const;
-	void fromMat(const cv::Mat& R);
-    Quat<T> getQuat() const;
+	cv::Matx<T,3,3> getR3() const;      //!< 3x3 R Matrix.
+	cv::Matx<T,4,4> getR4() const;      //!< 4x4 Rt Matrix, t is null because only the angle is known.
+	cv::Matx<T,3,3> getE() const;       //!< 3x3 E matrix.
+	cv::Matx<T,3,3> getdRdr() const;    //!< 3x3 derivative of R along the x axis (roll).
+	cv::Matx<T,3,3> getdRdp() const;    //!< 3x3 derivative of R along the y axis (pitch).
+	cv::Matx<T,3,3> getdRdy() const;    //!< 3x3 derivative of R along the z axis (yaw).
+	void fromMat(const cv::Mat& R);     //!< compute Euler angles from a rotation matrix R.
+    Quat<T> getQuat() const;            //!< convert Euler angles to a Quaternion of the same type.
 
     //operator
-    void operator+=(Euler& e);
-    cv::Vec<T,3> operator*(const cv::Vec<T,3>& v);
-	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v);
+    void operator+=(Euler& e); //!< concatenate with another Euler object.
+    cv::Vec<T,3> operator*(const cv::Vec<T,3>& v); //!< rotate a 3-vector with the rotation described by the object.
+	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v); //!< rotate a 4-vector with the rotation described by the object.
 
     //access
     T roll() const {return m_roll;}
@@ -72,42 +79,44 @@ class Quat {
 
 private:
 
-	T m_w;
-	T m_x;
-	T m_y;
-	T m_z;
+	T m_w; //!< real component.
+	T m_x; //!< x-axis.
+	T m_y; //!< y-axis.
+	T m_z; //!< z-axis.
 
 public:
 
-    // constructors and copy constructor
+    /*! Main constructor. Default values are 1 for the real part and 0 for the axis components. */
 	Quat(T w=1, T x=0, T y=0, T z=0): m_w(w), m_x(x), m_y(y), m_z(z){}
+	/*! Create a Quat object from a rotation matrix and normalize it. */
 	Quat(const cv::Mat& M){fromMat(M);norm();}
+	/*! copy constructor. */
 	Quat(const Quat& q): m_w(q.w()), m_x(q.x()), m_y(q.y()), m_z(q.z()){norm();}
 
-	//normalize, conjugate and display functions
-	void norm();
-	Quat conj() const {return Quat(m_w,-m_x,-m_y,-m_z);}
+	void norm(); //!< normalize the object
+	Quat conj() const {return Quat(m_w,-m_x,-m_y,-m_z);} //!< returns the conjugate of the object.
+
 	friend std::ostream& operator<<(std::ostream& os, const Quat<T>& q){
         os << "[" << q.m_w << "|" << q.m_x << "," << q.m_y << "," << q.m_z << "] angle: " << 2*acos(q.m_w) << std::endl;
         return os;
     }
 
     // conversions
-    inline cv::Matx<T,4,4> getQ() const;
-    inline cv::Matx<T,4,4> getQ_() const;
-    inline cv::Matx<T,4,4> getdQdq0() const;
-	inline cv::Matx<T,4,4> getdQ_dq0() const;
-	inline cv::Matx<T,4,4> getdQdq1() const;
-	inline cv::Matx<T,4,4> getdQ_dq1() const;
-	inline cv::Matx<T,4,4> getdQdq2() const;
-	inline cv::Matx<T,4,4> getdQ_dq2() const;
-	inline cv::Matx<T,4,4> getdQdq3() const;
-	inline cv::Matx<T,4,4> getdQ_dq3() const;
+    inline cv::Matx<T,4,4> getQ() const;        //!< Q matrix to multiply with another quaternion.
+    inline cv::Matx<T,4,4> getQ_() const;       //!< inverse of Q. Represents the inverse rotation.
+    inline cv::Matx<T,4,4> getdQdq0() const;    //!< dQ/dw.
+	inline cv::Matx<T,4,4> getdQ_dq0() const;   //!< dQ^-1/dw.
+	inline cv::Matx<T,4,4> getdQdq1() const;    //!< dQ/dx.
+	inline cv::Matx<T,4,4> getdQ_dq1() const;   //!< dQ^-1/dx.
+	inline cv::Matx<T,4,4> getdQdq2() const;    //!< dQ/dy.
+	inline cv::Matx<T,4,4> getdQ_dq2() const;   //!< dQ^-1/dy.
+	inline cv::Matx<T,4,4> getdQdq3() const;    //!< dQ/dz.
+	inline cv::Matx<T,4,4> getdQ_dq3() const;   //!< dQ^-1/dz.
 
-	inline cv::Matx<T,3,3> getR3() const;
-	inline cv::Matx<T,4,4> getR4() const;
-	void fromMat(const cv::Mat& M);
-	Euler<T> getEuler();
+	inline cv::Matx<T,3,3> getR3() const;   //!< returns the 3x3 corresponding rotation matrix.
+	inline cv::Matx<T,4,4> getR4() const;   //!< returns the 4x4 corresponding rotation matrix.
+	void fromMat(const cv::Mat& M);         //!< update thet object from a rotation matrix.
+	Euler<T> getEuler();                    //!< convert the quaternion object into Euler angles.
 
 	//operators
 	void operator*=(const Quat& q);
@@ -127,6 +136,8 @@ public:
 	double y() const {return m_y;}
 	double z() const {return m_z;}
 };
+
+std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output);
 
 }
 

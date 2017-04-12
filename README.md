@@ -1,12 +1,13 @@
-============
-DEPENDENCIES
-============
 
-Opencv 3 minimum
+################
+# DEPENDENCIES #
+################
 
-============
-INSTALLATION
-============
+- Opencv 3 minimum
+
+################
+# INSTALLATION #
+################
 
 1. extract library folder
 2. $ cmkdir build
