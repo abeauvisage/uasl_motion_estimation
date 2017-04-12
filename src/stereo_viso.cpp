@@ -1,6 +1,7 @@
 #include "stereo_viso.h"
 
 #include "fileIO.h"
+#include "utils.h"
 
 #include <math.h>
 #include <cstdlib>
@@ -9,265 +10,141 @@
 #include <numeric>
 #include <algorithm>
 #include <opencv2/highgui.hpp>
+#include <opencv2/calib3d.hpp>
 
 using namespace std;
 using namespace cv;
 
 namespace me{
 
-StereoVisualOdometry::StereoVisualOdometry (parameters param) : VisualOdometry(), m_param(param) {
-    srand(0);
+void StereoVisualOdometry::project3D(const vector<StereoMatchf>& features){
+    m_pts3D.clear();
+    m_disparities.clear();
+
+    for(unsigned int i=0;i<features.size();i++){
+        double d = (features[i].f1.x-m_param.cu1) - (features[i].f2.x-m_param.cu2);
+        ptH3D pt3D((features[i].f1.x-m_param.cu1)*m_param.baseline,(features[i].f1.y-m_param.cv1)*m_param.baseline,m_param.f1*m_param.baseline, d > 0 ? d : 0.00001);
+        normalize(pt3D);
+        m_pts3D.push_back(pt3D);
+    }
 }
 
+void StereoVisualOdometry::project3D(const vector<StereoOdoMatchesf>& features){
+    m_pts3D.clear();
+    m_disparities.clear();
 
-bool StereoVisualOdometry::process (const vector<StereoOdoMatches<Point2f>>& matches, cv::Mat x_initial) {
+    for(unsigned int i=0;i<features.size();i++){
+        double d = (features[i].f1.x-m_param.cu1) - (features[i].f2.x-m_param.cu2);
+        ptH3D pt3D((features[i].f1.x-m_param.cu1)*m_param.baseline,(features[i].f1.y-m_param.cv1)*m_param.baseline,m_param.f1*m_param.baseline, d > 0 ? d : 0.00001);
+        normalize(pt3D);
+        m_pts3D.push_back(pt3D);
+    }
+}
 
-    if (x_initial.rows!=6 || x_initial.cols!=1 || x_initial.type() != CV_64F)
-        x_initial = Mat::zeros(6,1,CV_64F);
+bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv::Mat init) {
 
-    int nb_matches = matches.size();
-    if(nb_matches<6)
+    //if init not correct, initialize every state parameter to 0
+    if (init.rows!=6 || init.cols!=1 || init.type() != CV_64F)
+        init = Mat::zeros(6,1,CV_64F);
+
+    // need at least 6 matches
+    if(matches.size()<6)
         return false;
 
-    x = x_initial;
+    m_state = init;
+    m_inliers_idx.clear();
 
-    pts3D.clear();
+    project3D(matches);
+    updateObservations(matches);
 
-    for (int i=0; i<nb_matches; i++) {
-        double d = (matches[i].f1.x-m_param.cu1) - (matches[i].f2.x-m_param.cu2);
-        d = (d>0)?d:0.00001; // to avoid divison by 0;
-        pts3D.push_back(Point3d((matches[i].f1.x-m_param.cu1)*m_param.baseline/d, (matches[i].f1.y-m_param.cv1)*m_param.baseline/d, m_param.f1*m_param.baseline/d));
-    }
-
-    inliers_idx.clear();
-
-    if(m_param.ransac){
-
+    /**** selecting matches ****/
+    // if ransac, selecting 3 random matches until nb iterations has been reached
+    if(m_param.ransac)
         for (int i=0;i<m_param.n_ransac;i++) {
             vector<int> selection;
-            selection = randomIndexes(3,nb_matches);
+            selection = selectRandomIndices(3,matches.size());
+            //selecting random matches scattered in the image
             if((matches[selection[0]].f3.x*(matches[selection[1]].f3.y-matches[selection[2]].f3.y)+matches[selection[1]].f3.x*(matches[selection[2]].f3.y-matches[selection[0]].f3.y)+matches[selection[2]].f3.x*(matches[selection[0]].f3.y-matches[selection[1]].f3.y))/2 > 1000){
-                x = x_initial;
-
-                if (optimize(matches,selection,false)) { // if optimization succeeded and more inliers obtained, inliers are saved
-                    vector<int> inliers_tmp = computeInliers(matches);
-                    if (inliers_tmp.size()>inliers_idx.size())
-                        inliers_idx = inliers_tmp;
+                m_state = init;
+                if (optimize(selection,false)) { // if optimization succeeded and more inliers obtained, inliers are saved
+                    vector<int> inliers_tmp = computeInliers();
+                    if (inliers_tmp.size()>m_inliers_idx.size())
+                        m_inliers_idx = inliers_tmp;
                 }
             }
         }
-        cout << "[ME] inliers: " << inliers_idx.size() << endl;
-//        for(int i =0;i<inliers_idx.size();i++){
-//            cout << matches[inliers_idx[i]].f1  << matches[inliers_idx[i]].f2  << matches[inliers_idx[i]].f3  << matches[inliers_idx[i]].f4  << endl;
-//        }
-
-    }else{
-        std::vector<int> selection(nb_matches);
+        else{ // if not ransac, selecting every matches
+            std::vector<int> selection(matches.size());
         std::iota (std::begin(selection), std::end(selection), 0);
-//        for(int i =0;i<100;i++)
-//        if (optimize(matches,selection,false))
-//            selection = computeInliers(matches);
-        inliers_idx = selection;
+        m_inliers_idx = selection;
     }
 
-    x = x_initial;
+    m_state = init;
 
     /** final optimization **/
     cout << "final optim" << endl;
 
-    if (inliers_idx.size()>=6) // check that more than 6 inliers have been obtained
-        if (optimize(matches,inliers_idx,false)) // optimize using inliers
+    if (m_inliers_idx.size()>=6){ // check that more than 6 inliers have been obtained
+        if (optimize(m_inliers_idx,false)) // optimize using inliers
             return true;
         else
             return false;
+    }
     else
         return false;
 }
 
-vector<int> StereoVisualOdometry::computeInliers(const vector<StereoOdoMatches<Point2f>>& matches) {
+vector<int> StereoVisualOdometry::computeInliers() {
 
+    //selecting all matches
     vector<int> selection;
-    for (int i=0;i<matches.size();i++)
+    for (unsigned int i=0;i<m_obs.size();i++)
         selection.push_back(i);
 
-    projectionUpdate(matches,selection,false);
+    // predictions
+    vector<pair<ptH2D,ptH2D>> pred = reproject(m_state,selection);
+    assert(pred.size() == m_obs.size());
 
+    //compute residual and get inlier indexes
     vector<int> inliers_idx;
-    for (int i=0; i<matches.size(); i++){
-        double score=0;
-        for(int j=0;j<4;j++)
-            score += pow(residuals.at<double>(4*i+j),2);
-//            cout << score << " ";
-        if (score < pow(m_param.inlier_threshold,2)){
+    for (unsigned int i=0; i<m_obs.size(); i++){
+        double score = pow(pred[i].first(0)-m_obs[i].first(0),2)+pow(pred[i].first(1)-m_obs[i].first(1),2)+pow(pred[i].second(0)-m_obs[i].second(0),2)+pow(pred[i].second(1)-m_obs[i].second(1),2);
+        if (score < pow(m_param.inlier_threshold,2))
             inliers_idx.push_back(i);
-//            cout  << "ok" << endl;
-        }
     }
 
     return inliers_idx;
 }
-void StereoVisualOdometry::computeReprojErrors(const vector<StereoOdoMatches<Point2f>>& matches, const std::vector<int>& inliers) {
 
-    projectionUpdate(matches,inliers,false);
+std::vector<std::pair<ptH2D,ptH2D>> StereoVisualOdometry::reproject(cv::Matx61d& state,  const vector<int>& selection){
 
-    double mean_score = 0;
-    for (int i=0; i<inliers.size(); i++){
-        double score=0;
-        for(int j=0;j<4;j++)
-            score += pow(residuals.at<double>(4*i+j),2);
+    std::vector<std::pair<ptH2D,ptH2D>> reproj_pts;
 
-        mean_score += score;
-        writeLogFile(to_string(score)+",");
+    Euld r(state(0),state(1),state(2));
 
-    }
-    writeLogFile("\n");
-    mean_score /= inliers_idx.size();
-    cout << inliers_idx.size() << " mean reproj: " << mean_score << endl;
-}
+    /*** Tr matrix ***/
 
-cv::Mat StereoVisualOdometry::applyFunction(const vector<StereoOdoMatches<Point2f>>& matches, cv::Mat& x_,  const vector<int>& selection){
+    Matx44d Tr = r.getR4();
+    Tr(0,3) = state(3);
+    Tr(1,3) = state(4);
+    Tr(2,3) = state(5);
 
-    cv::Mat res = cv::Mat::zeros(4*selection.size(),1,CV_64F);
-
-    Point3d p1,p2;
-
-    // compute R, dR/dx dR/dy and dR/dz
-    double* x_ptr = x_.ptr<double>();
-    double tx = x_ptr[3], ty = x_ptr[4], tz = x_ptr[5];
-    double sx = sin(x_ptr[0]), cx = cos(x_ptr[0]), sy = sin(x_ptr[1]), cy = cos(x_ptr[1]), sz = sin(x_ptr[2]), cz = cos(x_ptr[2]);
-
-
-    /*** R matrix ***/
-
-    double R_[9] = {    +cy*cz,             -cy*sz,             +sy,
-                        +sx*sy*cz+cx*sz,    -sx*sy*sz+cx*cz,    -sx*cy,
-                        -cx*sy*cz+sx*sz,    +cx*sy*sz+sx*cz,    +cx*cy};
-
-    Mat R(3,3,CV_64FC1,&R_);
-
-    for (unsigned int i=0; i<selection.size(); i++) {
-
-        p1 = pts3D[selection[i]];
-
-        double* R_ptr = R.ptr<double>();
-        p2 = Point3d(R_ptr[0]*p1.x+R_ptr[1]*p1.y+R_ptr[2]*p1.z+tx, R_ptr[3]*p1.x+R_ptr[4]*p1.y+R_ptr[5]*p1.z+ty, R_ptr[6]*p1.x+R_ptr[7]*p1.y+R_ptr[8]*p1.z+tz);
-
-        res.at<double>(4*i+0) = matches[selection[i]].f3.x-m_param.f1*p2.x/p2.z+m_param.cu1;
-        res.at<double>(4*i+1) = matches[selection[i]].f3.y-m_param.f1*p2.y/p2.z+m_param.cv1;
-        res.at<double>(4*i+2) = matches[selection[i]].f4.x-m_param.f2*(p2.x-m_param.baseline)/p2.z+m_param.cu2;
-        res.at<double>(4*i+3) = matches[selection[i]].f4.y-m_param.f2*p2.y/p2.z+m_param.cv2;
-    }
-    return res;
-}
-
-void StereoVisualOdometry::projectionUpdate(const vector<StereoOdoMatches<Point2f>>& matches, const vector<int>& selection, bool weight){
-
-    J          = cv::Mat::zeros(6,4*selection.size(),CV_64F);
-    predictions  = cv::Mat::zeros(4*selection.size(),1,CV_64F);
-    observations  = cv::Mat::zeros(4*selection.size(),1,CV_64F);
-    residuals = cv::Mat::zeros(4*selection.size(),1,CV_64F);
-
-    Point3d p1,p2,p2d;
-
-    // compute R, dR/dx dR/dy and dR/dz
-
-    double* x_ptr = x.ptr<double>();
-    double tx = x_ptr[3], ty = x_ptr[4], tz = x_ptr[5];
-    double sx = sin(x_ptr[0]), cx = cos(x_ptr[0]), sy = sin(x_ptr[1]), cy = cos(x_ptr[1]), sz = sin(x_ptr[2]), cz = cos(x_ptr[2]);
-
-
-    /*** R matrix ***/
-
-    double R_[9] = {    +cy*cz,             -cy*sz,             +sy,
-                        +sx*sy*cz+cx*sz,    -sx*sy*sz+cx*cz,    -sx*cy,
-                        -cx*sy*cz+sx*sz,    +cx*sy*sz+sx*cz,    +cx*cy};
-
-    Mat R(3,3,CV_64FC1,&R_);
-
-    /*** dR/dx matrix ***/
-
-    double dRdx_[9] = { 0,                  0,                  0,
-                        +cx*sy*cz-sx*sz,    -cx*sy*sz-sx*cz,    -cx*cy,
-                        +sx*sy*cz+cx*sz,    -sx*sy*sz+cx*cz,    -sx*cy};
-
-    Mat dRdx(3,3,CV_64F,dRdx_);
-
-    /*** dR/dy matrix ***/
-
-    double dRdy_[9] = { -sy*cz,     +sy*sz,     +cy,
-                        +sx*cy*cz,  -sx*cy*sz,  +sx*sy,
-                        -cx*cy*cz,  +cx*cy*sz,  -cx*sy};
-
-    Mat dRdy(3,3,CV_64F,dRdy_);
-
-    /*** dR/dz matrix ***/
-
-    double dRdz_[9] = { -cy*sz,             -cy*cz,             0,
-                        -sx*sy*sz+cx*cz,    -sx*sy*cz-cx*sz,    0,
-                        +cx*sy*sz+sx*cz,    +cx*sy*cz-sx*sz,    0};
-
-    Mat dRdz(3,3,CV_64F,dRdz_);
+    //computing projection matrices
+    Matx34d P1(m_param.f1,0,m_param.cu1,0,0,m_param.f1,m_param.cv1,0,0,0,1,0);
+    Matx34d P2(m_param.f2,0,m_param.cu2,-m_param.baseline*m_param.f2,0,m_param.f2,m_param.cv2,0,0,0,1,0);
 
 
     for (unsigned int i=0; i<selection.size(); i++) {
-
-        p1 = pts3D[selection[i]];
-        // compute 3d point in current left coordinate system
-        double* R_ptr = R.ptr<double>();
-        p2 = Point3d(R_ptr[0]*p1.x+R_ptr[1]*p1.y+R_ptr[2]*p1.z+tx, R_ptr[3]*p1.x+R_ptr[4]*p1.y+R_ptr[5]*p1.z+ty, R_ptr[6]*p1.x+R_ptr[7]*p1.y+R_ptr[8]*p1.z+tz);
-        float w;
-        if(weight)
-            w = 1/p1.z;
-        else
-            w = 1;
-
-        for (int j=0; j<6; j++) {
-
-            switch (j) {
-                case 0: {
-                            double* dRdx_ptr = dRdx.ptr<double>();
-                            p2d = Point3d(0, dRdx_ptr[3]*p1.x+dRdx_ptr[4]*p1.y+dRdx_ptr[5]*p1.z, dRdx_ptr[6]*p1.x+dRdx_ptr[7]*p1.y+dRdx_ptr[8]*p1.z);
-                            break;
-                        }
-                case 1: {
-                            double* dRdy_ptr = dRdy.ptr<double>();
-                            p2d = Point3d(dRdy_ptr[0]*p1.x+dRdy_ptr[1]*p1.y+dRdy_ptr[2]*p1.z, dRdy_ptr[3]*p1.x+dRdy_ptr[4]*p1.y+dRdy_ptr[5]*p1.z, dRdy_ptr[6]*p1.x+dRdy_ptr[7]*p1.y+dRdy_ptr[8]*p1.z);
-                            break;
-                        }
-                case 2: {
-                            double* dRdz_ptr = dRdz.ptr<double>();
-                            p2d = Point3d(dRdz_ptr[0]*p1.x+dRdz_ptr[1]*p1.y, dRdz_ptr[3]*p1.x+dRdz_ptr[4]*p1.y, dRdz_ptr[6]*p1.x+dRdz_ptr[7]*p1.y);
-                            break;
-                        }
-                case 3: p2d = Point3d(1,0,0); break;
-                case 4: p2d = Point3d(0,1,0); break;
-                case 5: p2d = Point3d(0,0,1); break;
-            }
-
-            // set jacobian entries (project via K)
-            J.at<double>(j,4*i+0) = w*m_param.f1*(p2d.x*p2.z-p2.x*p2d.z)/(p2.z*p2.z); // left u'
-            J.at<double>(j,4*i+1) = w*m_param.f1*(p2d.y*p2.z-p2.y*p2d.z)/(p2.z*p2.z); // left v'
-            J.at<double>(j,4*i+2) = w*m_param.f2*(p2d.x*p2.z-(p2.x-m_param.baseline)*p2d.z)/(p2.z*p2.z); // right u'
-            J.at<double>(j,4*i+3) = w*m_param.f2*(p2d.y*p2.z-p2.y*p2d.z)/(p2.z*p2.z); // right v'
+        ptH3D pt = Tr*m_pts3D[selection[i]];
+        ptH2D lpt=P1*pt,rpt=P2*pt;
+        normalize(lpt);normalize(rpt);
+        reproj_pts.push_back(pair<ptH2D,ptH2D>(lpt,rpt));
     }
 
-    observations.at<double>(4*i+0) = matches[selection[i]].f3.x;
-    observations.at<double>(4*i+1) = matches[selection[i]].f3.y;
-    observations.at<double>(4*i+2) = matches[selection[i]].f4.x;
-    observations.at<double>(4*i+3) = matches[selection[i]].f4.y;
-
-    predictions.at<double>(4*i+0) = m_param.f1*p2.x/p2.z+m_param.cu1; // left u
-    predictions.at<double>(4*i+1) = m_param.f1*p2.y/p2.z+m_param.cv1; // left v
-    predictions.at<double>(4*i+2) = m_param.f2*(p2.x-m_param.baseline)/p2.z+m_param.cu2; // right u
-    predictions.at<double>(4*i+3) = m_param.f2*p2.y/p2.z+m_param.cv2; // right v
-
-    for(int j=0;j<4;j++)
-        residuals.at<double>(4*i+j) = w*(observations.at<double>(4*i+j)-predictions.at<double>(4*i+j));
-  }
-
+    return reproj_pts;
 }
 
-vector<int> StereoVisualOdometry::randomIndexes(int nb_samples, int nb_tot) {
+vector<int> StereoVisualOdometry::selectRandomIndices(int nb_samples, int nb_tot) {
 
     assert(nb_samples < nb_tot);
     vector<int> samples_idx;
@@ -277,7 +154,7 @@ vector<int> StereoVisualOdometry::randomIndexes(int nb_samples, int nb_tot) {
         int idx = rand()% nb_tot; //select random number between 0 and nb_tot
 
         bool exists = false;
-        for(int j=0;j<samples_idx.size();j++) // ckeck if the index is alredy included
+        for(unsigned int j=0;j<samples_idx.size();j++) // ckeck if the index is alredy included
             if(idx == samples_idx[j])
                 exists = true;
         if(!exists){
@@ -289,7 +166,7 @@ vector<int> StereoVisualOdometry::randomIndexes(int nb_samples, int nb_tot) {
   return samples_idx;
 }
 
-bool StereoVisualOdometry::optimize(const std::vector<StereoOdoMatches<Point2f>>& matches, const std::vector<int>& selection, bool weight){
+bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weight){
 
     if (selection.size()<3) // if less than 3 points triangulation impossible
         return false;
@@ -299,95 +176,138 @@ bool StereoVisualOdometry::optimize(const std::vector<StereoOdoMatches<Point2f>>
     double lambda=1e-2;
 
     do {
+        // computing residuals (error between predicted and observed features)
+        vector<pair<ptH2D,ptH2D>> pred = reproject(m_state,selection);
+        Mat residuals(4*selection.size(),1,CV_64F);
+        for(unsigned int i=0;i<selection.size();i++){
+            residuals.at<double>(i*4) = m_obs[selection[i]].first(0)-pred[i].first(0);
+            residuals.at<double>(i*4+1) = m_obs[selection[i]].first(1)-pred[i].first(1);
+            residuals.at<double>(i*4+2) = m_obs[selection[i]].second(0)-pred[i].second(0);
+            residuals.at<double>(i*4+3) = m_obs[selection[i]].second(1)-pred[i].second(1);
+        }
 
-        projectionUpdate(matches,selection,weight);
+        //computing the jacobian
+        updateJacobian(selection);
 
         // init
-        cv::Mat A = J * J.t();
+        cv::Mat A = m_J * m_J.t();
         cv::Mat B(6,1,CV_64F);
         cv::Mat X(6,1,CV_64F);
 
         for(int i=0;i<6;i++){
-            Mat b = J.row(i) * residuals;
+            Mat b = m_J.row(i) * residuals;
             B.at<double>(i) = b.at<double>(0);
         }
 
         if(m_param.method == LM)
             A += lambda * Mat::diag(A.diag());
 
+        //solve A X = B (X = inv(J^2) * J * residual, for GN with step = 1)
         if(solve(A,B,X,DECOMP_QR)){
 
-            if(m_param.method == GN){   // Gauss-Newton
-                x += X;
-                cout << "X " << X.t() << endl;
+            if(m_param.method == GN){
+                // Gauss-Newton
+                m_state += (Matx61d)(X);
                 double min, max;
                 cv::minMaxLoc(X,&min,&max);
-//                cout << max << endl;
-                if(max < m_param.eps && !isinf(max))
+                if(max < m_param.eps && !isinf(max)){
                     result = 1;
+                }
             }
-            else{                       // Levenberg-Marquart
-                Mat x_test = x + X;
+            else{
+                // Levenberg-Marquart
+                Matx61d x_test = m_state + (Matx61d)(X);
 
-                Mat r = applyFunction(matches,x_test,selection);
+                Mat r(4*selection.size(),1,CV_64F);
+                vector<pair<ptH2D,ptH2D>> pred_ = reproject(x_test,selection);
+                for(unsigned int i=0;i<selection.size();i++){
+                    r.at<double>(i*4) = m_obs[selection[i]].first(0)-pred_[i].first(0);
+                    r.at<double>(i*4+1) = m_obs[selection[i]].first(1)-pred_[i].first(1);
+                    r.at<double>(i*4+2) = m_obs[selection[i]].second(0)-pred_[i].second(0);
+                    r.at<double>(i*4+3) = m_obs[selection[i]].second(1)-pred_[i].second(1);
+                }
                 Mat rho = (residuals.t()*residuals - r.t()*r)/(X.t()*(lambda*X+B));
-                if(abs(rho.at<double>(0)) > m_param.e4){ //threshold
+                if(fabs(rho.at<double>(0)) > m_param.e4){ //threshold
                     lambda = max(lambda/9,1.e-7);
-                    x = x_test;
+                    m_state = x_test;
                 }
                 else
                     lambda = min(lambda*11,1.e7);
 
-                double min, max, m1,m2,m3;
+                double min, max, m1,m2;
                 cv::minMaxLoc(X,&min,&max);
                 cv::minMaxLoc(B,&min,&m1);
-                cv::minMaxLoc(x_test/x,&min,&m2);
+                cv::minMaxLoc((Mat)x_test/(Mat)m_state,&min,&m2);
                 if(max < m_param.e1 || m1 < m_param.e2 || m2 < m_param.e3)
                     result = 1;
 
             }
         }else
             result = -1;
-
-        // perform elimination
-//        if (solve(A,B,X,DECOMP_QR)) {
-//            bool converged = true;
-//            for (int m=0; m<6; m++) {
-//              double* x_ptr = x.ptr<double>();
-//              x_ptr[m] += m_param.step_size*X.at<double>(m,0);
-//              if (fabs(X.at<double>(m,0))>m_param.eps)
-//                converged = false;
-//            }
-//            if (converged)
-//              result = 1;
-//
-//        } else
-//            result = -1;
-
     }while(k++ < m_param.max_iter && result==0);
 
-    cout << k << "/" << result << endl;
-    if(result == -1 || k > m_param.max_iter)
+    if(result == -1 || k== m_param.max_iter) // if failed or reached max iterations, return false (didn't work)
         return false;
     else
         return true;
 }
 
+void StereoVisualOdometry::updateObservations(const std::vector<StereoOdoMatchesf>& matches){
+    m_obs.clear();
+    for(unsigned int i=0;i<matches.size();i++)
+        m_obs.push_back(pair<ptH2D,ptH2D>(ptH2D(matches[i].f3.x,matches[i].f3.y,1),ptH2D(matches[i].f4.x,matches[i].f4.y,1)));
+}
+
+void StereoVisualOdometry::updateJacobian(const vector<int>& selection){
+
+    Euld r(m_state(0),m_state(1),m_state(2));
+    Matx44d Tr = r.getR4();
+    Matx33d dRdx = r.getdRdr();
+    Matx33d dRdy = r.getdRdp();
+    Matx33d dRdz = r.getdRdy();
+
+    Tr(0,3) = m_state(3);
+    Tr(1,3) = m_state(4);
+    Tr(2,3) = m_state(5);
+
+    m_J.create(6,selection.size()*4,CV_64FC1);
+
+    for (unsigned int i=0; i<selection.size(); i++) {
+
+        ptH3D pt = m_pts3D[selection[i]];
+        ptH3D pt_next = Tr*pt;
+        normalize(pt_next);
+
+        pt3D pt_(pt(0),pt(1),pt(2));
+        pt3D dpt_next;
+
+        for(unsigned j=0;j<6;j++){ // derivation depending on element of the state (euler angles and translation)
+            switch(j){
+                case 0: {dpt_next = dRdx*pt_;break;}
+                case 1: {dpt_next = dRdy*pt_;break;}
+                case 2: {dpt_next = dRdz*pt_;break;}
+                case 3: {dpt_next = pt3D(1,0,0);break;}
+                case 4: {dpt_next = pt3D(0,1,0);break;}
+                case 5: {dpt_next = pt3D(0,0,1);break;}
+            }
+            m_J.at<double>(j,i*4) = m_param.f1*(dpt_next(0)*pt_next(2)-pt_next(0)*dpt_next(2))/(pt_next(2)*pt_next(2));
+            m_J.at<double>(j,i*4+1) = m_param.f1*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
+            m_J.at<double>(j,i*4+2) = m_param.f2*(dpt_next(0)*pt_next(2)-(pt_next(0)-m_param.baseline)*dpt_next(2))/(pt_next(2)*pt_next(2));
+            m_J.at<double>(j,i*4+3) = m_param.f2*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
+       }
+    }
+}
+
 cv::Mat StereoVisualOdometry::getMotion(){
 
-    double* x_ptr = x.ptr<double>();
-    double tx = x_ptr[3], ty = x_ptr[4], tz = x_ptr[5];
-    double sx = sin(x_ptr[0]), cx = cos(x_ptr[0]), sy = sin(x_ptr[1]), cy = cos(x_ptr[1]), sz = sin(x_ptr[2]), cz = cos(x_ptr[2]); //compute sine cosine from the state vector
+    Euld r(m_state(0),m_state(1),m_state(2));
 
-    //create rigid-body transformation matrix (R|T) from state vector
-    cv::Mat Rt(4,4,CV_64F);
-    double* Rt_ptr = Rt.ptr<double>();
-    Rt_ptr[0]  = +cy*cz;          Rt_ptr[1]  = -cy*sz;          Rt_ptr[2]  = +sy;    Rt_ptr[3]  = tx;
-    Rt_ptr[4]  = +sx*sy*cz+cx*sz; Rt_ptr[5]  = -sx*sy*sz+cx*cz; Rt_ptr[6]  = -sx*cy; Rt_ptr[7]  = ty;
-    Rt_ptr[8]  = -cx*sy*cz+sx*sz; Rt_ptr[9]  = +cx*sy*sz+sx*cz; Rt_ptr[10] = +cx*cy; Rt_ptr[11] = tz;
-    Rt_ptr[12] = 0;               Rt_ptr[13] = 0;               Rt_ptr[14] = 0;      Rt_ptr[15] = 1;
+    Matx44d Rt = r.getR4();
+    Rt(0,3) = m_state(3);
+    Rt(1,3) = m_state(4);
+    Rt(2,3) = m_state(5);
 
-    return Rt;
+    return (Mat)Rt;
 }
 
 }

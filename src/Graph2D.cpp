@@ -47,11 +47,10 @@ void Graph2D::refresh(){
         dy = abs(m_min_y)*(height-2*m_margin)/(m_max_y-m_min_y);
 
     plot_axis(m_image,(int)dx,(int)dy);
-//    Scalar color(255,0,0)
     for(int k=0;k<m_nb_curves;k++){
         Point2f prev;
         float pitch = trunc(m_values.size()/m_max_pts)+1;
-        for(int i=0;i< m_values[k].size();i+=pitch){
+        for(unsigned int i=0;i< m_values[k].size();i+=pitch){
             Point2f p(round(m_margin+(m_values[k][i].x-m_min_x)*(width-m_margin-m_margin)/(m_max_x-m_min_x)),round(height-m_margin-(m_values[k][i].y-m_min_y)*(height-m_margin-m_margin)/(m_max_y-m_min_y)));
             if(m_type == DOT)
                 circle(m_image, p ,1,m_colours[k], 2);
