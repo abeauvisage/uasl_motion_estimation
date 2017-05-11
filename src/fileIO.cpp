@@ -70,7 +70,7 @@ int loadYML(string filename){
         calib["cu"] >> param_mono.cu;
         calib["cv"] >> param_mono.cv;
         calib["ransac"] >> param_mono.ransac;
-        calib["treshold"] >> param_mono.inlier_threshold;
+        calib["threshold"] >> param_mono.inlier_threshold;
     }
 
     string filter;
@@ -83,6 +83,8 @@ int loadYML(string filename){
         ft = EKFE;
     if(filter == "RCEKF")
         ft = RCEKF;
+    if(filter == "MREKF")
+        ft = MREKF;
     configFile["appendix"] >> appendix;
 
     return 1;
@@ -117,7 +119,7 @@ int openGpsFile(std::string filename){
 }
 
 int readImageData(int& nb, double& stamp){
-    if(!imagefile.is_open())
+    if(!imagefile.is_open() || imagefile.eof())
         return 0;
     char c;
     imagefile >> nb >> c >> stamp >> c;

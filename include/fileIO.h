@@ -18,9 +18,10 @@ enum SetupType{stereo,mono}; //!< Type of setup: stereo or monocular
 /*! the filter can be:
     - EKF: an Extended Kalman Filter (Quaternion)
     - EKFE: an Extended Kalman Filter (Euler angles)
+    - MREKF: Multi-rate Kalman Filter (Euler angles)
     - RCEKF: an Extended Kalman Filter with robocentric coordinate frame (Quaternion)
     - Linear: a linear Kalman Filter */
-enum FilterType{EKF,EKFE,RCEKF,Linear,None};
+enum FilterType{EKF,EKFE,MREKF,RCEKF,Linear,None};
 
 //! structure describing the number of frame and frequency
 /*! - fframe: number of the first frame
