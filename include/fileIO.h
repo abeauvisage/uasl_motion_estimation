@@ -43,7 +43,6 @@ extern std::string appendix;
 
 // different I/O files (extern extern so only used by fileIO.cpp)
 static std::ifstream imagefile;
-static std::ifstream imufile;
 static std::ifstream gpsfile;
 static std::ofstream logFile;
 
@@ -53,23 +52,15 @@ int loadYML(std::string filename);
 /*! if monocular, the second image of the pair is empty. */
 std::pair<cv::Mat,cv::Mat> loadImages(std::string& dir, int nb);
 int openImageFile(std::string filename);
-int openImuFile(std::string filename);
 int openGpsFile(std::string filename);
 inline void closeImageFile(){imagefile.close();}
-inline void closeImuFile(){imufile.close();}
 inline void closeGpsFile(){gpsfile.close();}
 //! reads the one ImageData (the next one in the file).
 /*! returns the number of the image and its corresponding timestamp.*/
 int readImageData(int& nb, double& stamp);
-//! reads the one ImuData (the next one in the file).
-/*! returns an ImuData structure containing the acceleration, angular velocity and the corresponding timestamp.*/
-int readImuData(ImuData& data);
 //! reads the one GpsData (the next one in the file).
 /*! returns a GpsData structure containing the longitude, latitude, altitude and the corresponding timestamp.*/
 int readGpsData(GpsData& data);
-//! get the first ImuData after the provided timestamp.
-/*! Corresponds to the average of all the imu data between current position in the file and the first imu data after the timestamp.*/
-int getNextImuData(double stamp, ImuData& data);
 //! get the first GpsData after the provided timestamp.
 int getNextGpsData(double stamp, GpsData& data);
 
@@ -77,6 +68,39 @@ inline void openLogFile(std::string filename){logFile.open(filename,std::ofstrea
 //! write a string in the logFile. Useful for displaying data without flooding the standard output.
 inline void writeLogFile(std::string message){logFile << message;}
 inline void closeLogFile(){logFile.close();}
+
+class IOFile{
+
+public:
+    IOFile(std::string filename):m_filename(filename){openFile(m_filename);}
+    ~IOFile(){m_file.close();}
+    bool is_open(){return m_file.is_open();}
+    int openFile(std::string filename);
+    void closeFile(){m_file.close();}
+
+protected:
+    std::string m_filename;
+    std::ifstream m_file;
+
+};
+
+class ImuFile : public IOFile{
+
+public:
+    ImuFile(std::string filename):IOFile(filename){openFile(filename);}
+    int openFile(std::string filename);
+    //! reads the one ImuData (the next one in the file).
+    /*! returns an ImuData structure containing the acceleration, angular velocity and the corresponding timestamp.*/
+    int readData(ImuData& data);
+    //! get the first ImuData after the provided timestamp.
+    /*! Corresponds to the average of all the imu data between current position in the file and the first imu data after the timestamp.*/
+    int getNextData(double stamp, ImuData& data);
+
+private:
+    std::vector<std::string> m_file_desc;
+
+};
+
 }
 
 #endif // FILEIO_H_INCLUDED

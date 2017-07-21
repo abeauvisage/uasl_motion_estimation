@@ -23,6 +23,8 @@ class Graph3D
         void addPose(const cv::Matx44d& pose);
         //! Update the camera pose.
         void addPose(const cv::Affine3d& pose);
+        //!Add 3D vector
+        void add3Vector(const cv::Point3d& vec){cv::viz::WArrow vec_(cv::Point3d(0,0,0),vec);m_viz.showWidget("Vector Widget",vec_);}
         //! Add an image to be displayed in the camera image plane.
         void addImage(const cv::Mat& img){m_image = img.clone();}
         //! reset the view of the widget to get a global view of the trajectory.

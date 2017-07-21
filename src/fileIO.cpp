@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 
 using namespace std;
 using namespace cv;
@@ -91,32 +92,59 @@ int loadYML(string filename){
 }
 
 
-int openImageFile(std::string filename){
-    imagefile.open(filename);
-    if(!imagefile.is_open()){
+//int openImageFile(std::string filename){
+//    imagefile.open(filename);
+//    if(!imagefile.is_open()){
+//        cerr << "could not open " << filename << endl;
+//        return 0;
+//    }
+//    return 1;
+//}
+
+int IOFile::openFile(std::string filename){
+    cout << "opening " << filename << endl;
+    m_file.open(filename);
+    if(!m_file.is_open()){
         cerr << "could not open " << filename << endl;
         return 0;
     }
     return 1;
 }
 
-int openImuFile(std::string filename){
-    imufile.open(filename);
-    if(!imufile.is_open()){
-        cerr << "could not open " << filename << endl;
+int ImuFile::openFile(std::string filename){
+
+    if(!m_file.is_open())
+        return 0;
+    string header;getline(m_file,header);
+    int pos = header.find("#");
+    if(pos < 0){
+        cerr << "could not find header in " << filename << endl;
+        m_file.close();
         return 0;
     }
+    else{
+        string h_(header.substr(pos+1,header.length()));
+        cout << h_ << endl;
+        string buff;
+        for(auto n:h_){
+            if(n != ',') buff+=n;else
+            if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << endl;buff="";}
+        }
+        if(buff != "") m_file_desc.push_back(buff);
+        cout << buff << endl;
+    }
+
     return 1;
 }
 
-int openGpsFile(std::string filename){
-    gpsfile.open(filename);
-    if(!gpsfile.is_open()){
-        cerr << "could not open " << filename << endl;
-        return 0;
-    }
-    return 1;
-}
+//int openGpsFile(std::string filename){
+//    gpsfile.open(filename);
+//    if(!gpsfile.is_open()){
+//        cerr << "could not open " << filename << endl;
+//        return 0;
+//    }
+//    return 1;
+//}
 
 int readImageData(int& nb, double& stamp){
     if(!imagefile.is_open() || imagefile.eof())
@@ -126,17 +154,48 @@ int readImageData(int& nb, double& stamp){
     return 1;
 }
 
-int readImuData(ImuData& data){
-    if(!imufile.is_open() || imufile.eof())
+int ImuFile::readData(ImuData& data){
+
+    if(!m_file.is_open() || m_file.eof())
         return 0;
+
     char c;
-    double stamp;
-    double ax=0,ay=0,az=0,qw=0,qx=0,qy=0,qz=0,gx=0,gy=0,gz=0;
-    imufile >> stamp >> c >> qw >> c >> qx >> c >> qy >> c >> qz >> c >> ax >> c >> ay >> c >> az >> c >> gx >> c >> gy >> c >> gz >> c;
-    data.stamp = stamp;
-    data.acc = Vec3d(ax,ay,az);
-    data.gyr = Vec3d(gx,gy,gz);
-    data.orientation = Quat<double>(qw,qx,qy,qz);
+    double value;
+    Vec4d orientation;
+    for(unsigned int i=0;i<m_file_desc.size();i++){
+        if(!m_file.is_open() || m_file.eof())
+        return 0;
+        m_file >> value >> c;
+        if(m_file_desc[i] == "timestamp")
+            data.stamp = value;
+        if(m_file_desc[i] == "acc_x")
+            data.acc[0] = value;
+        if(m_file_desc[i] == "acc_y")
+            data.acc[1] = value;
+        if(m_file_desc[i] == "acc_z")
+            data.acc[2] = value;
+        if(m_file_desc[i] == "av_x")
+            data.gyr[0] = value;
+        if(m_file_desc[i] == "av_y")
+            data.gyr[1] = value;
+        if(m_file_desc[i] == "av_z")
+            data.gyr[2] = value;
+        if(m_file_desc[i] == "pos_x")
+            data.pos[0] = value;
+        if(m_file_desc[i] == "pos_y")
+            data.pos[1] = value;
+        if(m_file_desc[i] == "pos_z")
+            data.pos[2] = value;
+        if(m_file_desc[i] == "qw")
+            orientation[0] = value;
+        if(m_file_desc[i] == "qx")
+            orientation[1] = value;
+        if(m_file_desc[i] == "qy")
+            orientation[2] = value;
+        if(m_file_desc[i] == "qz")
+            orientation[3] = value;
+    }
+    data.orientation = Quatd(orientation[0],orientation[1],orientation[2],orientation[3]);
     return 1;
 }
 
@@ -153,23 +212,23 @@ int readGpsData(GpsData& data){
     return 1;
 }
 
-int getNextImuData(double stamp, ImuData& data){
+int ImuFile::getNextData(double stamp, ImuData& data){
 
-    if(!imufile.is_open() || imufile.eof())
+    if(!m_file.is_open() || m_file.eof())
         return 0;
     data = ImuData();
     int count=0;
     ImuData rdata;
-    while(data.stamp <= stamp && readImuData(rdata)){
+    while(data.stamp <= stamp && readData(rdata)){
 
         data+=rdata;
         count++;
     }
     data /=count;
-    if(imufile.eof())
+    if(m_file.eof())
         return 0;
     else
-        return 1;
+        return count;
 }
 
 int getNextGpsData(double stamp, GpsData& data){

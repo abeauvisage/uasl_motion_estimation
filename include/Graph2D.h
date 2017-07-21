@@ -20,7 +20,7 @@ class Graph2D
 
     public:
 	//! Type of lines (with dots for values or not)
-        enum Type{DOT,LINE};
+        enum Type{DOT,LINE,DOTTEDLINE};
 
 	/*! Default constructor. Takes as input:
             - name of the window created
@@ -28,14 +28,14 @@ class Graph2D
             - boolean to display an orthogonal graph or not
             - size of the window
          */
-        Graph2D(std::string name, const int nb=1, bool orth=true, Type t=DOT, cv::Size s=cv::Size(640,480));
+        Graph2D(std::string name, const int nb=1, bool orth=true, Type t=DOTTEDLINE, cv::Size s=cv::Size(640,480));
         void refresh();
 	/*!< add a float point to the ith curve. This Function is called for 2D graphs. */
         void addValue(cv::Point2f& v, int i=1);
 	/*!< add a double point to the ith curve. This Function is called for 2D graph. */
         void addValue(cv::Point2d& v, int i=1){cv::Point2f pf(v.x,v.y);addValue(pf,i);}
 	/*!< add a double value to the ith curve. This Function is called for 1D graph. */
-        void addValue(double v, int i=1){cv::Point2f p(count,v);addValue(p,i);count++;}
+        void addValue(double v, int i=1){if(m_values[i-1].empty()){cv::Point2f pt(0,0);addValue(pt,i);}cv::Point2f p(m_values[i-1].size(),v);addValue(p,i);}
         void addLegend(std::string s, int i=1){m_legend[i-1]=s;} //!< store the legend for the ith curve.
         void clearGraph(); //!< remove values stored and refresh the graph.
         void saveGraph(std::string filename){imwrite(filename,m_image);} //!< save the image created in a file.

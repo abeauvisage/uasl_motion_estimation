@@ -49,7 +49,7 @@ public:
 
 	//displaying
 	friend std::ostream& operator<<(std::ostream& os, const Euler<T>& e){
-        os << "[" << e.m_roll << "," << e.m_pitch << "," << e.m_yaw << ", rad]" << std::endl;
+        os << "[" << e.m_roll << "," << e.m_pitch << "," << e.m_yaw << ", rad]";
         return os;
     }
 	std::string getDegrees(); /*!< return the degree angles as a string (for display purposes). */
@@ -97,7 +97,7 @@ public:
 	Quat conj() const {return Quat(m_w,-m_x,-m_y,-m_z);} //!< returns the conjugate of the object.
 
 	friend std::ostream& operator<<(std::ostream& os, const Quat<T>& q){
-        os << "[" << q.m_w << "|" << q.m_x << "," << q.m_y << "," << q.m_z << "] angle: " << 2*acos(q.m_w) << std::endl;
+        os << "[" << q.m_w << "|" << q.m_x << "," << q.m_y << "," << q.m_z << "] angle: " << 2*acos(q.m_w);
         return os;
     }
 

@@ -17,7 +17,7 @@ Graph2D::Graph2D(string name, const int nb, bool orth, Type t, cv::Size s): m_na
 
     for(int i=0;i<m_nb_curves;i++){
         vector<Point2f> pts;
-        pts.push_back(Point2f(0,0));
+//        pts.push_back(Point2f(0,0));
         m_values.push_back(pts);
         m_colours.push_back(randomColor(rng));
         m_legend.push_back("");
@@ -52,10 +52,10 @@ void Graph2D::refresh(){
         float pitch = trunc(m_values.size()/m_max_pts)+1;
         for(unsigned int i=0;i< m_values[k].size();i+=pitch){
             Point2f p(round(m_margin+(m_values[k][i].x-m_min_x)*(width-m_margin-m_margin)/(m_max_x-m_min_x)),round(height-m_margin-(m_values[k][i].y-m_min_y)*(height-m_margin-m_margin)/(m_max_y-m_min_y)));
-            if(m_type == DOT)
+            if(m_type != LINE)
                 circle(m_image, p ,1,m_colours[k], 2);
-            if(i>0)
-                line(m_image,prev,p,m_colours[k],m_type+1);
+            if(m_type != DOT && i>0)
+                line(m_image,prev,p,m_colours[k],1);
             prev=p;
         }
     }
