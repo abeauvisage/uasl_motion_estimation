@@ -17,6 +17,7 @@
 					<Add option="-fPIC" />
 					<Add directory="include" />
 					<Add directory="/usr/local/include" />
+					<Add directory="/usr/include/eigen3/" />
 				</Compiler>
 				<Linker>
 					<Add library="opencv_core" />
@@ -41,6 +42,7 @@
 					<Add option="-fPIC" />
 					<Add directory="include" />
 					<Add directory="/usr/local/include" />
+					<Add directory="/usr/include/eigen3/" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -51,6 +53,9 @@
 					<Add library="opencv_videoio" />
 					<Add library="opencv_imgcodecs" />
 					<Add library="opencv_viz" />
+					<Add library="ceres" />
+					<Add library="gflags" />
+					<Add library="glog" />
 					<Add directory="/usr/local/lib" />
 				</Linker>
 			</Target>
@@ -82,6 +87,7 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="include/CeresBA.h" />
 		<Unit filename="include/Graph2D.h" />
 		<Unit filename="include/Graph3D.h" />
 		<Unit filename="include/data_utils.h" />
@@ -92,16 +98,25 @@
 		<Unit filename="include/stereo_viso.h" />
 		<Unit filename="include/utils.h" />
 		<Unit filename="include/viso.h" />
+		<Unit filename="include/windowedBA.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="main.cpp">
 			<Option target="Release" />
 			<Option target="Test" />
 		</Unit>
+		<Unit filename="src/CeresBA.cpp" />
 		<Unit filename="src/Graph2D.cpp" />
 		<Unit filename="src/Graph3D.cpp" />
 		<Unit filename="src/fileIO.cpp" />
 		<Unit filename="src/mono_viso.cpp" />
 		<Unit filename="src/stereo_viso.cpp" />
 		<Unit filename="src/utils.cpp" />
+		<Unit filename="src/windowedBA.cpp">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger />

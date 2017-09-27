@@ -51,18 +51,6 @@ int loadYML(std::string filename);
 //! returns the image(s) corresponding to the frame number
 /*! if monocular, the second image of the pair is empty. */
 std::pair<cv::Mat,cv::Mat> loadImages(std::string& dir, int nb);
-int openImageFile(std::string filename);
-int openGpsFile(std::string filename);
-inline void closeImageFile(){imagefile.close();}
-inline void closeGpsFile(){gpsfile.close();}
-//! reads the one ImageData (the next one in the file).
-/*! returns the number of the image and its corresponding timestamp.*/
-int readImageData(int& nb, double& stamp);
-//! reads the one GpsData (the next one in the file).
-/*! returns a GpsData structure containing the longitude, latitude, altitude and the corresponding timestamp.*/
-int readGpsData(GpsData& data);
-//! get the first GpsData after the provided timestamp.
-int getNextGpsData(double stamp, GpsData& data);
 
 inline void openLogFile(std::string filename){logFile.open(filename,std::ofstream::trunc);}
 //! write a string in the logFile. Useful for displaying data without flooding the standard output.
@@ -98,6 +86,32 @@ public:
 
 private:
     std::vector<std::string> m_file_desc;
+
+};
+
+class GpsFile : public IOFile{
+
+public:
+    GpsFile(std::string filename):IOFile(filename){openFile(filename);}
+    int openFile(std::string filename);
+    //! reads the one GpsData (the next one in the file).
+    /*! returns an GpsData structure containing the acceleration, angular velocity and the corresponding timestamp.*/
+    int readData(GpsData& data);
+    //! get the first GpsData after the provided timestamp.
+    int getNextData(double stamp, GpsData& data);
+
+private:
+    std::vector<std::string> m_file_desc;
+
+};
+
+class ImageFile : public IOFile{
+
+public:
+    ImageFile(std::string filename):IOFile(filename){}
+    //! reads the one ImageData (the next one in the file).
+    /*! returns the number of the image and its corresponding timestamp.*/
+    int readData(int& nb,double& stamp);
 
 };
 

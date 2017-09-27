@@ -19,8 +19,10 @@ std::string appendix;
 int loadYML(string filename){
 
     FileStorage configFile(filename, FileStorage::READ);
-    if(!configFile.isOpened())
+    if(!configFile.isOpened()){
+        cerr << "YML file could not be opened!" << endl;
         return 0;
+    }
 
     // defining type (mono / stereo)
     string type; configFile["type"] >> type;
@@ -91,16 +93,6 @@ int loadYML(string filename){
     return 1;
 }
 
-
-//int openImageFile(std::string filename){
-//    imagefile.open(filename);
-//    if(!imagefile.is_open()){
-//        cerr << "could not open " << filename << endl;
-//        return 0;
-//    }
-//    return 1;
-//}
-
 int IOFile::openFile(std::string filename){
     cout << "opening " << filename << endl;
     m_file.open(filename);
@@ -137,20 +129,37 @@ int ImuFile::openFile(std::string filename){
     return 1;
 }
 
-//int openGpsFile(std::string filename){
-//    gpsfile.open(filename);
-//    if(!gpsfile.is_open()){
-//        cerr << "could not open " << filename << endl;
-//        return 0;
-//    }
-//    return 1;
-//}
+int GpsFile::openFile(std::string filename){
 
-int readImageData(int& nb, double& stamp){
-    if(!imagefile.is_open() || imagefile.eof())
+    if(!m_file.is_open())
+        return 0;
+    string header;getline(m_file,header);
+    int pos = header.find("#");
+    if(pos < 0){
+        cerr << "could not find header in " << filename << endl;
+        m_file.close();
+        return 0;
+    }
+    else{
+        string h_(header.substr(pos+1,header.length()));
+        cout << h_ << endl;
+        string buff;
+        for(auto n:h_){
+            if(n != ',') buff+=n;else
+            if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << endl;buff="";}
+        }
+        if(buff != "") m_file_desc.push_back(buff);
+        cout << buff << endl;
+    }
+
+    return 1;
+}
+
+int ImageFile::readData(int& nb, double& stamp){
+    if(!m_file.is_open() || m_file.eof())
         return 0;
     char c;
-    imagefile >> nb >> c >> stamp >> c;
+    m_file >> nb >> c >> stamp >> c;
     return 1;
 }
 
@@ -199,18 +208,41 @@ int ImuFile::readData(ImuData& data){
     return 1;
 }
 
-int readGpsData(GpsData& data){
-    if(!gpsfile.is_open() || gpsfile.eof())
+int GpsFile::readData(GpsData& data){
+
+    if(!m_file.is_open() || m_file.eof())
         return 0;
+
     char c;
-    double stamp,lon,lat,alt;
-    gpsfile >> stamp >> c >> lat >> c >> lon >> c >> alt>> c;
-    data.stamp = stamp;
-    data.lon = lon;
-    data.lat = lat;
-    data.alt = alt;
+    double value;
+    for(unsigned int i=0;i<m_file_desc.size();i++){
+        if(!m_file.is_open() || m_file.eof())
+        return 0;
+        m_file >> value >> c;
+        if(m_file_desc[i] == "timestamp")
+            data.stamp = value;
+        if(m_file_desc[i] == "longitude")
+            data.lon = value;
+        if(m_file_desc[i] == "latitude")
+            data.lat = value;
+        if(m_file_desc[i] == "elevation")
+            data.alt = value;
+    }
     return 1;
 }
+
+//int Gps::readGpsData(GpsData& data){
+//    if(!gpsfile.is_open() || gpsfile.eof())
+//        return 0;
+//    char c;
+//    double stamp,lon,lat,alt;
+//    gpsfile >> stamp >> c >> lat >> c >> lon >> c >> alt>> c;
+//    data.stamp = stamp;
+//    data.lon = lon;
+//    data.lat = lat;
+//    data.alt = alt;
+//    return 1;
+//}
 
 int ImuFile::getNextData(double stamp, ImuData& data){
 
@@ -231,12 +263,12 @@ int ImuFile::getNextData(double stamp, ImuData& data){
         return count;
 }
 
-int getNextGpsData(double stamp, GpsData& data){
+int GpsFile::getNextData(double stamp, GpsData& data){
 
     if(!gpsfile.is_open() || gpsfile.eof())
         return 0;
     do{
-        readGpsData(data);
+        readData(data);
     }while(data.stamp <= stamp);
     return 1;
 }
