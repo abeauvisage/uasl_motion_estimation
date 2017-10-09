@@ -17,47 +17,65 @@ namespace me{
 static double e1=1e-5,e2=1e-3,e3=1e-1,e4=1e-8;
 static int max_iter=100;
 static Mat img_;
+static vector<double> weights_;
 
-enum StopCondition{NO_STOP,SMALL_GRADIENT,SMALL_INCREMENT,MAX_ITERATIONS,SMALL_DECREASE_FUNCTION,SMALL_REPROJ_ERROR,NO_CONVERGENCE};
+static StereoVisualOdometry::parameters params_stereo;
+static MonoVisualOdometry::parameters params_mono;
 
-static StereoVisualOdometry::parameters params_;
-
-Vec3d solveWindowedBA(const std::vector<std::vector<cv::Point2f>>& observations, vector<ptH3D>& pts3D, const StereoVisualOdometry::parameters& params, const Mat& img, Vec3d dist){
+void solveWindowedBA(const std::vector<std::vector<cv::Point2f>>& observations, vector<ptH3D>& pts3D, const vector<double>& weights, const MonoVisualOdometry::parameters& params, const Mat& img, std::vector<Vec3d>& ori, std::vector<Vec3d>& pos){
 
     assert(observations.size() > 0 && pts3D.size() == observations[0].size());
     std::cout << "[Windowed BA] " << observations.size() << " views" << std::endl;
     std::cout << "[Windowed BA] " << pts3D.size() << " pts" << std::endl;
 
-    params_ = params;
+    params_mono = params;
     img_ = img.clone();
+    weights_ = weights;
 
     Mat state;
     //initialize state
     state = Mat::zeros(6*observations.size()+3*pts3D.size(),1,CV_64F);
-    for(int j=0;j<observations.size();j++)
-        state.at<double>(j*6+4,1) = (j+1)*dist(2)/observations.size();
+//    for(int j=0;j<observations.size();j++){
+//        state.Range(j,j+3) = getEuler)
+//
+//        state.at<double>(j*6+4,1) = (j)*dist(2)/(observations.size()-1);
+//    }
+
     for(uint i=0;i<pts3D.size();i++){
-        ptH3D pt = pts3D[i];
-        normalize(pt);
+        pt3D pt = to_euclidean(pts3D[i]);
         state.at<double>(observations.size()*6+i*3) = pt(0);
         state.at<double>(observations.size()*6+i*3+1) = pt(1);
         state.at<double>(observations.size()*6+i*3+2) = pt(2);
     }
 
+    cout << "initial state " << state.t() << endl;
+
     bool success = optimize(observations,pts3D,state);
 
     if(success){
         cout << "worked"<< endl;
-        for(int i=0;i<pts3D.size();i++){
-            ptH3D pt(state.at<double>(observations.size()*6+i*3),state.at<double>(observations.size()*6+i*3+1),state.at<double>(observations.size()*6+i*3+2),1);
-            pts3D[i] = pt;
+        for(uint i=0;i<pts3D.size();i++){
+            pts3D[i] = ptH3D(state.at<double>(observations.size()*6+i*3),state.at<double>(observations.size()*6+i*3+1),state.at<double>(observations.size()*6+i*3+2),1);
         }
-        return Vec3d(state.at<double>(6*observations.size()-3),state.at<double>(6*observations.size()-2),state.at<double>(6*observations.size()-1));
+        ori.clear();pos.clear();
+        for(uint j=0;j<observations.size();j++){
+            Vec3d vec = state.rowRange(j*6,j*6+3);
+            ori.push_back(vec);
+            vec = state.rowRange(j*6+3,j*6+6);
+            pos.push_back(vec);
+        }
     }
-    else
+    else{
         cout << "didn't work" << endl;
+        ori.clear();pos.clear();
+        for(uint j=0;j<observations.size();j++){
+            Vec3d vec(-1,-1,-1);
+            ori.push_back(vec);
+            pos.push_back(vec);
+        }
+    }
 
-    return Vec3d(-1,-1,-1);
+//    return Vec3d(-1,-1,-1);
 }
 
 cv::Vec3d solveWindowedBA(const std::vector<std::vector<std::pair<me::ptH2D,me::ptH2D>>>& observations,const std::vector<ptH3D>& pts3D, const StereoVisualOdometry::parameters& params, const cv::Mat& img){
@@ -65,7 +83,7 @@ cv::Vec3d solveWindowedBA(const std::vector<std::vector<std::pair<me::ptH2D,me::
     std::cout << "[Windowed BA] " << observations.size() << " views" << std::endl;
     std::cout << "[Windowed BA] " << pts3D.size() << " pts" << std::endl;
 
-    params_ = params;
+    params_stereo = params;
     img_ = img.clone();
 
     Mat state = Mat::zeros(6*observations.size()/*+3*pts3D.size()*/,1,CV_64F);
@@ -155,7 +173,7 @@ bool optimize(const std::vector<std::vector<cv::Point2f>>& observations,const st
     int k=0;
     int result=0;
     double v=2,tau=1e-3,mu=1e-20;
-    double abs_tol=1e-3,grad_tol=1e-9,incr_tol=1e-9,rel_tol=1e-3;
+    double abs_tol=1e-6,grad_tol=1e-9,incr_tol=1e-9,rel_tol=1e-6;
     StopCondition stop=StopCondition::NO_STOP;
 
     Mat Xa = state.rowRange(0,6*observations.size());
@@ -164,7 +182,7 @@ bool optimize(const std::vector<std::vector<cv::Point2f>>& observations,const st
 //    cout << "initial state " << Xa.t() << endl << endl << Xb.t() << endl;
 
     do {
-
+        state.rowRange(0,6*observations.size());
 //        vector<Matx34d> pMat = computeProjectionMatrices(Xa);
         Mat residuals = compute_residuals(observations,Xb,Xa);
 //        showReprojectedPts(img_,pMat,observations,Xb);
@@ -190,6 +208,11 @@ bool optimize(const std::vector<std::vector<cv::Point2f>>& observations,const st
             mu = tau * mu;
         }
 
+
+//        cout << JJ << endl;
+//        waitKey();
+
+
         for(;;){
 
             JJ += mu * Mat::eye(JJ.size(),CV_64F);
@@ -204,6 +227,7 @@ bool optimize(const std::vector<std::vector<cv::Point2f>>& observations,const st
                 Mat X_a(Xa.rows,1,CV_64F);
 
                 Mat X_b(Xb.rows,1,CV_64F);
+
                 X(Range(0,Xa.rows),Range(0,1)).copyTo(X_a);
                 X(Range(Xa.rows,Xa.rows+Xb.rows),Range(0,1)).copyTo(X_b);
 
@@ -215,8 +239,6 @@ bool optimize(const std::vector<std::vector<cv::Point2f>>& observations,const st
                 Mat xa_test = Xa + X_a;
                 Mat xb_test = Xb + X_b;
 
-//                cout << "Xa " << xa_test.t() << endl << endl;
-//                cout << "Xb " << xb_test.t() << endl;
                 Mat res_ = compute_residuals(observations,xb_test,xa_test);
 
                         Mat rho = (residuals.t()*residuals - res_.t()*res_)/(X.t()*(mu*X+e));
@@ -251,6 +273,8 @@ bool optimize(const std::vector<std::vector<cv::Point2f>>& observations,const st
     cout << "stop condition " << stop << endl;
     Xa.copyTo(state.rowRange(0,6*observations.size()));
     Xb.copyTo(state.rowRange(6*observations.size(),state.rows));
+     cout << "final state " << Xa.t() << endl << Xb.t() << endl;
+     showCameraPoses(Xa);
     if(stop == NO_CONVERGENCE || stop == MAX_ITERATIONS) // if failed or reached max iterations, return false (didn't work)
         return false;
     else{
@@ -268,7 +292,7 @@ std::vector<Matx34d> computeProjectionMatrices(const cv::Mat& Xa){
         for(unsigned int i=0;i<Xa.rows/6;i++){
             Euld orientation(Xa.at<double>(i*6),Xa.at<double>(i*6+1),Xa.at<double>(i*6+2));
             Matx33d K = Matx33d::eye();
-            K(0,0) = params_.f1;K(0,2) = params_.cu1;K(1,1) = params_.f1;K(1,2) = params_.cv1;
+            K(0,0) = params_mono.f;K(0,2) = params_mono.cu;K(1,1) = params_mono.f;K(1,2) = params_mono.cv;
             sfm::projectionFromKRt(K,orientation.getR3(),Xa.rowRange(i*6+3,i*6+6),P);
             pMat.push_back((Matx34d)P);
         }
@@ -292,10 +316,10 @@ cv::Mat compute_residuals_stereo(const std::vector<std::vector<std::pair<me::ptH
 //            cout << ob1.t() << " | ";
 //            cout << ob1.t() << " - " << (K_(0,0) * pt_next(0)/pt_next(2) + K_(0,2)) << "," << (K_(1,1) * pt_next(1)/pt_next(2) + K_(1,2)) <<  " | ";
 //            cout << K_(1,1) << " " << K_(1,2) << endl;
-            residuals.at<double>(j*pts3D.size()+i,0) = (ob1(0)-(params_.f1 * pt_next(0)/pt_next(2) + params_.cu1));
-            residuals.at<double>(j*pts3D.size()+i,1) = (ob1(1)-(params_.f1 * pt_next(1)/pt_next(2) + params_.cv1));
-            residuals.at<double>(j*pts3D.size()+i,2) = (ob2(0)-(params_.f2 * (pt_next(0)-params_.baseline)/pt_next(2) + params_.cu2));
-            residuals.at<double>(j*pts3D.size()+i,3) = (ob2(1)-(params_.f2 * pt_next(1)/pt_next(2) + params_.cv2));
+            residuals.at<double>(j*pts3D.size()+i,0) = (ob1(0)-(params_stereo.f1 * pt_next(0)/pt_next(2) + params_stereo.cu1));
+            residuals.at<double>(j*pts3D.size()+i,1) = (ob1(1)-(params_stereo.f1 * pt_next(1)/pt_next(2) + params_stereo.cv1));
+            residuals.at<double>(j*pts3D.size()+i,2) = (ob2(0)-(params_stereo.f2 * (pt_next(0)-params_stereo.baseline)/pt_next(2) + params_stereo.cu2));
+            residuals.at<double>(j*pts3D.size()+i,3) = (ob2(1)-(params_stereo.f2 * pt_next(1)/pt_next(2) + params_stereo.cv2));
 //            cout << residuals.at<double>(j*pts3D.size()+i,0) << "," << residuals.at<double>(j*pts3D.size()+i,1) << " | ";
         }
     }
@@ -313,8 +337,8 @@ cv::Mat compute_residuals(const std::vector<std::vector<cv::Point2f>>& observati
             ptH3D pt = ptH3D(Xb.at<double>(i*3),Xb.at<double>(i*3+1),Xb.at<double>(i*3+2),1);
             ptH3D pt_next = (Matx44d)Tr*pt;
             normalize(pt_next);
-            residuals.at<double>(j*Xb.rows/3+i,0) = (observations[j][i].x-(params_.f1 * pt_next(0)/pt_next(2) + params_.cu1));
-            residuals.at<double>(j*Xb.rows/3+i,1) = (observations[j][i].y-(params_.f1* pt_next(1)/pt_next(2) + params_.cv1));
+            residuals.at<double>(j*Xb.rows/3+i,0) = (observations[j][i].x-(params_mono.f * pt_next(0)/pt_next(2) + params_mono.cu));
+            residuals.at<double>(j*Xb.rows/3+i,1) = (observations[j][i].y-(params_mono.f* pt_next(1)/pt_next(2) + params_mono.cv));
         }
     }
     return residuals;
@@ -338,7 +362,7 @@ std::vector<std::vector<cv::Point2f>> project_pts(const cv::Mat& Xb, const std::
 }
 
 void computeJacobian_stereo(const cv::Mat& Xa,  const std::vector<ptH3D>& pts, const Mat& residuals, Mat& JJ, Mat& e){
-        int m_views = Xa.rows/6, n_pts = pts.size();
+    int m_views = Xa.rows/6, n_pts = pts.size();
     Mat U = Mat::zeros(6*m_views,6*m_views,CV_64F);
     Mat V = Mat::zeros(3*n_pts,3*n_pts,CV_64F);
     Mat W = Mat::zeros(6*m_views,3*n_pts,CV_64F);
@@ -378,10 +402,10 @@ void computeJacobian_stereo(const cv::Mat& Xa,  const std::vector<ptH3D>& pts, c
                 }
 //                A_ij.at<double>(0,k) = K_(0,0)*(dpt_next(0)*pt_next(2)-pt_next(0)*dpt_next(2))/(pt_next(2)*pt_next(2));
 //                A_ij.at<double>(1,k) = K_(1,1)*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
-                A_ij.at<double>(0,k) = params_.f1*(dpt_next(0)*pt_next(2)-pt_next(0)*dpt_next(2))/(pt_next(2)*pt_next(2));
-                A_ij.at<double>(1,k) = params_.f1*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
-                A_ij.at<double>(2,k) = params_.f2*(dpt_next(0)*pt_next(2)-(pt_next(0)-params_.baseline)*dpt_next(2))/(pt_next(2)*pt_next(2));
-                A_ij.at<double>(3,k) = params_.f2*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
+                A_ij.at<double>(0,k) = params_stereo.f1*(dpt_next(0)*pt_next(2)-pt_next(0)*dpt_next(2))/(pt_next(2)*pt_next(2));
+                A_ij.at<double>(1,k) = params_stereo.f1*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
+                A_ij.at<double>(2,k) = params_stereo.f2*(dpt_next(0)*pt_next(2)-(pt_next(0)-params_stereo.baseline)*dpt_next(2))/(pt_next(2)*pt_next(2));
+                A_ij.at<double>(3,k) = params_stereo.f2*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
            }
            U(Range(j*6,j*6+6),Range(j*6,j*6+6)) += A_ij.t() * A_ij;
 //           W(Range(j*6,j*6+6),Range(i*3,i*3+3)) += A_ij.t() * B_ij;
@@ -401,12 +425,14 @@ void computeJacobian(const cv::Mat& Xa,  const Mat& Xb, const Mat& residuals, Ma
     Mat W = Mat::zeros(6*m_views,3*n_pts,CV_64F);
     JJ = Mat::zeros(U.rows+V.rows,U.cols+V.cols,CV_64F);
     e = Mat::zeros(JJ.rows,1,CV_64F);
+    Mat cov_A=Mat::eye(2,2,CV_64F),cov_B=Mat::eye(2,2,CV_64F);
 //    JJ = Mat::zeros(U.rows,U.cols,CV_64F);
 //    e = Mat::zeros(JJ.rows,1,CV_64F);
 
     vector<vector<Mat>> A_;vector<vector<Mat>> B_;
 
     for(unsigned int j=0;j<m_views;j++){
+
         Euld eul(Xa.at<double>(j*6,0),Xa.at<double>(j*6+1,0),Xa.at<double>(j*6+2,0));
         Mat Tr = (Mat) eul.getR4();
         Matx33d dRdx = eul.getdRdr();
@@ -417,6 +443,13 @@ void computeJacobian(const cv::Mat& Xa,  const Mat& Xb, const Mat& residuals, Ma
 
         vector<Mat> A_j;vector<Mat> B_j;
         for(unsigned int i=0;i<n_pts;i++){
+
+            if(j==0)
+                cov_A = Mat::zeros(2,2,CV_64F);
+            else
+                cov_A = Mat::eye(2,2,CV_64F) * weights_[i];
+            cov_B  = Mat::eye(2,2,CV_64F) * weights_[i];
+
             Mat A_ij(2,6,CV_64F), B_ij(2,3,CV_64F);
             ptH3D pt = ptH3D(Xb.at<double>(i*3),Xb.at<double>(i*3+1),Xb.at<double>(i*3+2),1);
             ptH3D pt_next = (Matx44d)Tr*pt;
@@ -434,16 +467,16 @@ void computeJacobian(const cv::Mat& Xa,  const Mat& Xb, const Mat& residuals, Ma
                     case 4: {dpt_next = pt3D(0,1,0);break;}
                     case 5: {dpt_next = pt3D(0,0,1);break;}
                 }
-                A_ij.at<double>(0,k) = params_.f1*(dpt_next(0)*pt_next(2)-pt_next(0)*dpt_next(2))/(pt_next(2)*pt_next(2));
-                A_ij.at<double>(1,k) = params_.f1*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
+                A_ij.at<double>(0,k) = params_mono.f*(dpt_next(0)*pt_next(2)-pt_next(0)*dpt_next(2))/(pt_next(2)*pt_next(2));
+                A_ij.at<double>(1,k) = params_mono.f*(dpt_next(1)*pt_next(2)-pt_next(1)*dpt_next(2))/(pt_next(2)*pt_next(2));
                 if(k<3){
-                    B_ij.at<double>(0,k) = params_.f1*(dpt_b(0)*pt_next(2)-pt_next(0)*dpt_b(2))/(pt_next(2)*pt_next(2));
-                    B_ij.at<double>(1,k) = params_.f1*(dpt_b(1)*pt_next(2)-pt_next(1)*dpt_b(2))/(pt_next(2)*pt_next(2));
+                    B_ij.at<double>(0,k) = params_mono.f*(dpt_b(0)*pt_next(2)-pt_next(0)*dpt_b(2))/(pt_next(2)*pt_next(2));
+                    B_ij.at<double>(1,k) = params_mono.f*(dpt_b(1)*pt_next(2)-pt_next(1)*dpt_b(2))/(pt_next(2)*pt_next(2));
                 }
            }
-           U(Range(j*6,j*6+6),Range(j*6,j*6+6)) += A_ij.t() * A_ij;
-           W(Range(j*6,j*6+6),Range(i*3,i*3+3)) += A_ij.t() * B_ij;
-           e(Range(j*6,j*6+6),Range(0,1)) += A_ij.t() * residuals.row(j*n_pts+i).t();
+           U(Range(j*6,j*6+6),Range(j*6,j*6+6)) += A_ij.t() * cov_A.inv() * A_ij;
+           W(Range(j*6,j*6+6),Range(i*3,i*3+3)) += A_ij.t() * cov_A.inv() * B_ij;
+           e(Range(j*6,j*6+6),Range(0,1)) += A_ij.t() * cov_A.inv() * residuals.row(j*n_pts+i).t();
            A_j.push_back(A_ij);
            B_j.push_back(B_ij);
         }
@@ -452,8 +485,8 @@ void computeJacobian(const cv::Mat& Xa,  const Mat& Xb, const Mat& residuals, Ma
     }
     for(unsigned int i=0;i<n_pts;i++)
         for(unsigned int j=0;j<m_views;j++){
-            V(Range(i*3,i*3+3),Range(i*3,i*3+3)) += B_[j][i].t() * B_[j][i];
-            e(Range(6*m_views+i*3,6*m_views+i*3+3),Range(0,1)) += B_[j][i].t() * residuals.row(j*n_pts+i).t();
+            V(Range(i*3,i*3+3),Range(i*3,i*3+3)) += B_[j][i].t() * cov_B.inv() * B_[j][i];
+            e(Range(6*m_views+i*3,6*m_views+i*3+3),Range(0,1)) += B_[j][i].t() * cov_B.inv() * residuals.row(j*n_pts+i).t();
         }
 
     U.copyTo(JJ(Range(0,6*m_views),Range(0,6*m_views)));
@@ -489,9 +522,34 @@ void showCameraPoses(const Mat& Xa){
         Euld orientation(Xa.at<double>(i*6),Xa.at<double>(i*6+1),Xa.at<double>(i*6+2));
         Mat cameraPose = (Mat) orientation.getR4();
         Xa(Range(i*6+3,i*6+6),Range(0,1)).copyTo(cameraPose(Range(0,3),Range(3,4)));
-        viz.showWidget("Camera Widget"+to_string(i),cpw,Affine3d(cameraPose));
+        viz.showWidget("Camera Widget"+to_string(i),cpw,Affine3d(cameraPose.inv()));
     }
-    viz.spinOnce();
+    viz.spinOnce(0);
+}
+
+void showCameraPosesAndPoints(const Euld& orientation,const cv::Vec3d& position, const std::vector<ptH3D>& pts){
+    cv::viz::Viz3d viz("Camera poses and points");
+    viz.showWidget("Coordinate system", viz::WCoordinateSystem(10));
+
+//    for(uint i=0;i<Xa.rows/6;i++){
+        viz::WCameraPosition cpw;
+        cpw = viz::WCameraPosition(Vec2f(1,0.5));
+//        Euld orientation(Xa.at<double>(i*6),Xa.at<double>(i*6+1),Xa.at<double>(i*6+2));
+        Mat cameraPose = (Mat) orientation.getR4();
+        Mat(position).copyTo(cameraPose(Range(0,3),Range(3,4)));
+        viz.showWidget("Camera Widget",cpw,Affine3d(cameraPose));
+//    }
+//
+    Mat cloud = Mat::zeros(pts.size(),1,CV_64FC3);
+    for(uint i=0;i<pts.size();i++){
+        ptH3D pt = pts[i];
+        if(pt(2)>0 && pt(2) < 50)
+        cloud.at<Matx31d>(i) = orientation.getR3() * to_euclidean(pt) + position;
+    }
+
+    viz::WCloud wcloud(cloud);
+    viz.showWidget("CLOUD",wcloud);
+    viz.spin();
 }
 
 /*

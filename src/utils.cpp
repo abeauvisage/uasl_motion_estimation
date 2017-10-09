@@ -535,4 +535,53 @@ std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output)
     return maxima;
 }
 
+template<typename T>
+void convertToOpenCV(Euler<T>& e){
+
+    Vec<T,3> vec(e.roll(),e.pitch(),e.yaw());
+    vec = (Matx<T,3,3>)TRef * vec;
+    e = Euler<T>(vec(0),vec(1),vec(2));
+}
+
+template<typename T>
+void convertToXYZ(Euler<T>& e){
+    Vec<T,3> vec(e.roll(),e.pitch(),e.yaw());
+    vec = ((Matx<T,3,3>)(TRef)).t() * vec;
+    e = Euler<T>(vec(0),vec(1),vec(2));
+}
+
+template<typename T>
+void convertToOpenCV(Quat<T>& q){
+    Quat<T> p(TRef);
+    q = p*q;
+}
+
+template<typename T>
+void convertToXYZ(Quat<T>& q){
+    q *= Quat<T>(0.5,-0.5,0.5,-0.5).conj();
+}
+
+template<typename T>
+void convertToOpenCV(Vec<T,3>& vec){
+    vec = (Matx<T,3,3>)TRef * vec;
+}
+
+template<typename T>
+void convertToXYZ(Vec<T,3>& vec){
+    vec = ((Matx<T,3,3>)(TRef)).t() * vec;
+}
+
+template void convertToOpenCV(Euler<double>& e);
+template void convertToXYZ(Euler<double>& e);
+template void convertToOpenCV(Euler<float>& e);
+template void convertToXYZ(Euler<float>& e);
+template void convertToOpenCV(Quat<double>& q);
+template void convertToXYZ(Quat<double>& q);
+template void convertToOpenCV(Quat<float>& q);
+template void convertToXYZ(Quat<float>& q);
+template void convertToOpenCV(Vec3d& vec);
+template void convertToXYZ(Vec3d& vec);
+template void convertToOpenCV(Vec3f& vec);
+template void convertToXYZ(Vec3f& vec);
+
 }

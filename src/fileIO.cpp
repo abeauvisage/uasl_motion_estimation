@@ -283,10 +283,43 @@ pair<Mat,Mat> loadImages(std::string& dir, int nb){
     if(st == stereo){
         imgs.second = imread(dir+"/cam1_image"+num.str()+"_"+appendix+".png",0);
         if(imgs.second.empty())
-            cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+appendix+".png" << endl;
+            cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_"+appendix+".png" << endl;
     }
 
     return imgs;
+}
+//void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
+//
+//    stringstream num;num <<  std::setfill('0') << std::setw(5) << nb;
+//    imgs.first = imread(dir+"/cam0_image"+num.str()+"_"+appendix+".png",0);
+//    if(imgs.first.empty())
+//        cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+appendix+".png" << endl;
+//    if(st == stereo){
+//        imgs.second = imread(dir+"/cam1_image"+num.str()+"_"+appendix+".png",0);
+//        if(imgs.second.empty())
+//            cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_"+appendix+".png" << endl;
+//    }
+//}
+
+void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
+
+    stringstream num;num <<  std::setfill('0') << std::setw(8) << nb;
+    imgs.first = imread(dir+"/L_"+num.str()+".png",0);
+    if(imgs.first.empty())
+        cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
+    if(st == stereo){
+        imgs.second = imread(dir+"/R_"+num.str()+".png",0);
+        if(imgs.second.empty())
+            cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
+    }
+}
+
+void loadImages(std::string& dir, int nb, cv::Mat& img){
+
+    stringstream num;num <<  std::setfill('0') << std::setw(10) << nb;
+    img= imread(dir+"/"+num.str()+".png",0);
+    if(img.empty())
+        cerr << "cannot read " << dir+"/"+num.str()+".png" << endl;
 }
 
 }

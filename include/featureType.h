@@ -39,6 +39,24 @@ inline void normalize(ptH3D& pt){
     pt(3)/=pt(3);
     assert(pt(3) == 1);
 }
+/*! converts a 2D homogeneous point to non-homogeneous coordinate*/
+inline pt2D to_euclidean(ptH2D& pt){
+    normalize(pt);
+    return pt2D(pt(0),pt(1));
+}
+/*! converts a 3D homogeneous point to non-homogeneous coordinate*/
+inline pt3D to_euclidean(ptH3D& pt){
+    normalize(pt);
+    return pt3D(pt(0),pt(1),pt(2));
+}
+/*! converts a 2D point to homogeneous coordinate*/
+inline ptH2D to_homogeneous(const pt2D& pt){
+    return ptH2D(pt(0),pt(1),1);
+}
+/*! converts a 3D point to homogeneous coordinate*/
+inline ptH3D to_homogeneous(const pt3D& pt){
+    return ptH3D(pt(0),pt(1),pt(2),1);
+}
 
 /*! Function used to display elements of a descriptor. */
 template <typename T>

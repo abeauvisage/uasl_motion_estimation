@@ -11,6 +11,8 @@
 
 namespace me{
 
+const cv::Mat TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0);
+
 //! template class Quat
 /*! represents a quaternion. Must be a float-point type (float or double), results with other data type are not guaranteed */
 template <typename T>
@@ -136,6 +138,19 @@ public:
 	double y() const {return m_y;}
 	double z() const {return m_z;}
 };
+
+template<typename T>
+void convertToOpenCV(Euler<T>& e);
+template<typename T>
+void convertToXYZ(Euler<T>& e);
+template<typename T>
+void convertToOpenCV(Quat<T>& q);
+template<typename T>
+void convertToXYZ(Quat<T>& q);
+template<typename T>
+void convertToOpenCV(cv::Vec<T,3>& e);
+template<typename T>
+void convertToXYZ(cv::Vec<T,3>& e);
 
 std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output);
 

@@ -82,7 +82,7 @@ private:
 
     cv::Mat m_J;    //!< Jacobian matrix (6x4).
     cv::Matx61d m_state; //!< State vector. Contains the 3 Euler angles and the translation.
-    std::vector<std::pair<ptH2D,ptH2D>> m_obs; //!< location of observerd features in the current stereo pair.
+    std::vector<std::pair<ptH2D,ptH2D>> m_obs; //!< location of observed features in the current stereo pair.
     cv::Mat m_res; //!< residual matrix (1x4*nb_matches).
 
     /*! project a set of StereoMatch (2 matches) into 3D points. StereoMatch has float precision. */

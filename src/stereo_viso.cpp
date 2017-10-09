@@ -12,6 +12,9 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/calib3d.hpp>
 
+#include "CeresBA.h"
+#include "windowedBA.h"
+
 using namespace std;
 using namespace cv;
 
@@ -56,6 +59,20 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
 
     project3D(matches);
     updateObservations(matches);
+    vector<vector<Point2f>> observations(1);
+    for(uint i=0;i<m_obs.size();i++){
+        ptH2D pt = m_obs[i].first;
+        normalize(pt);
+        observations[0].push_back(Point2f(pt(0),pt(1)));
+    }
+//    vector<vector<pair<ptH2D,ptH2D>>> observations;
+//    observations.push_back(m_obs);
+
+//    Matx33d K = Matx33d::eye();
+//    K(0,0) = m_param.f1;K(0,2) = m_param.cu1;K(1,1) = m_param.f1;K(1,2) = m_param.cv1;
+//    Mat mat = Mat::zeros(480,640,CV_8U);
+//    Vec3d t = solveWindowedBA(observations,m_pts3D,m_param,mat);
+//    cout << "solution " << t.t() << endl;
 
     /**** selecting matches ****/
     // if ransac, selecting 3 random matches until nb iterations has been reached
@@ -129,6 +146,7 @@ std::vector<std::pair<ptH2D,ptH2D>> StereoVisualOdometry::reproject(cv::Matx61d&
     Tr(1,3) = state(4);
     Tr(2,3) = state(5);
 
+//    cout << "Tr " << Tr << endl;
     //computing projection matrices
     Matx34d P1(m_param.f1,0,m_param.cu1,0,0,m_param.f1,m_param.cv1,0,0,0,1,0);
     Matx34d P2(m_param.f2,0,m_param.cu2,-m_param.baseline*m_param.f2,0,m_param.f2,m_param.cv2,0,0,0,1,0);
@@ -138,6 +156,7 @@ std::vector<std::pair<ptH2D,ptH2D>> StereoVisualOdometry::reproject(cv::Matx61d&
         ptH3D pt = Tr*m_pts3D[selection[i]];
         ptH2D lpt=P1*pt,rpt=P2*pt;
         normalize(lpt);normalize(rpt);
+//        cout << lpt.t() << " | ";
         reproj_pts.push_back(pair<ptH2D,ptH2D>(lpt,rpt));
     }
 
@@ -176,15 +195,23 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
     double lambda=1e-2;
 
     do {
+        cout << "step " << k << endl;
         // computing residuals (error between predicted and observed features)
         vector<pair<ptH2D,ptH2D>> pred = reproject(m_state,selection);
         Mat residuals(4*selection.size(),1,CV_64F);
+        double sum1=0,sum2=0,sum3=0,sum4=0;
         for(unsigned int i=0;i<selection.size();i++){
+//                cout << m_obs[selection[i]].first.t() << " - " << pred[i].first.t() << " | ";
             residuals.at<double>(i*4) = m_obs[selection[i]].first(0)-pred[i].first(0);
             residuals.at<double>(i*4+1) = m_obs[selection[i]].first(1)-pred[i].first(1);
             residuals.at<double>(i*4+2) = m_obs[selection[i]].second(0)-pred[i].second(0);
             residuals.at<double>(i*4+3) = m_obs[selection[i]].second(1)-pred[i].second(1);
+            sum1+=residuals.at<double>(i*4);sum2+=residuals.at<double>(i*4+1);sum3+=residuals.at<double>(i*4+2);sum4+=residuals.at<double>(i*4+3);
+//            cout << residuals.at<double>(i*4) << " " << residuals.at<double>(i*4+1) << " | ";
         }
+//        cout << "sums " << sum1 << " " << sum2 << " " << sum3 << " " << sum4 << endl;
+
+//        cout << residuals.t() << endl;
 
         //computing the jacobian
         updateJacobian(selection);
@@ -194,16 +221,22 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
         cv::Mat B(6,1,CV_64F);
         cv::Mat X(6,1,CV_64F);
 
-        for(int i=0;i<6;i++){
-            Mat b = m_J.row(i) * residuals;
-            B.at<double>(i) = b.at<double>(0);
-        }
+//        for(int i=0;i<6;i++){
+//            Mat b = m_J.row(i) * residuals;
+//            B.at<double>(i) = b.at<double>(0);
+//        }
+        B = m_J * residuals;
+
+//        cout << A << endl << B.t() << endl;
+//        waitKey();
 
         if(m_param.method == LM)
             A += lambda * Mat::diag(A.diag());
 
         //solve A X = B (X = inv(J^2) * J * residual, for GN with step = 1)
         if(solve(A,B,X,DECOMP_QR)){
+
+            cout << X.t() << endl;
 
             if(m_param.method == GN){
                 // Gauss-Newton
@@ -300,12 +333,65 @@ void StereoVisualOdometry::updateJacobian(const vector<int>& selection){
 
 cv::Mat StereoVisualOdometry::getMotion(){
 
-    Euld r(m_state(0),m_state(1),m_state(2));
+//    vector<vector<Point2f>> detected_features(1);
+//    for(uint i=0;i<m_obs.size();i++){
+//        ptH2D pt = m_obs[i].first;
+//        normalize(pt);
+//        detected_features[0].push_back(Point2f(pt(0),pt(1)));
+//    }
+//    vector<ptH3D> ptsH = this->getPts3D();
+//    Matx33d K64 = Matx33d::eye();
+//    K64(0,0) = m_param.f1; K64(0,2) = m_param.cu1; K64(1,1) = m_param.f1; K64(1,2) = m_param.cv1;
+//    CeresBA solver(1,ptsH.size(),K64);
+//    solver.fillData(detected_features,ptsH);
+//
+//    const double* observations = solver.observations();
+//    ceres::Problem problem;
+//    for (int i = 0; i < solver.num_observations(); ++i) {
+//         Each Residual block takes a point and a camera as input and outputs a 2
+//         dimensional residual. Internally, the cost function stores the observed
+//         image location and compares the reprojection against the observation.
+//        ceres::CostFunction* cost_function =
+//            CeresBA::SnavelyReprojectionError::Create(observations[2 * i + 0],
+//                                             observations[2 * i + 1]);
+//        problem.AddResidualBlock(cost_function,
+//                                 new ceres::HuberLoss(0.5),
+//                                 solver.mutable_camera_for_observation(i),
+//                                 solver.mutable_point_for_observation(i));
+//      }
+//       Make Ceres automatically detect the bundle structure. Note that the
+//       standard solver, SPARSE_NORMAL_CHOLESKY, also works fine but it is slower
+//       for standard bundle adjustment problems.
+//      cout << "running Ceres" << endl;
+//      ceres::Solver::Options options;
+//      options.linear_solver_type = ceres::DENSE_SCHUR;
+//      options.minimizer_progress_to_stdout = true;
+//      options.max_num_iterations = 50;
+//      ceres::Solver::Summary summary;
+//      ceres::Solve(options, &problem, &summary);
+//      double* params = solver.mutable_cameras();
+//
+//    Mat Rt = (Mat) Matx44d::eye();
+//    Matx31d rv(params[0],params[1],params[2]);
+//    //    Matx31d t(params[3],params[4],params[5]);
+//    Mat R;cv::Rodrigues(rv,R);
+//    R.copyTo(Rt(Range(0,3),Range(0,3)));
+//    Rt.at<double>(0,3) = params[3];
+//    Rt.at<double>(1,3) = params[4];
+//    Rt.at<double>(2,3) = params[5];
+//
+//    cout << "translation " << params[5] << endl;
+//    cout << "state " << m_state.t() << endl;
+
+    /******************************/
+
+      Euld r(m_state(0),m_state(1),m_state(2));
 
     Matx44d Rt = r.getR4();
     Rt(0,3) = m_state(3);
     Rt(1,3) = m_state(4);
     Rt(2,3) = m_state(5);
+
 
     return (Mat)Rt;
 }
