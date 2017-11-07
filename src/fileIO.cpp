@@ -142,14 +142,12 @@ int GpsFile::openFile(std::string filename){
     }
     else{
         string h_(header.substr(pos+1,header.length()));
-        cout << h_ << endl;
         string buff;
         for(auto n:h_){
             if(n != ',') buff+=n;else
             if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << endl;buff="";}
         }
         if(buff != "") m_file_desc.push_back(buff);
-        cout << buff << endl;
     }
 
     return 1;
@@ -210,8 +208,8 @@ int ImuFile::readData(ImuData& data){
 
 int GpsFile::readData(GpsData& data){
 
-    if(!m_file.is_open() || m_file.eof())
-        return 0;
+//    if(!m_file.is_open() || m_file.eof())
+//        return 0;
 
     char c;
     double value;
@@ -247,6 +245,7 @@ int GpsFile::readData(GpsData& data){
 int ImuFile::getNextData(double stamp, ImuData& data){
 
     if(!m_file.is_open() || m_file.eof())
+
         return 0;
     data = ImuData();
     int count=0;
@@ -265,7 +264,7 @@ int ImuFile::getNextData(double stamp, ImuData& data){
 
 int GpsFile::getNextData(double stamp, GpsData& data){
 
-    if(!gpsfile.is_open() || gpsfile.eof())
+    if(!m_file.is_open() || m_file.eof())
         return 0;
     do{
         readData(data);
@@ -288,31 +287,31 @@ pair<Mat,Mat> loadImages(std::string& dir, int nb){
 
     return imgs;
 }
-//void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
-//
-//    stringstream num;num <<  std::setfill('0') << std::setw(5) << nb;
-//    imgs.first = imread(dir+"/cam0_image"+num.str()+"_"+appendix+".png",0);
-//    if(imgs.first.empty())
-//        cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+appendix+".png" << endl;
-//    if(st == stereo){
-//        imgs.second = imread(dir+"/cam1_image"+num.str()+"_"+appendix+".png",0);
-//        if(imgs.second.empty())
-//            cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_"+appendix+".png" << endl;
-//    }
-//}
-
 void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
 
-    stringstream num;num <<  std::setfill('0') << std::setw(8) << nb;
-    imgs.first = imread(dir+"/L_"+num.str()+".png",0);
+    stringstream num;num <<  std::setfill('0') << std::setw(5) << nb;
+    imgs.first = imread(dir+"/cam0_image"+num.str()+"_"+appendix+".png",0);
     if(imgs.first.empty())
-        cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
+        cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+appendix+".png" << endl;
     if(st == stereo){
-        imgs.second = imread(dir+"/R_"+num.str()+".png",0);
+        imgs.second = imread(dir+"/cam1_image"+num.str()+"_"+appendix+".png",0);
         if(imgs.second.empty())
-            cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
+            cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_"+appendix+".png" << endl;
     }
 }
+
+//void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
+//
+//    stringstream num;num <<  std::setfill('0') << std::setw(8) << nb;
+//    imgs.first = imread(dir+"/L_"+num.str()+".png",0);
+//    if(imgs.first.empty())
+//        cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
+//    if(st == stereo){
+//        imgs.second = imread(dir+"/R_"+num.str()+".png",0);
+//        if(imgs.second.empty())
+//            cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
+//    }
+//}
 
 void loadImages(std::string& dir, int nb, cv::Mat& img){
 

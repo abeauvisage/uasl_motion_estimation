@@ -160,6 +160,11 @@ Quat<T> Euler<T>::getQuat() const{
 }
 
 template <typename T>
+Vec<T,3> Euler<T>::getVector() const{
+    return Vec<T,3>(m_roll,m_pitch,m_yaw);
+}
+
+template <typename T>
 void Euler<T>::operator+=(Euler& e){
 
     m_roll += e.roll();

@@ -64,6 +64,7 @@ public:
 	cv::Matx<T,3,3> getdRdy() const;    //!< 3x3 derivative of R along the z axis (yaw).
 	void fromMat(const cv::Mat& R);     //!< compute Euler angles from a rotation matrix R.
     Quat<T> getQuat() const;            //!< convert Euler angles to a Quaternion of the same type.
+    cv::Vec<T,3> getVector() const;         //!< returns a 3-axis vector contains the different angles.
 
     //operator
     void operator+=(Euler& e); //!< concatenate with another Euler object.

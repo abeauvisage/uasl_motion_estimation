@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cstring>
 #include <assert.h>
+#include <deque>
 
 #include <opencv2/core.hpp>
 
@@ -241,6 +242,37 @@ typedef StereoMatch<cv::Point2d> StereoMatchd;              //! double precision
 typedef StereoOdoMatches<cv::Point2f> StereoOdoMatchesf;    //! float precision StereoOdoMatch
 typedef StereoOdoMatches<cv::Point2d> StereoOdoMatchesd;    //! double precision StereOdooMatch
 
+
+//! Structure to store WBA matches
+/*! Represent a Point with its 3D location and the list of features and the corresponding frame indices in which they appear */
+template <typename T>
+struct WBA_Point{
+
+private:
+std::deque<T> features;
+std::deque<uint> indices;
+ptH3D pt;
+int count=0;
+
+public:
+WBA_Point(const T match, const int frame_nb, const ptH3D pt_=ptH3D(0,0,0,1)){features.push_back(match);indices.push_back(frame_nb);pt=pt_;count=1;}
+void addMatch(const T match, const int frame_nb){features.push_back(match);indices.push_back(frame_nb);count++;}
+void pop(){features.pop_front();indices.pop_front();}
+bool isValid() const {return !features.empty();}
+bool isTriangulated() {return !(pt(0)==0 && pt(1)==0 && pt(2)==0 && pt(3)==1);}
+T getLastFeat() const {return features[features.size()-1];}
+T getFirstFeat() const {return features[0];}
+T getFeat(int idx) const {assert(idx < features.size()); return features[idx];}
+int getLastFrameIdx() const {return indices[indices.size()-1];}
+int getFirstFrameIdx() const {return indices[0];}
+int getFrameIdx(int idx) const {assert(idx < indices.size());return indices[idx];}
+int getNbFeatures() const {return features.size();}
+int getCount() const {return count;}
+ptH3D get3DLocation() const {return pt;}
+void set3DLocation(const ptH3D& pt_){pt = pt_;}
+};
+
+typedef WBA_Point<cv::Point2f> WBA_Ptf;
 
 }
 
