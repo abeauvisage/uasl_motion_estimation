@@ -7,6 +7,8 @@
 using namespace std;
 using namespace cv;
 
+#define KITTI
+
 namespace me{
 
 SetupType st;
@@ -44,8 +46,16 @@ int loadYML(string filename){
     //defining calibration parameters
     FileNode calib = configFile["calib"];
     if(st == stereo){
-        calib["focal"] >> param_stereo.f1;
-        calib["focal"] >> param_stereo.f2;
+        calib["f1"] >> param_stereo.fu1;
+        calib["f2"] >> param_stereo.fu2;
+        calib["f1"] >> param_stereo.fv1;
+        calib["f2"] >> param_stereo.fv2;
+        if(param_stereo.fu1 == 0){
+            calib["fu1"] >> param_stereo.fu1;
+            calib["fu2"] >> param_stereo.fu2;
+            calib["fv1"] >> param_stereo.fv1;
+            calib["fv2"] >> param_stereo.fv2;
+        }
         calib["cu"] >> param_stereo.cu1;
         if(param_stereo.cu1 == 0)
             calib["cu1"] >> param_stereo.cu1;
@@ -69,7 +79,12 @@ int loadYML(string filename){
         else
             param_stereo.method = StereoVisualOdometry::LM;
     }else{
-        calib["focal"] >> param_mono.f;
+        calib["fu"] >> param_mono.fu;
+        calib["fv"] >> param_mono.fv;
+        if(param_mono.fu == 0){
+            calib["f"] >> param_mono.fu;
+            calib["f"] >> param_mono.fv;
+        }
         calib["cu"] >> param_mono.cu;
         calib["cv"] >> param_mono.cv;
         calib["ransac"] >> param_mono.ransac;
@@ -208,8 +223,8 @@ int ImuFile::readData(ImuData& data){
 
 int GpsFile::readData(GpsData& data){
 
-//    if(!m_file.is_open() || m_file.eof())
-//        return 0;
+    if(!m_file.is_open() || m_file.eof())
+        return 0;
 
     char c;
     double value;
@@ -229,29 +244,15 @@ int GpsFile::readData(GpsData& data){
     return 1;
 }
 
-//int Gps::readGpsData(GpsData& data){
-//    if(!gpsfile.is_open() || gpsfile.eof())
-//        return 0;
-//    char c;
-//    double stamp,lon,lat,alt;
-//    gpsfile >> stamp >> c >> lat >> c >> lon >> c >> alt>> c;
-//    data.stamp = stamp;
-//    data.lon = lon;
-//    data.lat = lat;
-//    data.alt = alt;
-//    return 1;
-//}
-
 int ImuFile::getNextData(double stamp, ImuData& data){
 
     if(!m_file.is_open() || m_file.eof())
-
         return 0;
+
     data = ImuData();
     int count=0;
     ImuData rdata;
     while(data.stamp <= stamp && readData(rdata)){
-
         data+=rdata;
         count++;
     }
@@ -266,10 +267,12 @@ int GpsFile::getNextData(double stamp, GpsData& data){
 
     if(!m_file.is_open() || m_file.eof())
         return 0;
+    bool success=true;
     do{
-        readData(data);
-    }while(data.stamp <= stamp);
-    return 1;
+        success = readData(data);
+    }while( success && data.stamp <= stamp);
+
+    return success;
 }
 
 pair<Mat,Mat> loadImages(std::string& dir, int nb){
@@ -287,6 +290,21 @@ pair<Mat,Mat> loadImages(std::string& dir, int nb){
 
     return imgs;
 }
+
+#ifdef KITTI
+void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
+
+    stringstream num;num <<  std::setfill('0') << std::setw(8) << nb;
+    imgs.first = imread(dir+"/L_"+num.str()+".png",0);
+    if(imgs.first.empty())
+        cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
+    if(st == stereo){
+        imgs.second = imread(dir+"/R_"+num.str()+".png",0);
+        if(imgs.second.empty())
+            cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
+    }
+}
+#else
 void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
 
     stringstream num;num <<  std::setfill('0') << std::setw(5) << nb;
@@ -299,19 +317,7 @@ void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
             cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_"+appendix+".png" << endl;
     }
 }
-
-//void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
-//
-//    stringstream num;num <<  std::setfill('0') << std::setw(8) << nb;
-//    imgs.first = imread(dir+"/L_"+num.str()+".png",0);
-//    if(imgs.first.empty())
-//        cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
-//    if(st == stereo){
-//        imgs.second = imread(dir+"/R_"+num.str()+".png",0);
-//        if(imgs.second.empty())
-//            cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
-//    }
-//}
+#endif // KITTI
 
 void loadImages(std::string& dir, int nb, cv::Mat& img){
 

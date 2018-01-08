@@ -30,7 +30,7 @@ public:
         bool ransac;                //!< use of not if RANSAC.
         double  inlier_threshold;   //!< error threshold for a match to be considered inlier.
         bool    reweighting;        //!< use weight deping on feature distance (deprecated).
-        double f1,f2;               //!< focal length of each camera.
+        double fu1,fv1,fu2,fv2;     //!< focal length of each camera.
         double cu1,cu2;             //!< principal point in u (horizontal).
         double cv1,cv2;             //!< principal point in v (vertical).
         double step_size;           //!< step size for optimization (TO BE USED).
@@ -38,7 +38,7 @@ public:
         int max_iter;               //!< max_iteration for optim algo to converge.
         parameters () {
             method = GN;
-            f1=1;f2=1;
+            fu1=1;fv1=1;fu2=1;fv2=1;
             cu1=0;cu2=0;
             cv1=0;cv2=0;
             baseline = 1.0;
@@ -47,12 +47,12 @@ public:
             ransac=true;
             reweighting = true;
             step_size = 1;
-            eps = 1e-8;
+            eps = 1e-9;
             e1 = 1e-3;
-            e2 = 1e-3;
-            e3 = 1e-1;
-            e4 = 1e-1;
-            max_iter=20;
+            e2 = 1e-12;
+            e3 = 1e-12;
+            e4 = 1e-15;
+            max_iter=100;
         }
     };
 
@@ -70,6 +70,7 @@ public:
     std::vector<ptH3D> getPts3D(){return m_pts3D;}
     std::vector<int> getInliers_idx(){return m_inliers_idx;}
     std::vector<std::pair<ptH2D,ptH2D>> getPredictions(){return reproject(m_state,m_inliers_idx);}
+    parameters getParams(){return m_param;}
 
 
 private:
@@ -99,7 +100,7 @@ private:
     /*! Update the observation vector from the matches. */
     void updateObservations(const std::vector<StereoOdoMatchesf>& matches);
     /*! Compute and upadate the Jacobian matrix from the current state vector and the matches provided */
-    void updateJacobian(const vector<int>& selection);
+    void updateJacobian(const std::vector<int>& selection);
     /*! compute the inliers form the current state vector. Matches are selected as inliers when their reprojection error
         is smaller than the specified threshold.
         Returns the list of inliers indices.*/

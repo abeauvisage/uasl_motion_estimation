@@ -13,6 +13,8 @@ namespace me{
 
 const cv::Mat TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0);
 
+enum StopCondition{NO_STOP,SMALL_GRADIENT,SMALL_INCREMENT,MAX_ITERATIONS,SMALL_DECREASE_FUNCTION,SMALL_REPROJ_ERROR,NO_CONVERGENCE};
+
 //! template class Quat
 /*! represents a quaternion. Must be a float-point type (float or double), results with other data type are not guaranteed */
 template <typename T>

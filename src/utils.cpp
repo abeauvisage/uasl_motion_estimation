@@ -149,10 +149,10 @@ void Euler<double>::fromMat(const Mat& M){
 template <typename T>
 Quat<T> Euler<T>::getQuat() const{
 
-    T cy = cos(m_roll * 0.5f);
-    T sy = sin(m_roll * 0.5f);
-    T cr = cos(m_yaw * 0.5f);
-    T sr = sin(m_yaw * 0.5f);
+    T cy = cos(m_yaw * 0.5f);
+    T sy = sin(m_yaw * 0.5f);
+    T cr = cos(m_roll * 0.5f);
+    T sr = sin(m_roll * 0.5f);
     T cp = cos(m_pitch * 0.5f);
     T sp = sin(m_pitch * 0.5f);
 
@@ -223,8 +223,8 @@ template <typename T>
 inline cv::Matx<T,3,3> Quat<T>::getR3() const{
 
     return typename Matx<T,3,3>::Matx(  m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z,  2*(m_x*m_y + m_w*m_z),                  2*(m_x*m_z - m_w*m_y),
-                                        2*(m_x*m_y - m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_w*m_x + m_y*m_z),
-                                        2*(m_x*m_z + m_w*m_y),			        2*(m_w*m_x - m_y*m_z),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z);
+                                        2*(m_x*m_y - m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_y*m_z + m_w*m_x),
+                                        2*(m_x*m_z + m_w*m_y),			        2*(m_y*m_z - m_w*m_x),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z);
 }
 
 template <typename T>

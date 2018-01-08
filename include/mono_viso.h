@@ -22,14 +22,16 @@ public:
         bool ransac;                //! use of RANSAC or not.
         double prob;                //! level of confidence for the estimation (probability).
         double  inlier_threshold;   //! inlier threshold for RANSAC.
-        double f;                   //! focal length of the camera.
+        double fu;                   //! focal length of the camera.
+        double fv;                   //! focal length of the camera.
         double cu;                  //! principal point.
         double cv;                  //! principal point.
         parameters () {
             ransac=true;
             prob=0.999;
             inlier_threshold = 1.0;
-            f=1;
+            fu=1;
+            fv=1;
             cu=0;
             cv=0;
         }
@@ -42,15 +44,18 @@ public:
         bool process(const std::vector<StereoMatch<cv::Point2f>>& matches);
         virtual cv::Mat getMotion(){return m_Rt;} //!< Returns the Transformation matrix.
         std::vector<int> getInliersIdx(){return m_inliers;} //!< Returns the set of inlier indices.
+        std::vector<int> getOutliersIdx(){return m_outliers;} //!< Returns the set of outlier indices.
         cv::Mat getEssentialMat(){return m_E;} //!< Returns the Essential matrix.
 
     private:
         parameters m_param;         //!< Mono parameters.
+        cv::Mat m_K;                //! intrinsic Matrix.
         cv::Mat m_Rt;               //!< Transformation matrix.
         cv::Mat m_E;                //!< Essential matrix.
         std::vector<int> m_inliers; //!< List of inliers.
-};
+        std::vector<int> m_outliers; //!< List of outliers.
 
+};
 }
 
 #endif // MONOVISUALODOMETRY_H

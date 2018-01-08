@@ -13,8 +13,6 @@
 
 #define DESCRIPTOR_SIZE 32
 
-using namespace std;
-
 namespace me{
 
 //!< Representation of a 2D point as a Matrix.
@@ -251,25 +249,42 @@ struct WBA_Point{
 private:
 std::deque<T> features;
 std::deque<uint> indices;
+std::deque<int> mask;
 ptH3D pt;
 int count=0;
+double reproj_error=0;
 
 public:
-WBA_Point(const T match, const int frame_nb, const ptH3D pt_=ptH3D(0,0,0,1)){features.push_back(match);indices.push_back(frame_nb);pt=pt_;count=1;}
-void addMatch(const T match, const int frame_nb){features.push_back(match);indices.push_back(frame_nb);count++;}
-void pop(){features.pop_front();indices.pop_front();}
+WBA_Point(const T match, const int frame_nb, const ptH3D pt_=ptH3D(0,0,0,1)){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);pt=pt_;count=1;}
+void addMatch(const T match, const int frame_nb){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);count++;assert(indices.size() == features.size() && indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1 && mask.size() == indices.size());}
+void pop(){features.pop_front();indices.pop_front();mask.pop_front();assert(indices.size() == features.size() && indices.size() == mask.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
 bool isValid() const {return !features.empty();}
-bool isTriangulated() {return !(pt(0)==0 && pt(1)==0 && pt(2)==0 && pt(3)==1);}
-T getLastFeat() const {return features[features.size()-1];}
-T getFirstFeat() const {return features[0];}
+bool isTriangulated() const {return !(pt(0)==0 && pt(1)==0 && pt(2)==0 && pt(3)==1);}
+T getLastFeat() const {if(isValid()) return features[features.size()-1]; else return T();}
+T getFirstFeat() const {if(isValid()) return features[0]; else return T();}
 T getFeat(int idx) const {assert(idx < features.size()); return features[idx];}
-int getLastFrameIdx() const {return indices[indices.size()-1];}
-int getFirstFrameIdx() const {return indices[0];}
-int getFrameIdx(int idx) const {assert(idx < indices.size());return indices[idx];}
+int findFeat(int idx, T& feat) const {
+    for(uint k=0;k<indices.size();k++)
+        if(indices[k] == idx){
+            feat = features[k];
+            return k;
+        }
+    return -1;
+}
+void removeLastFeat(){features.pop_back();indices.pop_back();mask.pop_back();assert(indices.size() == features.size() && indices.size() == mask.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
+int getLastFrameIdx() const {if(isValid())return indices[indices.size()-1];else return -1;}
+int getFirstFrameIdx() const {if(isValid())return indices[0];else return -1;}
+int getFrameIdx(int idx) const {assert(idx < indices.size() && idx>=0);return indices[idx];}
 int getNbFeatures() const {return features.size();}
 int getCount() const {return count;}
 ptH3D get3DLocation() const {return pt;}
 void set3DLocation(const ptH3D& pt_){pt = pt_;}
+double getReprojError() const {return reproj_error;}
+void setReprojError(const double reproj_error_){reproj_error = reproj_error_;}
+bool isFeatValid(int idx) const{return mask[idx];}
+void setFeatValidity(int idx, bool v){if(v)mask[idx] = 1;else mask[idx]=0;}
+void clearMask(){for(uint i=0;i<mask.size();i++)mask[i]=0;}
+
 };
 
 typedef WBA_Point<cv::Point2f> WBA_Ptf;
