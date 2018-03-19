@@ -7,7 +7,7 @@
 using namespace std;
 using namespace cv;
 
-#define KITTI
+//#define KITTI
 
 namespace me{
 
@@ -131,11 +131,10 @@ int ImuFile::openFile(std::string filename){
     }
     else{
         string h_(header.substr(pos+1,header.length()));
-        cout << h_ << endl;
         string buff;
         for(auto n:h_){
             if(n != ',') buff+=n;else
-            if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << endl;buff="";}
+            if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << " ";buff="";}
         }
         if(buff != "") m_file_desc.push_back(buff);
         cout << buff << endl;
@@ -160,7 +159,7 @@ int GpsFile::openFile(std::string filename){
         string buff;
         for(auto n:h_){
             if(n != ',') buff+=n;else
-            if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << endl;buff="";}
+            if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << " ";buff="";}
         }
         if(buff != "") m_file_desc.push_back(buff);
     }
@@ -257,6 +256,7 @@ int ImuFile::getNextData(double stamp, ImuData& data){
         count++;
     }
     data /=count;
+
     if(m_file.eof())
         return 0;
     else
@@ -319,12 +319,14 @@ void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
 }
 #endif // KITTI
 
-void loadImages(std::string& dir, int nb, cv::Mat& img){
+cv::Mat loadImage(std::string& dir, int cam_nb, int img_nb){
 
-    stringstream num;num <<  std::setfill('0') << std::setw(10) << nb;
-    img= imread(dir+"/"+num.str()+".png",0);
+    Mat img;
+    stringstream num;num <<  std::setfill('0') << std::setw(5) << img_nb;
+    img= imread(dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_"+appendix+".png",0)(Range(0,380),Range(0,640));
     if(img.empty())
-        cerr << "cannot read " << dir+"/"+num.str()+".png" << endl;
+        cerr << "cannot read " << dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_"+appendix+".png" << endl;
+    return img;
 }
 
 }

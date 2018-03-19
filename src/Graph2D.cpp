@@ -64,7 +64,7 @@ void Graph2D::refresh(){
     waitKey(10);
 }
 
-void Graph2D::addValue(cv::Point2f& v, int idx){
+void Graph2D::addValue(const cv::Point2f& v, int idx){
 
     if(idx < 1)
         idx =1;

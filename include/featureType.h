@@ -256,7 +256,7 @@ double reproj_error=0;
 
 public:
 WBA_Point(const T match, const int frame_nb, const ptH3D pt_=ptH3D(0,0,0,1)){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);pt=pt_;count=1;}
-void addMatch(const T match, const int frame_nb){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);count++;assert(indices.size() == features.size() && indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1 && mask.size() == indices.size());}
+void addMatch(const T match, const int frame_nb){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);count++;assert(indices.size() == features.size()); assert(indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1); assert(mask.size() == indices.size());}
 void pop(){features.pop_front();indices.pop_front();mask.pop_front();assert(indices.size() == features.size() && indices.size() == mask.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
 bool isValid() const {return !features.empty();}
 bool isTriangulated() const {return !(pt(0)==0 && pt(1)==0 && pt(2)==0 && pt(3)==1);}
@@ -285,9 +285,23 @@ bool isFeatValid(int idx) const{return mask[idx];}
 void setFeatValidity(int idx, bool v){if(v)mask[idx] = 1;else mask[idx]=0;}
 void clearMask(){for(uint i=0;i<mask.size();i++)mask[i]=0;}
 
+friend std::ostream& operator<<(std::ostream& os, const WBA_Point& pt){
+    os << pt.getNbFeatures() << " feats (from " << pt.getFirstFrameIdx() << " to " << pt.getLastFrameIdx() << ")";
+    return os;
+}
+
 };
 
 typedef WBA_Point<cv::Point2f> WBA_Ptf;
+
+template<typename O, typename T>
+class CamPose{
+    public:
+    O orientation;
+    cv::Vec<T,3> position;
+    int ID;
+    CamPose<O,T>(int id, O e, cv::Vec<T,3> v):orientation(e),position(v),ID(id){}
+};
 
 }
 
