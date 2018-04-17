@@ -14,6 +14,7 @@ namespace me{
 SetupType st;
 FilterType ft;
 FrameInfo fi;
+double gps_orientation;
 MonoVisualOdometry::parameters param_mono;
 StereoVisualOdometry::parameters param_stereo;
 std::string appendix;
@@ -42,6 +43,8 @@ int loadYML(string filename){
     fi.fframe = frames["start"];
     fi.lframe = frames["stop"];
     fi.skip = frames["rate"];
+    fi.bias_frame = frames["bias"];
+    fi.init = frames["init"];
 
     //defining calibration parameters
     FileNode calib = configFile["calib"];
@@ -104,6 +107,8 @@ int loadYML(string filename){
     if(filter == "MREKF")
         ft = MREKF;
     configFile["appendix"] >> appendix;
+
+    configFile ["gps"] >> gps_orientation;
 
     return 1;
 }
@@ -207,13 +212,13 @@ int ImuFile::readData(ImuData& data){
             data.pos[1] = value;
         if(m_file_desc[i] == "pos_z")
             data.pos[2] = value;
-        if(m_file_desc[i] == "qw")
+        if(m_file_desc[i] == "q_w")
             orientation[0] = value;
-        if(m_file_desc[i] == "qx")
+        if(m_file_desc[i] == "q_x")
             orientation[1] = value;
-        if(m_file_desc[i] == "qy")
+        if(m_file_desc[i] == "q_y")
             orientation[2] = value;
-        if(m_file_desc[i] == "qz")
+        if(m_file_desc[i] == "q_z")
             orientation[3] = value;
     }
     data.orientation = Quatd(orientation[0],orientation[1],orientation[2],orientation[3]);
@@ -323,7 +328,7 @@ cv::Mat loadImage(std::string& dir, int cam_nb, int img_nb){
 
     Mat img;
     stringstream num;num <<  std::setfill('0') << std::setw(5) << img_nb;
-    img= imread(dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_"+appendix+".png",0)(Range(0,380),Range(0,640));
+    img= imread(dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_"+appendix+".png",0);
     if(img.empty())
         cerr << "cannot read " << dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_"+appendix+".png" << endl;
     return img;

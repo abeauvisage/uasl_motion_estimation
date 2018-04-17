@@ -28,7 +28,7 @@ class Graph2D
             - boolean to display an orthogonal graph or not
             - size of the window
          */
-        Graph2D(std::string name, const int nb=1, bool orth=true, Type t=DOTTEDLINE, cv::Size s=cv::Size(640,480));
+        Graph2D(std::string name, const int nb=1, bool orth=false, Type t=DOTTEDLINE, cv::Size s=cv::Size(640,480));
         void refresh();
 	/*!< add a float point to the ith curve. This Function is called for 2D graphs. */
         void addValue(const cv::Point2f& v, int i=1);

@@ -105,7 +105,7 @@ void Graph2D::plot_background(){
 void Graph2D::plot_legend(){
     for(int k=0;k<m_nb_curves;k++){
         putText(m_image,m_legend[k],Point(30+100*k,10),FONT_HERSHEY_SIMPLEX,0.3,m_colours[k]);
-        line(m_image,Point(10+100*k,7),Point(20+100*k,7),m_colours[k]);
+        line(m_image,Point(10+100*k,7),Point(20+100*k,7),m_colours[k],2);
     }
 }
 

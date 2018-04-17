@@ -31,12 +31,15 @@ struct FrameInfo{
     int fframe = 0;
     int lframe = 0;
     int skip = 1;
+    int bias_frame = 0;
+    int init = 0;
 };
 
 // setting variables
 extern SetupType st;
 extern FilterType ft;
 extern FrameInfo fi;
+extern double gps_orientation;
 extern MonoVisualOdometry::parameters param_mono;
 extern StereoVisualOdometry::parameters param_stereo;
 extern std::string appendix;

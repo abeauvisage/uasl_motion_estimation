@@ -28,7 +28,7 @@ public:
         double cv;                  //! principal point.
         parameters () {
             ransac=true;
-            prob=0.999;
+            prob=0.99;
             inlier_threshold = 1.0;
             fu=1;
             fv=1;
@@ -45,6 +45,7 @@ public:
         virtual cv::Mat getMotion(){return m_Rt;} //!< Returns the Transformation matrix.
         std::vector<int> getInliersIdx(){return m_inliers;} //!< Returns the set of inlier indices.
         std::vector<int> getOutliersIdx(){return m_outliers;} //!< Returns the set of outlier indices.
+        std::vector<ptH3D> get3Dpts(){return m_pts;} //!< Returns thet set of 3D features.
         cv::Mat getEssentialMat(){return m_E;} //!< Returns the Essential matrix.
 
     private:
@@ -54,6 +55,9 @@ public:
         cv::Mat m_E;                //!< Essential matrix.
         std::vector<int> m_inliers; //!< List of inliers.
         std::vector<int> m_outliers; //!< List of outliers.
+        std::vector<ptH3D> m_pts; //! List of 3D points
+
+        double findRelativeScale(std::vector<std::pair<me::ptH3D,me::ptH3D>>& pts);
 
 };
 }

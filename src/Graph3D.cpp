@@ -13,7 +13,18 @@ namespace me{
 Graph3D::Graph3D(const string& name, bool traj, bool coordSyst) : m_viz(name), m_traj(traj), m_coordSyst(coordSyst)
 {
     m_poses.push_back(Matx44d::eye());
-    refresh();
+    m_t = thread(&Graph3D::mainloop,this);
+}
+
+void Graph3D::mainloop(){
+
+    m_viz.showWidget("Coordinate system", viz::WCoordinateSystem(1));
+    m_viz.showWidget("Trajectory",viz::WTrajectory(vector<Affine3d>(1,Affine3d::Identity())));
+//    m_viz.showWidget("GPS track",viz::WTrajectory(vector<Affine3d>(1,Affine3d::Identity())));
+    m_viz.showWidget("IMU track",viz::WTrajectory(vector<Affine3d>(1,Affine3d::Identity())));
+    while(!m_viz.wasStopped()){
+        m_viz.spinOnce(100);
+    }
 }
 
 
@@ -26,41 +37,76 @@ void Graph3D::refresh(){
     }else
         correction = Affine3d(Matx44d::eye());
 
-    Affine3d current_pose = m_poses[m_poses.size()-1] * correction;
+//    for(uint i=0;i<m_poses.size();i++){
+//
 
-    //displaying camera object, coordinate system and trajectory
-    viz::WCameraPosition cpw;
-    if(!m_image.empty())
-        cpw = viz::WCameraPosition(Vec2f(1,0.5),m_image);
-    else
-        cpw = viz::WCameraPosition(Vec2f(1,0.5));
-
-    m_viz.showWidget("Camera Widget",cpw,current_pose);
-    m_viz.showWidget("Coordinate system", viz::WCoordinateSystem(/*m_poses.size()/10.0<1?1:current_pose.matrix(2,3)/10.0*/));
-    if(m_traj)
-        m_viz.showWidget("Trajectory",viz::WTrajectory(Mat(m_poses),viz::WTrajectory::PATH,1.0, viz::Color::green()));
+//    m_viz.showWidget("Coordinate system", viz::WCoordinateSystem(/*m_poses.size()/10.0<1?1:current_pose.matrix(2,3)/10.0*/));
 
     //set viewer pose to follow the cemera
-    if(m_coordSyst){
-        Vec3d pos(current_pose.matrix(0,3)+5.0,current_pose.matrix(1,3)-5.0,current_pose.matrix(2,3)+10.0), f(current_pose.matrix(0,3),current_pose.matrix(1,3),current_pose.matrix(2,3)), y(0.0,1.0,0.0);
-        Affine3f cam_pose = viz::makeCameraPose(pos,f,y);
-        m_viz.setViewerPose(cam_pose);
-    }else{
-        Vec3d pos(current_pose.matrix(0,3)-5.0,current_pose.matrix(1,3)-2.0,current_pose.matrix(2,3)+10.0), f(current_pose.matrix(0,3),current_pose.matrix(1,3),current_pose.matrix(2,3)), y(0.0,0.0,-1.0);
-        Affine3f cam_pose = viz::makeCameraPose(pos,f,y);
-        m_viz.setViewerPose(cam_pose);
-    }
-    m_viz.spinOnce(1,true);
+//    if(m_coordSyst){
+//        Vec3d pos(current_pose.matrix(0,3)+5.0,current_pose.matrix(1,3)-5.0,current_pose.matrix(2,3)+10.0), f(current_pose.matrix(0,3),current_pose.matrix(1,3),current_pose.matrix(2,3)), y(0.0,1.0,0.0);
+//        Affine3f cam_pose = viz::makeCameraPose(pos,f,y);
+//        m_viz.setViewerPose(cam_pose);
+//    }else{
+//        Vec3d pos(current_pose.matrix(0,3)-5.0,current_pose.matrix(1,3)-2.0,current_pose.matrix(2,3)+10.0), f(current_pose.matrix(0,3),current_pose.matrix(1,3),current_pose.matrix(2,3)), y(0.0,0.0,-1.0);
+//        Affine3f cam_pose = viz::makeCameraPose(pos,f,y);
+//        m_viz.setViewerPose(cam_pose);
+//    }
+//    m_viz.spinOnce(1,true);
 }
 
-void Graph3D::addPose(const cv::Matx44d& pose){
+void Graph3D::addGPSPosition(const cv::Vec3d& position){
+
+    Matx44d pose = Matx44d::eye();
+    pose(0,3) = position(0);
+    pose(1,3) = position(2);
+    pose(2,3) = position(1);
+    m_gps.push_back(Affine3d(pose));
+//    m_viz.showWidget("GPS track",viz::WTrajectorySpheres(Mat(m_gps),10,0.05,viz::Color::red(),viz::Color::red()));
+}
+
+void Graph3D::addIMUPose(const Quatd& ori, const cv::Vec3d& position){
+    Matx44d pose = ori.getR4().t();
+    pose(0,3) = position(0);
+    pose(1,3) = position(1);
+    pose(2,3) = position(2);
+    m_imu.push_back(Affine3d(pose));
+//    m_viz.removeWidget("IMU track");
+//    m_viz.showWidget("IMU track",viz::WTrajectorySpheres(m_imu,10,0.05,viz::Color::yellow(),viz::Color::yellow()));
+}
+
+void Graph3D::addCameraPose(const Quatd& ori, const cv::Vec3d& position){
+    Matx44d pose = ori.getR4().t();
+    pose(0,3) = position(0);
+    pose(1,3) = position(1);
+    pose(2,3) = position(2);
+    viz::WCameraPosition cpw;
+    cpw = viz::WCameraPosition(Vec2f(1,0.5));
     m_poses.push_back(Affine3d(pose));
-    refresh();
+    m_viz.showWidget("Camera_widget_"+to_string(m_poses.size()-1),cpw,Affine3d(pose));
+//    if(m_traj){
+//        m_viz.removeWidget("Trajectory");
+//        m_viz.showWidget("Trajectory",viz::WTrajectory(m_poses,viz::WTrajectory::PATH,1.0, viz::Color::green()));
+//    }
 }
 
-void Graph3D::addPose(const cv::Affine3d& pose){
+
+void Graph3D::addCameraPose(const cv::Matx44d& pose){
+    viz::WCameraPosition cpw;
+    cpw = viz::WCameraPosition(Vec2f(1,0.5));
+    m_poses.push_back(Affine3d(pose));
+    m_viz.showWidget("Camera_widget_"+to_string(m_poses.size()-1),cpw,Affine3d(pose));
+    if(m_traj)
+        m_viz.showWidget("Trajectory",viz::WTrajectory(Mat(m_poses),viz::WTrajectory::PATH,1.0, viz::Color::green()));
+}
+
+void Graph3D::addCameraPose(const cv::Affine3d& pose){
+    viz::WCameraPosition cpw;
+    cpw = viz::WCameraPosition(Vec2f(1,0.5));
     m_poses.push_back(pose);
-    refresh();
+    m_viz.showWidget("Camera_widget_"+to_string(m_poses.size()-1),cpw,pose);
+    if(m_traj)
+        m_viz.showWidget("Trajectory",viz::WTrajectory(Mat(m_poses),viz::WTrajectory::PATH,1.0, viz::Color::green()));
 }
 
 std::istream& operator>>(std::istream& is, Graph3D& g){

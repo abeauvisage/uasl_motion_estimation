@@ -263,13 +263,14 @@ bool isTriangulated() const {return !(pt(0)==0 && pt(1)==0 && pt(2)==0 && pt(3)=
 T getLastFeat() const {if(isValid()) return features[features.size()-1]; else return T();}
 T getFirstFeat() const {if(isValid()) return features[0]; else return T();}
 T getFeat(int idx) const {assert(idx < features.size()); return features[idx];}
-int findFeat(int idx, T& feat) const {
-    for(uint k=0;k<indices.size();k++)
+bool findFeat(int idx, T& feat) const {
+    for(uint k=0;k<indices.size();k++){
         if(indices[k] == idx){
             feat = features[k];
-            return k;
+            return true;
         }
-    return -1;
+    }
+    return false;
 }
 void removeLastFeat(){features.pop_back();indices.pop_back();mask.pop_back();assert(indices.size() == features.size() && indices.size() == mask.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
 int getLastFrameIdx() const {if(isValid())return indices[indices.size()-1];else return -1;}
