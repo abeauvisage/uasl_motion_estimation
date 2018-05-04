@@ -4,6 +4,7 @@
 #include <string>
 #include <istream>
 #include <thread>
+#include <mutex>
 
 #include "utils.h"
 
@@ -22,20 +23,36 @@ class Graph3D
         Graph3D(const std::string& name, bool traj=true, bool coordSyst=true);
         ~Graph3D(){m_viz.close();m_t.join();}
 
-        //! Update the camera pose.
+        //! Add a new camera pose.
         void addCameraPose(const cv::Matx44d& pose);
-        //! Update the camera pose.
+        //! Add a new camera pose.
         void addCameraPose(const cv::Affine3d& pose);
+        //! Add a new camera pose.
         void addCameraPose(const Quatd& ori, const cv::Vec3d& position);
+        //! Update the camera pose.
+        void updateCameraPose(const cv::Affine3d& pose,int idx);
+        //! Update the camera pose.
+        void updateCameraPose(const Quatd& ori, const cv::Vec3d& position, int idx);
+        //! Update the camera pose.
+        void updateCameraPose(const cv::Matx44d& pose, int idx);
+        //! Add a new GPS coordinate.
         void addGPSPosition(const cv::Vec3d& position);
+        //! Add a new IMU pose.
         void addIMUPose(const Quatd& ori, const cv::Vec3d& position);
-        //!Add 3D vector
+        //! Update the cloud of 3D points.
+        void add3Dpts(const std::vector<me::pt3D>& points);
+        //! Add 3D vector
         void add3Vector(const cv::Point3d& vec){cv::viz::WArrow vec_(cv::Point3d(0,0,0),vec);m_viz.showWidget("Vector Widget",vec_);}
         //! Add an image to be displayed in the camera image plane.
         void addImage(const cv::Mat& img){m_image = img.clone();}
-        //! reset the view of the widget to get a global view of the trajectory.
+        //! Reset the view of the widget to get a global view of the trajectory.
         void resetView(){m_viz.resetCamera();}
+        //! Remove all widgets and reset view.
+        void reset(){m_viz.removeAllWidgets();resetView();}
+        //! viz display mainloop.
         void mainloop();
+
+        int getNbCameraPoses(){return m_poses.size();}
 
         //! stream operator to add text to the graph (only one line).
         friend std::istream& operator>>(std::istream& is, Graph3D& g);
@@ -50,10 +67,11 @@ class Graph3D
     bool m_coordSyst; //!< Coordinate system. True: OpenCV (z-axis forward). False: standard (x-axis forward).
     cv::Mat m_image; //!< Image to be displayed
     std::vector<cv::Affine3d> m_poses; //!< Set of all camera poses.
-    std::vector<cv::Affine3d> m_gps; //!< Set of all camera poses.
-    std::vector<cv::Affine3d> m_imu; //!< Set of all camera poses.
-    cv::Vec3d m_gps_position;
-    std::thread  m_t;
+    std::vector<cv::Affine3d> m_gps; //!< Set of all GPS coordinates.
+    std::vector<cv::Affine3d> m_imu; //!< Set of all IMU poses.
+    cv::Mat m_pts; //!< Set of 3D points.
+    std::thread  m_t; //!< Thread to run display loop.
+    std::mutex m_mutex; //!< Mutex for multi-threading display/update.
 
 };
 

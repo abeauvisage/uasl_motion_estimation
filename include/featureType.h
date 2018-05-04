@@ -39,12 +39,14 @@ inline void normalize(ptH3D& pt){
     assert(pt(3) == 1);
 }
 /*! converts a 2D homogeneous point to non-homogeneous coordinate*/
-inline pt2D to_euclidean(ptH2D& pt){
+inline pt2D to_euclidean(const ptH2D& pt_){
+    ptH2D pt =pt_;
     normalize(pt);
     return pt2D(pt(0),pt(1));
 }
 /*! converts a 3D homogeneous point to non-homogeneous coordinate*/
-inline pt3D to_euclidean(ptH3D& pt){
+inline pt3D to_euclidean(const ptH3D& pt_){
+    ptH3D pt = pt_;
     normalize(pt);
     return pt3D(pt(0),pt(1),pt(2));
 }
@@ -256,7 +258,7 @@ double reproj_error=0;
 
 public:
 WBA_Point(const T match, const int frame_nb, const ptH3D pt_=ptH3D(0,0,0,1)){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);pt=pt_;count=1;}
-void addMatch(const T match, const int frame_nb){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);count++;assert(indices.size() == features.size()); assert(indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1); assert(mask.size() == indices.size());}
+void addMatch(const T match, const int frame_nb){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);count++;assert(indices.size() == features.size()); if(indices.size() != getLastFrameIdx()-getFirstFrameIdx()+1) std::cout << indices.size() << " [] " << getLastFrameIdx() << " " << getFirstFrameIdx() << std::endl;assert(indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1); assert(mask.size() == indices.size());}
 void pop(){features.pop_front();indices.pop_front();mask.pop_front();assert(indices.size() == features.size() && indices.size() == mask.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
 bool isValid() const {return !features.empty();}
 bool isTriangulated() const {return !(pt(0)==0 && pt(1)==0 && pt(2)==0 && pt(3)==1);}

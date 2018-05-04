@@ -167,6 +167,7 @@ int GpsFile::openFile(std::string filename){
             if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << " ";buff="";}
         }
         if(buff != "") m_file_desc.push_back(buff);
+        cout << buff << endl;
     }
 
     return 1;
