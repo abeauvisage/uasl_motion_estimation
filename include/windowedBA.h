@@ -78,7 +78,7 @@ void vizLoop();
 /** On manifold optim ***/
 bool optimize(const std::deque<std::vector<cv::Point2f>>& observations, std::vector<cv::Matx44d>& cam_poses, std::vector<pt3D>& pts3D, const std::vector<std::vector<cv::Matx22d>>& cov, const cv::Mat& visibility=cv::Mat(), const int fixedFrames=0);
 void computeJacobian(const std::vector<cv::Matx44d>& camera_poses, const std::vector<pt3D>& pts3D, const cv::Mat& residuals, cv::Mat& JJ, cv::Mat& U, cv::Mat& V, cv::Mat& W, cv::Mat& e, const std::vector<std::vector<cv::Matx22d>>& cov, const cv::Mat& visibility=cv::Mat(), int fixedFrames=0);
-void computeJacobian(const std::vector<cv::Matx44d>& camera_poses, const std::vector<pt3D>& pts3D, const cv::Mat& residuals, std::vector<cv::Matx66d>& U, std::vector<cv::Matx33d>& V, cv::Mat& W, cv::Mat& ea, cv::Mat& eb, const double& sigma, const std::vector<std::vector<cv::Matx22d>>& cov, const cv::Mat& visibility=cv::Mat(), int fixedFrames=0);
+void computeJacobian(const std::vector<cv::Matx44d>& camera_poses, const std::vector<pt3D>& pts3D, const cv::Mat& residuals, std::vector<cv::Matx66d>& U, std::vector<cv::Matx33d>& V, cv::Mat& W, cv::Mat& ea, cv::Mat& eb, const std::vector<std::vector<cv::Matx22d>>& cov, const cv::Mat& visibility=cv::Mat(), int fixedFrames=0);
 cv::Mat compute_residuals(const std::deque<std::vector<cv::Point2f>>& observations, const std::vector<cv::Matx44d>& poses, const std::vector<pt3D>& pts3D, const cv::Mat& visibility=cv::Mat());
 cv::Mat compute_dHdp(const cv::Matx44d& pose, const pt3D& pt);
 cv::Mat compute_dHde(const cv::Matx44d& pose, const pt3D& pt);

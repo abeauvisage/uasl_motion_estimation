@@ -60,6 +60,11 @@ void Graph3D::add3Dpts(const vector<me::pt3D>& points){
 
 void Graph3D::update3Dpts(const vector<me::pt3D>& points){
 
+    if(m_pts.empty()){
+        add3Dpts(points);
+        return;
+    }
+
     m_pts = Mat::zeros(points.size(),1,CV_64FC3);
     for(uint i=0;i<points.size();i++)
         m_pts.at<Matx31d>(i) = points[i];
@@ -102,6 +107,13 @@ void Graph3D::addCameraPose(const cv::Affine3d& pose){
 }
 
 void Graph3D::updateCameraPose(const Quatd& ori, const cv::Vec3d& position, int idx){
+
+    if(idx == m_poses.size()){
+        addCameraPose(ori,position);
+        return;
+    }
+    assert(idx < m_poses.size());
+
     Matx44d pose = ori.getR4().t();
     pose(0,3) = position(0);
     pose(1,3) = position(1);
@@ -111,10 +123,22 @@ void Graph3D::updateCameraPose(const Quatd& ori, const cv::Vec3d& position, int 
 }
 
 void Graph3D::updateCameraPose(const cv::Matx44d& pose, int idx){
+
+    if(idx == m_poses.size()){
+        addCameraPose(pose);
+        return;
+    }
+    assert(idx < m_poses.size());
     m_poses[idx] = Affine3d(pose);
 }
 
 void Graph3D::updateCameraPose(const cv::Affine3d& pose, int idx){
+
+    if(idx == m_poses.size()){
+        addCameraPose(pose);
+        return;
+    }
+    assert(idx < m_poses.size());
     m_poses[idx] = pose;
 }
 
