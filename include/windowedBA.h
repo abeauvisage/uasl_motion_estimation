@@ -26,6 +26,7 @@ void solveWindowedBA(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, const cv:
 /*! solve BA problem with observations, 3D points and camera poses*/
 cv::Vec3d solveWindowedBA(const std::vector<std::vector<std::pair<me::ptH2D,me::ptH2D>>>& observations,const std::vector<ptH3D>& pts3D, const cv::Matx33d& K, const cv::Mat& img);
 void solveWindowedBA(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, std::vector<CamPose_qd>& poses, int fixedFrames);
+void solveWindowedBAManifold(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, std::vector<CamPose_qd>& poses, int fixedFrames);
 //! optimization function with OpenCV Point2f
 /*! implements LM and GN minimization algo. Deprecated */
 bool optimize(const std::deque<std::vector<cv::Point2f>>& observations, cv::Mat& state, const cv::Mat& visibility,int fixedFrames);
@@ -70,8 +71,20 @@ void showCameraPosesAndPoints(const std::vector<Euld>& ori ,const std::vector<cv
 void showCameraPosesAndPoints(const cv::Mat& P, const std::vector<ptH3D>& pts);
 //! Display the different camera poses and 3D points in a 3D environment
 void showReprojectedPts(const cv::Mat& img, const std::vector<cv::Matx34d>& pMat, const std::vector<std::vector<cv::Point2f>>& observations, const cv::Mat& Xb);
+void showReprojectedPts(const cv::Mat& img, const std::vector<cv::Matx44d>& cam_poses, const std::vector<pt3D>& pts3D, const std::deque<std::vector<cv::Point2f>>& observations, const cv::Mat& visibility=cv::Mat());
 void showCameraPosesAndPointsT(const std::vector<CamPose_qd>& poses, const std::vector<WBA_Ptf*>& pts);
 void vizLoop();
+
+/** On manifold optim ***/
+bool optimize(const std::deque<std::vector<cv::Point2f>>& observations, std::vector<cv::Matx44d>& cam_poses, std::vector<pt3D>& pts3D, const std::vector<std::vector<cv::Matx22d>>& cov, const cv::Mat& visibility=cv::Mat(), const int fixedFrames=0);
+void computeJacobian(const std::vector<cv::Matx44d>& camera_poses, const std::vector<pt3D>& pts3D, const cv::Mat& residuals, cv::Mat& JJ, cv::Mat& U, cv::Mat& V, cv::Mat& W, cv::Mat& e, const std::vector<std::vector<cv::Matx22d>>& cov, const cv::Mat& visibility=cv::Mat(), int fixedFrames=0);
+void computeJacobian(const std::vector<cv::Matx44d>& camera_poses, const std::vector<pt3D>& pts3D, const cv::Mat& residuals, std::vector<cv::Matx66d>& U, std::vector<cv::Matx33d>& V, cv::Mat& W, cv::Mat& ea, cv::Mat& eb, const double& sigma, const std::vector<std::vector<cv::Matx22d>>& cov, const cv::Mat& visibility=cv::Mat(), int fixedFrames=0);
+cv::Mat compute_residuals(const std::deque<std::vector<cv::Point2f>>& observations, const std::vector<cv::Matx44d>& poses, const std::vector<pt3D>& pts3D, const cv::Mat& visibility=cv::Mat());
+cv::Mat compute_dHdp(const cv::Matx44d& pose, const pt3D& pt);
+cv::Mat compute_dHde(const cv::Matx44d& pose, const pt3D& pt);
+
+cv::Matx44d exp_map(const cv::Matx61d& mat);
+double MedianAbsoluteDeviation(const cv::Mat& squared_error);
 
 }
 

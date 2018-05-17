@@ -251,20 +251,21 @@ struct WBA_Point{
 private:
 std::deque<T> features;
 std::deque<uint> indices;
-std::deque<int> mask;
+std::deque<cv::Matx22d> cov;
 ptH3D pt;
 int count=0;
 double reproj_error=0;
 
 public:
-WBA_Point(const T match, const int frame_nb, const ptH3D pt_=ptH3D(0,0,0,1)){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);pt=pt_;count=1;}
-void addMatch(const T match, const int frame_nb){features.push_back(match);indices.push_back(frame_nb);mask.push_back(1);count++;assert(indices.size() == features.size()); if(indices.size() != getLastFrameIdx()-getFirstFrameIdx()+1) std::cout << indices.size() << " [] " << getLastFrameIdx() << " " << getFirstFrameIdx() << std::endl;assert(indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1); assert(mask.size() == indices.size());}
-void pop(){features.pop_front();indices.pop_front();mask.pop_front();assert(indices.size() == features.size() && indices.size() == mask.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
+WBA_Point(const T match, const int frame_nb, const cv::Matx22d& cov_=cv::Matx22d::eye(), const ptH3D pt_=ptH3D(0,0,0,1)){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);pt=pt_;count=1;}
+void addMatch(const T match, const int frame_nb, const cv::Matx22d& cov_=cv::Matx22d::eye()){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);count++;assert(indices.size() == features.size()); if(indices.size() != getLastFrameIdx()-getFirstFrameIdx()+1) std::cout << indices.size() << " [] " << getLastFrameIdx() << " " << getFirstFrameIdx() << std::endl;assert(indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1); assert(cov.size() == indices.size());}
+void pop(){features.pop_front();indices.pop_front();cov.pop_front();assert(indices.size() == features.size() && indices.size() == cov.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
 bool isValid() const {return !features.empty();}
 bool isTriangulated() const {return !(pt(0)==0 && pt(1)==0 && pt(2)==0 && pt(3)==1);}
 T getLastFeat() const {if(isValid()) return features[features.size()-1]; else return T();}
 T getFirstFeat() const {if(isValid()) return features[0]; else return T();}
 T getFeat(int idx) const {assert(idx < features.size()); return features[idx];}
+cv::Matx22d getCov(int idx) const {assert(idx < cov.size()); return cov[idx];}
 bool findFeat(int idx, T& feat) const {
     for(uint k=0;k<indices.size();k++){
         if(indices[k] == idx){
@@ -274,7 +275,7 @@ bool findFeat(int idx, T& feat) const {
     }
     return false;
 }
-void removeLastFeat(){features.pop_back();indices.pop_back();mask.pop_back();assert(indices.size() == features.size() && indices.size() == mask.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
+void removeLastFeat(){features.pop_back();indices.pop_back();cov.pop_back();assert(indices.size() == features.size() && indices.size() == cov.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
 int getLastFrameIdx() const {if(isValid())return indices[indices.size()-1];else return -1;}
 int getFirstFrameIdx() const {if(isValid())return indices[0];else return -1;}
 int getFrameIdx(int idx) const {assert(idx < indices.size() && idx>=0);return indices[idx];}
@@ -282,11 +283,7 @@ int getNbFeatures() const {return features.size();}
 int getCount() const {return count;}
 ptH3D get3DLocation() const {return pt;}
 void set3DLocation(const ptH3D& pt_){pt = pt_;}
-double getReprojError() const {return reproj_error;}
-void setReprojError(const double reproj_error_){reproj_error = reproj_error_;}
-bool isFeatValid(int idx) const{return mask[idx];}
-void setFeatValidity(int idx, bool v){if(v)mask[idx] = 1;else mask[idx]=0;}
-void clearMask(){for(uint i=0;i<mask.size();i++)mask[i]=0;}
+
 
 friend std::ostream& operator<<(std::ostream& os, const WBA_Point& pt){
     os << pt.getNbFeatures() << " feats (from " << pt.getFirstFrameIdx() << " to " << pt.getLastFrameIdx() << ")";

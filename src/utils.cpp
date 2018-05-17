@@ -214,8 +214,8 @@ template <typename T>
 inline cv::Matx<T,4,4> Quat<T>::getR4() const{
 
     return typename Matx<T,4,4>::Matx(  m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z,  2*(m_x*m_y + m_w*m_z),                  2*(m_x*m_z - m_w*m_y),                  0,
-                                        2*(m_x*m_y - m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_w*m_x + m_y*m_z),                  0,
-                                        2*(m_x*m_z + m_w*m_y),			        2*(m_w*m_x - m_y*m_z),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z,  0,
+                                        2*(m_x*m_y - m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_y*m_z + m_w*m_x),                  0,
+                                        2*(m_x*m_z + m_w*m_y),			        2*(m_y*m_z - m_w*m_x),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z,  0,
                                         0,                                      0,						                0,					                    1);
 }
 

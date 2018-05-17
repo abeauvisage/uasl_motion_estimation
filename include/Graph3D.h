@@ -39,8 +39,10 @@ class Graph3D
         void addGPSPosition(const cv::Vec3d& position);
         //! Add a new IMU pose.
         void addIMUPose(const Quatd& ori, const cv::Vec3d& position);
-        //! Update the cloud of 3D points.
+        //! Add a cloud of 3D points.
         void add3Dpts(const std::vector<me::pt3D>& points);
+        //! Update the cloud of 3D points.
+        void update3Dpts(const std::vector<me::pt3D>& points);
         //! Add 3D vector
         void add3Vector(const cv::Point3d& vec){cv::viz::WArrow vec_(cv::Point3d(0,0,0),vec);m_viz.showWidget("Vector Widget",vec_);}
         //! Add an image to be displayed in the camera image plane.

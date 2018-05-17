@@ -12,10 +12,11 @@ namespace me{
 
 Graph3D::Graph3D(const string& name, bool traj, bool coordSyst) : m_viz(name), m_traj(traj), m_coordSyst(coordSyst)
 {
-    m_t = thread(&Graph3D::mainloop,this);
+    m_viz.setBackgroundColor(viz::Color::black(),viz::Color::gray());
     m_viz.showWidget("Coordinate system", viz::WCoordinateSystem(1));
     m_viz.showWidget("Camera_widget",viz::WTrajectoryFrustums(m_poses,Vec2d(1,0.5)));
     m_viz.resetCamera();
+    m_t = thread(&Graph3D::mainloop,this);
 }
 
 void Graph3D::mainloop(){
@@ -23,9 +24,9 @@ void Graph3D::mainloop(){
     while(!m_viz.wasStopped()){
         {
         lock_guard<mutex> lock(m_mutex);
-        m_viz.spinOnce(100);
+        m_viz.spinOnce(10);
         }
-        this_thread::sleep_for(chrono::milliseconds(50));
+        this_thread::sleep_for(chrono::milliseconds(5));
     }
 }
 
@@ -35,11 +36,11 @@ void Graph3D::refresh(){
     lock_guard<mutex> lock(m_mutex);
 
 
-    m_viz.showWidget("Trajectory",viz::WTrajectory(vector<Affine3d>(1,Affine3d::Identity())));
-    m_viz.showWidget("GPS track",viz::WTrajectory(vector<Affine3d>(1,Affine3d::Identity())));
-//    m_viz.removeWidget("Camera_widget");
-    m_viz.showWidget("Camera_widget",viz::WTrajectoryFrustums(m_poses,Vec2d(1,0.5)));
-    m_viz.showWidget("IMU track",viz::WTrajectory(vector<Affine3d>(1,Affine3d::Identity())));
+    if(m_traj)
+        m_viz.showWidget("Trajectory",viz::WTrajectory(m_poses,viz::WTrajectory::PATH,1.0,viz::Color::green()));
+    m_viz.showWidget("GPS track",viz::WTrajectorySpheres(m_gps,0.05,0.007,viz::Color::blue(),viz::Color::green()));
+    m_viz.showWidget("IMU track",viz::WTrajectorySpheres(m_imu,0.05,0.07,viz::Color::red(),viz::Color::red()));
+    m_viz.showWidget("Camera_widget",viz::WTrajectoryFrustums(m_poses,Vec2d(1,0.5),1.0,viz::Color::blue()));
 
     if(!m_pts.empty()){
         viz::WCloud wcloud(m_pts);
@@ -49,6 +50,15 @@ void Graph3D::refresh(){
 }
 
 void Graph3D::add3Dpts(const vector<me::pt3D>& points){
+
+    Mat new_pts = Mat::zeros(points.size(),1,CV_64FC3);
+    for(uint i=0;i<points.size();i++)
+        new_pts.at<Matx31d>(i) = points[i];
+
+   m_pts.push_back(new_pts);
+}
+
+void Graph3D::update3Dpts(const vector<me::pt3D>& points){
 
     m_pts = Mat::zeros(points.size(),1,CV_64FC3);
     for(uint i=0;i<points.size();i++)
