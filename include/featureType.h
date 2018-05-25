@@ -38,6 +38,27 @@ inline void normalize(ptH3D& pt){
     pt(3)/=pt(3);
     assert(pt(3) == 1);
 }
+
+/*! Normalize a 2D homogeneous point. */
+inline ptH2D normalize(const ptH2D& pt_){
+    ptH2D pt(pt_);
+    pt(0)/=pt(2);
+    pt(1)/=pt(2);
+    pt(2)/=pt(2);
+    assert(pt(2) == 1);
+    return pt;
+}
+
+/*! Normalize a 3D homogeneous point. */
+inline ptH3D normalize(const ptH3D& pt_){
+    ptH3D pt(pt_);
+    pt(0)/=pt(3);
+    pt(1)/=pt(3);
+    pt(2)/=pt(3);
+    pt(3)/=pt(3);
+    assert(pt(3) == 1);
+    return pt;
+}
 /*! converts a 2D homogeneous point to non-homogeneous coordinate*/
 inline pt2D to_euclidean(const ptH2D& pt_){
     ptH2D pt =pt_;
@@ -254,11 +275,15 @@ std::deque<uint> indices;
 std::deque<cv::Matx22d> cov;
 ptH3D pt;
 int count=0;
-double reproj_error=0;
+int ID;
+
+static int latestID;
 
 public:
-WBA_Point(const T match, const int frame_nb, const cv::Matx22d& cov_=cv::Matx22d::eye(), const ptH3D pt_=ptH3D(0,0,0,1)){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);pt=pt_;count=1;}
-void addMatch(const T match, const int frame_nb, const cv::Matx22d& cov_=cv::Matx22d::eye()){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);count++;assert(indices.size() == features.size()); if(indices.size() != getLastFrameIdx()-getFirstFrameIdx()+1) std::cout << indices.size() << " [] " << getLastFrameIdx() << " " << getFirstFrameIdx() << std::endl;assert(indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1); assert(cov.size() == indices.size());}
+WBA_Point(const T match, const int frame_nb, const cv::Matx22d& cov_=cv::Matx22d::zeros(), const ptH3D pt_=ptH3D(0,0,0,1)): count(1), ID(latestID++){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);pt=pt_;}
+WBA_Point(const WBA_Point& point): count(point.count), ID(point.ID){features=point.features;indices=point.indices;cov=point.cov;pt=point.pt;}
+WBA_Point(WBA_Point& point): count(point.count), ID(point.ID){features=point.features;indices=point.indices;cov=point.cov;pt=point.pt;}
+void addMatch(const T match, const int frame_nb, const cv::Matx22d& cov_=cv::Matx22d::zeros()){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);count++;assert(indices.size() == features.size()); if(indices.size() != getLastFrameIdx()-getFirstFrameIdx()+1) std::cout << indices.size() << " [] " << getLastFrameIdx() << " " << getFirstFrameIdx() << std::endl;assert(indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1); assert(cov.size() == indices.size());}
 void pop(){features.pop_front();indices.pop_front();cov.pop_front();assert(indices.size() == features.size() && indices.size() == cov.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
 bool isValid() const {return !features.empty();}
 bool isTriangulated() const {return !(pt(0)==0 && pt(1)==0 && pt(2)==0 && pt(3)==1);}
@@ -281,18 +306,31 @@ int getFirstFrameIdx() const {if(isValid())return indices[0];else return -1;}
 int getFrameIdx(int idx) const {assert(idx < indices.size() && idx>=0);return indices[idx];}
 int getNbFeatures() const {return features.size();}
 int getCount() const {return count;}
+int getID() const {return ID;}
 ptH3D get3DLocation() const {return pt;}
 void set3DLocation(const ptH3D& pt_){pt = pt_;}
 
+friend void swap(WBA_Point& pt1, WBA_Point& pt2){
+    std::swap(pt1.features,pt2.features);
+    std::swap(pt1.indices,pt2.indices);
+    std::swap(pt1.cov,pt2.cov);
+    std::swap(pt1.pt,pt2.pt);
+    int tmp=pt1.ID;pt1.ID=pt2.ID;pt2.ID=tmp;
+}
+
+WBA_Point& operator=(const WBA_Point& point){ WBA_Point tmp(point);swap(*this,tmp); return *this;}
+
 
 friend std::ostream& operator<<(std::ostream& os, const WBA_Point& pt){
-    os << pt.getNbFeatures() << " feats (from " << pt.getFirstFrameIdx() << " to " << pt.getLastFrameIdx() << ")";
+    os << "Point " << pt.getID() << ": " << pt.getNbFeatures() << " feats (from " << pt.getFirstFrameIdx() << " to " << pt.getLastFrameIdx() << ")";
     return os;
 }
 
 };
 
 typedef WBA_Point<cv::Point2f> WBA_Ptf;
+template<typename T>
+int WBA_Point<T>::latestID=0;
 
 template<typename O, typename T>
 class CamPose{

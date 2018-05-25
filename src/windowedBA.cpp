@@ -909,7 +909,7 @@ void computeJacobian(const std::vector<WBA_Ptf*>& pts, const cv::Mat& Xa,  const
 
 /*** On-Manifold Optim ***/
 
-void solveWindowedBAManifold(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, std::vector<CamPose_qd>& poses, int fixedFrames){
+void solveWindowedBAManifold(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, std::vector<CamPose_qd>& poses, int fixedFrames, std::vector<int>& outliers){
 
     assert(fixedFrames <= poses.size());
 
@@ -946,8 +946,10 @@ void solveWindowedBAManifold(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, s
         pts3D.push_back(to_euclidean(ptH));
         for(uint k=0;k<pts[i]->getNbFeatures();k++){
             obs_i.push_back(pts[i]->getFeat(k));
+            cov[i][pts[i]->getFrameIdx(k)-start_] = Matx22d::eye();
 //            cov[i][pts[i]->getFrameIdx(k)-start_] = pts[i]->getCov(k);
 //            cout << "cov " << pts[i]->getCov(k) << endl;
+
             visibility.at<uchar>(obs.size(),pts[i]->getFrameIdx(k)-start_) = k+1;
         }
         obs.push_back(obs_i);
@@ -956,8 +958,14 @@ void solveWindowedBAManifold(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, s
     visibility = visibility.rowRange(0,obs.size());
     Mat residuals = compute_residuals(obs,cam_poses,pts3D,visibility);
 
+    showReprojectedPts(img_,cam_poses,pts3D,obs,visibility);
     cout << "[BA] initial MRE: " << sqrt(sum(residuals.mul(residuals))[0]) / (double)(residuals.rows*2) << endl;
-//    showReprojectedPts(img_,cam_poses,pts3D,obs,visibility);
+    if( sqrt(sum(residuals.mul(residuals))[0]) / (double)(residuals.rows*2) > 1e-2){
+            cerr << "[BA] initial big reproj error!" << endl;
+//            cout << residuals.t() << endl;
+            cout << sum(residuals.mul(residuals))<< endl;
+            waitKey();
+        }
 
     auto tp1 = chrono::steady_clock::now();
     bool success = optimize(obs,cam_poses,pts3D,cov,visibility,fixedFrames);
@@ -969,18 +977,32 @@ void solveWindowedBAManifold(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, s
         Mat residuals = compute_residuals(obs,cam_poses,pts3D,visibility);
         cout << "[BA] final MRE: " << sqrt(sum(residuals.mul(residuals))[0]) / (double)(residuals.rows*2) << endl;
 
+        outliers.clear();
+        Mat squared_res = residuals.mul(residuals);
         for(uint i=0;i<pts.size();i++){
-            pts[i]->set3DLocation(to_homogeneous(pts3D[i]));
+            double error = 0;
+            for(uint j=0;j<cam_poses.size();j++)
+                error += sqrt(sum(squared_res.row(j*pts.size()+i))[0]);
+            if( error < 15)
+                pts[i]->set3DLocation(to_homogeneous(pts3D[i]));
+            else{
+                pts[i]->set3DLocation(ptH3D(0,0,0,1));
+                outliers.push_back(pts[i]->getID());
+            }
+//            cout << error << endl;
         }
 
         for(uint j=0;j<window_size;j++){
+            cout << Quatd((Mat)cam_poses[j]) << ((Mat)cam_poses[j])(Range(0,3),Range(3,4)).t() << endl;
             poses[j].orientation = Quatd((Mat)cam_poses[j]);
             Mat new_pose = - ((Mat)cam_poses[j])(Range(0,3),Range(0,3)).t() * ((Mat)cam_poses[j])(Range(0,3),Range(3,4));
             poses[j].position = new_pose;
         }
         showReprojectedPts(img_,cam_poses,pts3D,obs,visibility);
-        if( sum((residuals.t()*residuals).diag())[0] / (double)(residuals.rows) > 50.0){
+        if( sqrt(sum(residuals.mul(residuals))[0]) / (double)(residuals.rows*2) > 1e-2){
             cerr << "[BA] big reproj error!" << endl;
+//            cout << residuals.t() << endl;
+            cout << sum(residuals.mul(residuals)) << endl;
             waitKey();
         }
     }
@@ -997,25 +1019,30 @@ bool optimize(const std::deque<std::vector<cv::Point2f>>& obs, std::vector<cv::M
     int k=0;
     int result=0;
     double v=2,tau=1e-3,mu=1e-20;
-    double abs_tol=1e-6,grad_tol=1e-9,incr_tol=1e-9,rel_tol=1e-9;
+    double abs_tol=1e-3,grad_tol=1e-6,incr_tol=1e-9,rel_tol=1e-6;
     StopCondition stop=StopCondition::NO_STOP;
 
     vector<pt3D> pts3D_ = pts3D;
     vector<Matx44d> cam_poses_ = cam_poses;
 
-    Mat schur,WV_inv,V_inv,W;
+    Mat schur,WV_inv,V_inv,W,schur2;
     vector<Matx66d>Uj;vector<Matx33d>Vi;
+    vector<vector<Matx22d>> new_cov;
 
     do {
 
         Mat residuals = compute_residuals(obs,cam_poses_,pts3D_,visibility),new_res;
-//        Mat squared_residuals = residuals.clone();squared_residuals.mul(residuals);vconcat(squared_residuals.col(0),squared_residuals.col(1),squared_residuals);
+        Mat squared_residuals =residuals.mul(residuals);vconcat(squared_residuals.col(0),squared_residuals.col(1),squared_residuals);
 //        cout << squared_residuals.depth() << " " << squared_residuals.size << endl;
-//        double sigma = MedianAbsoluteDeviation(squared_residuals);
+        double sigma = MedianAbsoluteDeviation(squared_residuals);
 //        cout << "sigma " << sigma << endl;
 //        Mat Weights;
-//        vector<vector<Matx22d>> new_cov;
-//        tukeyMahalanobis(residuals,new_res,4.685/0.6745*sigma,cov,new_cov);
+        vector<vector<Matx22d>> new_cov = cov;
+
+//        tukeyMahalanobis(residuals,new_res,100*2.685/0.6745*sigma,cov,new_cov);
+//        for(uint i=0;i<new_cov.size();i++)
+//            for(uint j=0;j<new_cov[i].size();j++)
+//                cout << new_cov[i][j] << endl;
         double e1 = sum(residuals.mul(residuals))[0];
         double meanReprojError = sqrt(e1) / (double)(residuals.rows*2);
 //        cout << cam_poses_[cam_poses_.size()-1] << endl;
@@ -1027,12 +1054,14 @@ bool optimize(const std::deque<std::vector<cv::Point2f>>& obs, std::vector<cv::M
         Mat ea,eb;
         Mat JJ,U,V,e;
 
-        computeJacobian(cam_poses_,pts3D_,residuals,Uj,Vi,W,ea,eb,cov,visibility,fixedFrames);
+        computeJacobian(cam_poses_,pts3D_,residuals,Uj,Vi,W,ea,eb,new_cov,visibility,fixedFrames);
 //        computeJacobian(cam_poses_,pts3D_,residuals,JJ,U,V,W,e,cov,visibility,fixedFrames);
 
-        if(norm(ea,NORM_INF)+norm(eb,NORM_INF) < grad_tol)
+//        if(norm(e,NORM_INF) < grad_tol)
+        if(norm(e,NORM_INF)+norm(eb,NORM_INF) < grad_tol)
             stop = StopCondition::SMALL_GRADIENT;
 
+//        cout << "ea: " << ea.t() << endl;
 //        cv::Mat X = Mat::zeros((cam_poses.size()-fixedFrames)*6+pts3D.size()*3,1,CV_64F);
 
         if(k==0){
@@ -1051,9 +1080,10 @@ bool optimize(const std::deque<std::vector<cv::Point2f>>& obs, std::vector<cv::M
             }
             mu = max(mu,max_);
             mu = tau * mu;
+//            mu = 1e-6;
         }
         for(;;){
-//            cout << mu << endl;
+            cout << mu << endl;
     /*** compute Schur complement ****/
 //
             WV_inv = W.clone();
@@ -1062,7 +1092,8 @@ bool optimize(const std::deque<std::vector<cv::Point2f>>& obs, std::vector<cv::M
                 Vi[i] += mu*Matx33d::eye();
                 Matx33d Vinv = Vi[i].inv();
                 V_inv(Range(i*3,i*3+3),Range(i*3,i*3+3)) += (Mat)Vinv;
-                WV_inv.colRange(i*3,i*3+3) *= (Mat) Vinv;
+                if(!WV_inv.empty())
+                    WV_inv.colRange(i*3,i*3+3) *= (Mat) Vinv;
             }
 
             Mat U_=Mat::zeros((cam_poses_.size()-fixedFrames)*6,(cam_poses_.size()-fixedFrames)*6,CV_64F);
@@ -1071,10 +1102,13 @@ bool optimize(const std::deque<std::vector<cv::Point2f>>& obs, std::vector<cv::M
                 ((Mat)Uj[j]).copyTo(U_(Range(j*6,j*6+6),Range(j*6,j*6+6)));
             }
 
-            schur = U_ - ( WV_inv * W.t());
-            Mat schur2 = ea - WV_inv * eb;
+
+            if(!U_.empty()){
+                schur = U_ - ( WV_inv * W.t());
+                schur2 = ea - WV_inv * eb;
+            }
             Mat X_a;
-            if(solve(schur,schur2,X_a,DECOMP_CHOLESKY)){
+            if((U_.empty()) || solve(schur,schur2,X_a,DECOMP_CHOLESKY)){
 
     /****  JJ ****/
 //            JJ += mu * Mat::eye(JJ.size(),CV_64F);
@@ -1084,28 +1118,34 @@ bool optimize(const std::deque<std::vector<cv::Point2f>>& obs, std::vector<cv::M
 //                X_a  = X.rowRange(0,cam_poses_.size()*6).clone();
 //                X_b  = X.rowRange(cam_poses_.size()*6,X.rows).clone();
 
-                Mat X_b = V_inv *(eb-W.t()*X_a);
+                cout << X_a.t() << endl;
+                Mat X_b;
+                if(U_.empty())
+                    X_b = V_inv * eb;
+                else
+                    X_b = V_inv *(eb-W.t()*X_a);
+
                 if(norm(X_a)+norm(X_b) <= incr_tol ){
                     stop = StopCondition::SMALL_INCREMENT;
                     break;
                 }
                 vector<Matx44d> cam_poses_test=cam_poses_; vector<pt3D> pts3D_test=pts3D_;
                 for(int j=fixedFrames;j<cam_poses_.size();j++)
-                    cam_poses_test[j] = (exp_map((Matx61d)(X_a.rowRange((j-fixedFrames)*6,(j-fixedFrames)*6+6))) * cam_poses_[j]);
+                    cam_poses_test[j] = (cam_poses_[j] * exp_map((Matx61d)(X_a.rowRange((j-fixedFrames)*6,(j-fixedFrames)*6+6))));
                 for(int i=0;i<pts3D_.size();i++){
                     pts3D_test[i] += (Matx31d) X_b.rowRange(i*3,i*3+3);
                 }
-
+//                cout << X_a.t() << endl << X_b.t() << endl;
                 Mat res_ = compute_residuals(obs,cam_poses_test,pts3D_test,visibility),new_res_;
 //                tukey(res_,new_res_,4.685/0.6745*sigma,3.0,Weights);
 //                tukeyMahalanobis(res_,new_res_,4.685/0.6745*sigma,cov,new_cov);
                 double e2 = sum(res_.mul(res_))[0];
                 Mat dL = X_a.t()*(mu*X_a+ea) + X_b.t()*(mu*X_b+eb);
-                double rho = (e1-e2)/dL.at<double>(0,0);
+                double rho = (e1-e2);///dL.at<double>(0,0);
 
                 if(rho > 0){ //threshold
 
-                    mu *= max(1.0/3.0,1-pow(2*rho-1,3));
+                    mu *= 0.00001;//max(1.0/3.0,1-pow(2*rho-1,3));
                     v = 2;
 
                     if(pow(sqrt(e1) - sqrt(e2),2) < rel_tol * sqrt(e1))
@@ -1145,30 +1185,32 @@ bool optimize(const std::deque<std::vector<cv::Point2f>>& obs, std::vector<cv::M
     cam_poses = cam_poses_;
     pts3D = pts3D_;
 
-    Mat residuals = compute_residuals(obs,cam_poses,pts3D,visibility);
-    Mat ea,eb;
-    computeJacobian(cam_poses_,pts3D_,residuals,Uj,Vi,W,ea,eb,cov,visibility,fixedFrames);
-//    computeJacobian(cam_poses_,pts3D_,residuals,JJ,U,V,W,e,cov,visibility,fixedFrames);
+//    Mat residuals = compute_residuals(obs,cam_poses,pts3D,visibility);
+//    Mat ea,eb;
+//    computeJacobian(cam_poses_,pts3D_,residuals,Uj,Vi,W,ea,eb,cov,visibility,fixedFrames);
+////    computeJacobian(cam_poses_,pts3D_,residuals,JJ,U,V,W,e,cov,visibility,fixedFrames);
+//
+//    if(fixedFrames < cam_poses.size()){
+//        Mat WV_inv_,V_inv_,U_;
+//        WV_inv_ = W.clone();
+//        V_inv_ = Mat::zeros(Vi.size()*3,Vi.size()*3,CV_64F);
+//        for(uint i=0;i<Vi.size();i++){
+//            Matx33d Vinv = Vi[i].inv();
+//            ((Mat)Vinv).copyTo(V_inv_(Range(i*3,i*3+3),Range(i*3,i*3+3)));
+//            WV_inv_.colRange(i*3,i*3+3) *= (Mat) Vinv;
+//        }
+//
+//        U_=Mat::zeros((cam_poses_.size()-fixedFrames)*6,(cam_poses_.size()-fixedFrames)*6,CV_64F);
+//        for(uint j=0;j<Uj.size();j++){
+//            ((Mat)Uj[j]).copyTo(U_(Range(j*6,j*6+6),Range(j*6,j*6+6)));
+//        }
+//
+//        Mat schur_ = (U_ - WV_inv_ * W.t());
+//        Mat cova = (schur_.t() * schur_).inv() * schur_.t(),covb;
+//        covb = WV_inv_.t() * cova * WV_inv_ + V_inv_;
+//    }
 
-    Mat WV_inv_,V_inv_,U_;
-    WV_inv_ = W.clone();
-    V_inv_ = Mat::zeros(Vi.size()*3,Vi.size()*3,CV_64F);
-    for(uint i=0;i<Vi.size();i++){
-        Matx33d Vinv = Vi[i].inv();
-        ((Mat)Vinv).copyTo(V_inv_(Range(i*3,i*3+3),Range(i*3,i*3+3)));
-        WV_inv_.colRange(i*3,i*3+3) *= (Mat) Vinv;
-    }
-
-    U_=Mat::zeros((cam_poses_.size()-fixedFrames)*6,(cam_poses_.size()-fixedFrames)*6,CV_64F);
-    for(uint j=0;j<Uj.size();j++){
-        ((Mat)Uj[j]).copyTo(U_(Range(j*6,j*6+6),Range(j*6,j*6+6)));
-    }
-
-    Mat schur_ = (U_ - WV_inv_ * W.t());
-    Mat cova = (schur_.t() * schur_).inv() * schur_.t(),covb;
-    covb = WV_inv_.t() * cova * WV_inv_ + V_inv_;
-
-    if(stop == NO_CONVERGENCE || stop == MAX_ITERATIONS) // if failed or reached max iterations, return false (didn't work)
+    if(stop == NO_CONVERGENCE /*|| stop == MAX_ITERATIONS*/) // if failed or reached max iterations, return false (didn't work)
         return false;
     else{
         return true;
@@ -1300,8 +1342,8 @@ void computeJacobian(const std::vector<cv::Matx44d>& cam_poses, const std::vecto
             A_j.push_back(A_ij);
             B_j.push_back(B_ij);
 
-           if(j<fixedFrames)
-             continue;
+//           if(j<fixedFrames)
+//             continue;
 
            U[j-fixedFrames] += (Matx66d)(Mat)(A_ij.t() * (Mat)(cov[i][j]) * A_ij);
            W(Range((j-fixedFrames)*6,(j-fixedFrames)*6+6),Range(i*3,i*3+3)) += A_ij.t() * (Mat)(cov[i][j]) * B_ij;
@@ -1333,19 +1375,20 @@ cv::Matx44d exp_map(const cv::Matx61d& eps){
     double vtuy = eps(4);
     double vtuz = eps(5);
     cv::Mat tu = (cv::Mat_<double>(3,1) << vtux, vtuy, vtuz); // theta u
-    cv::Mat dR;
+    cv::Mat exp_omega;
 //    cv::Mat dt(3, 1, CV_64F);
-    cv::Rodrigues(tu, dR);
-    double theta = sqrt(tu.dot(tu));
-    double sinc = (fabs(theta) < 1.0e-8) ? 1.0 : sin(theta) / theta;
-    double mcosc = (fabs(theta) < 2.5e-4) ? 0.5 : (1.-cos(theta)) / theta / theta;
-    double msinc = (fabs(theta) < 2.5e-4) ? (1./6.) : (theta-sin(theta)/theta) / theta / theta;
+    cv::Rodrigues(tu, exp_omega);
+//    double theta = sqrt(tu.dot(tu));
+    double theta = norm(tu);
+//    double sinc = (fabs(theta) < 1.0e-8) ? 1.0 : sin(theta) / theta;
+    double mcosc = (fabs(theta) < 2.5e-4) ? 0.5 : (1.-cos(theta)) / pow(theta,2);
+    double msinc = (fabs(theta) < 2.5e-4) ? (1./6.) : (theta-sin(theta)) / pow(theta,3);
 
     Matx33d V = Matx33d::eye() + mcosc * skew(tu) + msinc * skew(tu) * skew(tu);
 
-    Matx31d dt = V * Matx31d(vx,vy,vz);
+    Matx31d Vt = V * Matx31d(vx,vy,vz);
 
-    cv::hconcat(dR, dt, A);
+    cv::hconcat(exp_omega, Vt, A);
     cv::Mat temp = (cv::Mat_<double>(1,4) << 0, 0, 0, 1);
     A.push_back(temp);
 
@@ -1374,7 +1417,8 @@ double MedianAbsoluteDeviation(const cv::Mat& squared_error){
         lmeds = (res_squared[idx - 1] + res_squared[idx])/2.;
     }
 
-    double sigma = sqrt(lmeds)*1.f/phi_const;                                                               // Estimated std. dev.
+
+    double sigma = sqrt(lmeds)*1.f/phi_const;
     return sigma;
 }
 
@@ -1389,6 +1433,7 @@ void tukeyMahalanobis(const cv::Mat& residuals, cv::Mat& new_residuals, const do
         for(int j=0;j<cov[i].size();j++){
             int row = i*cov[i].size()+j;
             res_norm = ((Mat)(residuals.row(row) * (Mat)cov[i][j] * residuals.row(row).t())).at<double>(0);
+//            cout << "norm " <<res_norm << " ";
             if (res_norm <= k) {
                 w_x = pow(1 - pow(residuals.at<double>(row,0)/k,2), 2);
                 w_y = pow(1 - pow(residuals.at<double>(row,1)/k,2), 2);
@@ -1402,10 +1447,12 @@ void tukeyMahalanobis(const cv::Mat& residuals, cv::Mat& new_residuals, const do
             new_residuals.at<double>(row*2+1) = k*k/6;
           }
           Matx22d cov_ij; cov_ij << w_y,0,0,w_y;
+//          cout << w_x << w_y << endl;
           cov_i.push_back(cov_ij);
         }
         new_cov.push_back(cov_i);
     }
+//     cout << "k : " << k << endl;
 }
 
 void tukey(const cv::Mat& residuals, cv::Mat& new_residuals, const double &k, cv::Mat& W){

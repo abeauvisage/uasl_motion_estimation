@@ -26,7 +26,7 @@ void solveWindowedBA(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, const cv:
 /*! solve BA problem with observations, 3D points and camera poses*/
 cv::Vec3d solveWindowedBA(const std::vector<std::vector<std::pair<me::ptH2D,me::ptH2D>>>& observations,const std::vector<ptH3D>& pts3D, const cv::Matx33d& K, const cv::Mat& img);
 void solveWindowedBA(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, std::vector<CamPose_qd>& poses, int fixedFrames);
-void solveWindowedBAManifold(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, std::vector<CamPose_qd>& poses, int fixedFrames);
+void solveWindowedBAManifold(std::vector<WBA_Ptf*>& pts, const cv::Matx33d& K, std::vector<CamPose_qd>& poses, int fixedFrames, std::vector<int>& outliers);
 //! optimization function with OpenCV Point2f
 /*! implements LM and GN minimization algo. Deprecated */
 bool optimize(const std::deque<std::vector<cv::Point2f>>& observations, cv::Mat& state, const cv::Mat& visibility,int fixedFrames);
