@@ -53,9 +53,11 @@ static std::ofstream logFile;
 int loadYML(std::string filename);
 //! returns the image(s) corresponding to the frame number
 /*! if monocular, the second image of the pair is empty. */
-std::pair<cv::Mat,cv::Mat> loadImages(std::string& dir, int nb);
-void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs);
-cv::Mat loadImage(std::string& dir, int cam_nb, int img_nb);
+std::pair<cv::Mat,cv::Mat> loadImages(const std::string& dir, int nb);
+void loadImagesKitti(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs, const int padding=8);
+cv::Mat loadImageKitti(const std::string& dir, int cam_nb, int img_nb, const int padding=8);
+void loadImages(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs, const int padding=5);
+cv::Mat loadImage(const std::string& dir, int cam_nb, int img_nb, const int padding=5);
 
 inline void openLogFile(std::string filename){logFile.open(filename,std::ofstream::trunc);}
 //! write a string in the logFile. Useful for displaying data without flooding the standard output.

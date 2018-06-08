@@ -163,6 +163,76 @@ typedef CamPose<Eulf,float> CamPose_ef;
 typedef CamPose<Quatd,double> CamPose_qd;
 typedef CamPose<Quatf,float> CamPose_qf;
 
+//inline functions
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getR4() const{
+
+    return typename cv::Matx<T,4,4>::Matx(  m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z,  2*(m_x*m_y + m_w*m_z),                  2*(m_x*m_z - m_w*m_y),                  0,
+                                        2*(m_x*m_y - m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_y*m_z + m_w*m_x),                  0,
+                                        2*(m_x*m_z + m_w*m_y),			        2*(m_y*m_z - m_w*m_x),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z,  0,
+                                        0,                                      0,						                0,					                    1);
+}
+
+template <typename T>
+inline cv::Matx<T,3,3> Quat<T>::getR3() const{
+
+    return typename cv::Matx<T,3,3>::Matx(  m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z,  2*(m_x*m_y + m_w*m_z),                  2*(m_x*m_z - m_w*m_y),
+                                        2*(m_x*m_y - m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_y*m_z + m_w*m_x),
+                                        2*(m_x*m_z + m_w*m_y),			        2*(m_y*m_z - m_w*m_x),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getQ() const{
+    return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,-m_z,m_y,m_y,m_z,m_w,-m_x,m_z,-m_y,m_x,m_w);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getQ_() const{
+    return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,m_z,-m_y,m_y,-m_z,m_w,m_x,m_z,m_y,-m_x,m_w);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getdQdq0() const{
+    return cv::Matx<T,4,4>::eye();
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getdQ_dq0() const{
+    return cv::Matx<T,4,4>::eye();
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getdQdq1() const{
+    return typename cv::Matx<T,4,4>::Matx(0,-1,0,0,1,0,0,0,0,0,0,-1,0,0,1,0);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getdQ_dq1() const{
+    return typename cv::Matx<T,4,4>::Matx(0,-1,0,0,1,0,0,0,0,0,0,1,0,0,-1,0);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getdQdq2() const{
+    return typename cv::Matx<T,4,4>::Matx(0,0,-1,0,0,0,0,1,1,0,0,0,0,-1,0,0);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getdQ_dq2() const{
+    return typename cv::Matx<T,4,4>::Matx(0,0,-1,0,0,0,0,-1,1,0,0,0,0,1,0,0);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getdQdq3() const{
+    return typename cv::Matx<T,4,4>::Matx(0,0,0,-1,0,0,-1,0,0,1,0,0,1,0,0,0);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getdQ_dq3() const{
+    return typename cv::Matx<T,4,4>::Matx(0,0,0,-1,0,0,1,0,0,-1,0,0,1,0,0,0);
+}
+
+
 }
 
 #endif // UTILS_H_INCLUDED

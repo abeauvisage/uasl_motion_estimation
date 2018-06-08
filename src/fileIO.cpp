@@ -7,8 +7,6 @@
 using namespace std;
 using namespace cv;
 
-//#define KITTI
-
 namespace me{
 
 SetupType st;
@@ -281,7 +279,7 @@ int GpsFile::getNextData(double stamp, GpsData& data){
     return success;
 }
 
-pair<Mat,Mat> loadImages(std::string& dir, int nb){
+pair<Mat,Mat> loadImages(const std::string& dir, int nb){
 
     pair<Mat,Mat> imgs;
     stringstream num;num <<  std::setfill('0') << std::setw(5) << nb;
@@ -297,10 +295,10 @@ pair<Mat,Mat> loadImages(std::string& dir, int nb){
     return imgs;
 }
 
-#ifdef KITTI
-void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
 
-    stringstream num;num <<  std::setfill('0') << std::setw(8) << nb;
+void loadImagesKitti(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs, const int padding){
+
+    stringstream num;num <<  std::setfill('0') << std::setw(padding) << nb;
     imgs.first = imread(dir+"/L_"+num.str()+".png",0);
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
@@ -310,10 +308,20 @@ void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
             cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
     }
 }
-#else
-void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
 
-    stringstream num;num <<  std::setfill('0') << std::setw(5) << nb;
+cv::Mat loadImageKitti(const std::string& dir, int cam_nb, int img_nb, const int padding){
+
+    Mat img;
+    stringstream num;num <<  std::setfill('0') << std::setw(padding) << img_nb;
+    img= imread(dir+"/L_"+num.str()+".png",0);
+    if(img.empty())
+        cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
+    return img;
+}
+
+void loadImages(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs, const int padding){
+
+    stringstream num;num <<  std::setfill('0') << std::setw(padding) << nb;
     imgs.first = imread(dir+"/cam0_image"+num.str()+"_"+appendix+".png",0);
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+appendix+".png" << endl;
@@ -323,16 +331,17 @@ void loadImages(std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs){
             cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_"+appendix+".png" << endl;
     }
 }
-#endif // KITTI
 
-cv::Mat loadImage(std::string& dir, int cam_nb, int img_nb){
+
+cv::Mat loadImage(const std::string& dir, int cam_nb, int img_nb, const int padding){
 
     Mat img;
-    stringstream num;num <<  std::setfill('0') << std::setw(5) << img_nb;
-    img= imread(dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_"+appendix+".png",0);
+    stringstream num;num <<  std::setfill('0') << std::setw(padding) << img_nb;
+    img= imread(dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
     if(img.empty())
-        cerr << "cannot read " << dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_"+appendix+".png" << endl;
+        cerr << "cannot read " << dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
     return img;
 }
+
 
 }
