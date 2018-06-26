@@ -3,13 +3,13 @@ project (MotionEstimation)
 
 # compiler options
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wno-comment")
 
 # output directory
 set( LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib )
 
 # dependencies
-find_package(OpenCV 3.1 REQUIRED)
+find_package(OpenCV 3.4 REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # documentation
@@ -24,7 +24,7 @@ file(GLOB SOURCE_FILES src/*.cpp)
 file(GLOB HEADER_FILES include/*.cpp)
 
 # library target
-add_library(MotionEstimation SHARED ${SOURCE_FILES})
+add_library(MotionEstimation SHARED ${SOURCE_FILES} ${HEADER_FILES})
 install(TARGETS MotionEstimation LIBRARY DESTINATION lib)
 target_link_libraries(MotionEstimation ${OpenCV_LIBS})
 include_directories(include ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})

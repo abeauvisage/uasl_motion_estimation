@@ -26,8 +26,9 @@ int delay=0;
 
 int wait(Graph2D& g, const string& filename){
     int wk = cv::waitKey(delay);
-    if((char)wk == 'p')
+    if((char)wk == 'p'){
         if(!delay)delay=10;else delay=0;
+    }
     if((char)wk == 's'){
         g.saveGraph(filename);
         cout << "image saved!" << endl;
@@ -81,9 +82,9 @@ int main(int argc, char** argv){
 
     std::string savingFile = dir+"/matches_"+to_string(fi.skip)+".yml";
     FileStorage matchesFile(savingFile, FileStorage::READ);
-	
+
     openLogFile(dir+"/log.txt");
-    
+
 	while(image_nb > 0 && image_nb < fi.fframe)
         imgF.readData(image_nb,image_stamp);
 

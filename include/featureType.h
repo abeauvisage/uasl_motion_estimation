@@ -271,7 +271,7 @@ struct WBA_Point{
 
 private:
 std::deque<T> features;
-std::deque<uint> indices;
+std::deque<unsigned int> indices;
 std::deque<cv::Matx22d> cov;
 ptH3D pt;
 int count=0;
@@ -289,9 +289,9 @@ bool isValid() const {return !features.empty();}
 bool isTriangulated() const {return !(pt(0)==0 && pt(1)==0 && pt(2)==0 && pt(3)==1);}
 T getLastFeat() const {if(isValid()) return features[features.size()-1]; else return T();}
 T getFirstFeat() const {if(isValid()) return features[0]; else return T();}
-T getFeat(int idx) const {assert(idx < features.size()); return features[idx];}
-cv::Matx22d getCov(int idx) const {assert(idx < cov.size()); return cov[idx];}
-bool findFeat(int idx, T& feat) const {
+T getFeat(unsigned int idx) const {assert(idx < features.size()); return features[idx];}
+cv::Matx22d getCov(unsigned int idx) const {assert(idx < cov.size()); return cov[idx];}
+bool findFeat(unsigned int idx, T& feat) const {
     for(uint k=0;k<indices.size();k++){
         if(indices[k] == idx){
             feat = features[k];
@@ -301,10 +301,10 @@ bool findFeat(int idx, T& feat) const {
     return false;
 }
 void removeLastFeat(){features.pop_back();indices.pop_back();cov.pop_back();assert(indices.size() == features.size() && indices.size() == cov.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
-int getLastFrameIdx() const {if(isValid())return indices[indices.size()-1];else return -1;}
-int getFirstFrameIdx() const {if(isValid())return indices[0];else return -1;}
-int getFrameIdx(int idx) const {assert(idx < indices.size() && idx>=0);return indices[idx];}
-int getNbFeatures() const {return features.size();}
+unsigned int getLastFrameIdx() const {if(isValid())return indices[indices.size()-1];else return -1;}
+unsigned int getFirstFrameIdx() const {if(isValid())return indices[0];else return -1;}
+unsigned int getFrameIdx(unsigned int idx) const {assert(idx < indices.size() && idx>=0);return indices[idx];}
+unsigned int getNbFeatures() const {return features.size();}
 int getCount() const {return count;}
 int getID() const {return ID;}
 ptH3D get3DLocation() const {return pt;}
@@ -329,6 +329,7 @@ friend std::ostream& operator<<(std::ostream& os, const WBA_Point& pt){
 };
 
 typedef WBA_Point<cv::Point2f> WBA_Ptf;
+
 template<typename T>
 int WBA_Point<T>::latestID=0;
 

@@ -112,7 +112,6 @@ int loadYML(string filename){
 }
 
 int IOFile::openFile(std::string filename){
-    cout << "opening " << filename << endl;
     m_file.open(filename);
     if(!m_file.is_open()){
         cerr << "could not open " << filename << endl;
@@ -137,10 +136,9 @@ int ImuFile::openFile(std::string filename){
         string buff;
         for(auto n:h_){
             if(n != ',') buff+=n;else
-            if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << " ";buff="";}
+            if(n == ',' && buff != ""){m_file_desc.push_back(buff);buff="";}
         }
         if(buff != "") m_file_desc.push_back(buff);
-        cout << buff << endl;
     }
 
     return 1;
@@ -162,10 +160,9 @@ int GpsFile::openFile(std::string filename){
         string buff;
         for(auto n:h_){
             if(n != ',') buff+=n;else
-            if(n == ',' && buff != ""){m_file_desc.push_back(buff);cout << buff << " ";buff="";}
+            if(n == ',' && buff != ""){m_file_desc.push_back(buff);buff="";}
         }
         if(buff != "") m_file_desc.push_back(buff);
-        cout << buff << endl;
     }
 
     return 1;

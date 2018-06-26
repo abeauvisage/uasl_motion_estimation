@@ -120,7 +120,7 @@ void Graph3D::addCameraPose(const cv::Affine3d& pose){
     m_poses.push_back(pose);
 }
 
-void Graph3D::updateCameraPose(const Quatd& ori, const cv::Vec3d& position, int idx){
+void Graph3D::updateCameraPose(const Quatd& ori, const cv::Vec3d& position, unsigned int idx){
 
     if(idx == m_poses.size()){
         addCameraPose(ori,position);
@@ -136,7 +136,7 @@ void Graph3D::updateCameraPose(const Quatd& ori, const cv::Vec3d& position, int 
     refresh();
 }
 
-void Graph3D::updateCameraPose(const cv::Matx44d& pose, int idx){
+void Graph3D::updateCameraPose(const cv::Matx44d& pose, unsigned int idx){
 
     if(idx == m_poses.size()){
         addCameraPose(pose);
@@ -146,7 +146,7 @@ void Graph3D::updateCameraPose(const cv::Matx44d& pose, int idx){
     m_poses[idx] = Affine3d(pose);
 }
 
-void Graph3D::updateCameraPose(const cv::Affine3d& pose, int idx){
+void Graph3D::updateCameraPose(const cv::Affine3d& pose, unsigned int idx){
 
     if(idx == m_poses.size()){
         addCameraPose(pose);

@@ -176,7 +176,6 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
         return false;
 
     int k=0;
-    int result=0;
     double v=2,tau=1e-5,mu=1e-20;
     double abs_tol=m_param.e1,grad_tol=m_param.e2,incr_tol=m_param.e3,rel_tol=m_param.e4;
     StopCondition stop=StopCondition::NO_STOP;

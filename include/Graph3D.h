@@ -30,11 +30,11 @@ class Graph3D
         //! Add a new camera pose.
         void addCameraPose(const Quatd& ori, const cv::Vec3d& position);
         //! Update the camera pose.
-        void updateCameraPose(const cv::Affine3d& pose,int idx);
+        void updateCameraPose(const cv::Affine3d& pose,unsigned int idx);
         //! Update the camera pose.
-        void updateCameraPose(const Quatd& ori, const cv::Vec3d& position, int idx);
+        void updateCameraPose(const Quatd& ori, const cv::Vec3d& position, unsigned int idx);
         //! Update the camera pose.
-        void updateCameraPose(const cv::Matx44d& pose, int idx);
+        void updateCameraPose(const cv::Matx44d& pose, unsigned int idx);
         //! Add a new GPS coordinate.
         void addGPSPosition(const cv::Vec3d& position);
         //! Add a new IMU pose.

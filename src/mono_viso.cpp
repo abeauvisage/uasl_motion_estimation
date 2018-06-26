@@ -38,7 +38,7 @@ bool MonoVisualOdometry::process(const std::vector<StereoMatch<cv::Point2f>>& ma
 //        std::cout << m_inliers.size() << " prev matches" << std::endl;
 //        std::cout << m_pts.size() << " prev pts" << std::endl;
 
-        Matx44d prev_Rt = m_Rt;
+//        Matx44d prev_Rt = m_Rt;
 //        std::vector<ptH3D> prev_pts = m_pts;
 //        std::vector<std::pair<ptH3D,ptH3D>> pairs;
         Mat triangulated;
