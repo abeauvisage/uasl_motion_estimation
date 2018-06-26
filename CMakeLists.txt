@@ -21,7 +21,7 @@ endif(DOXYGEN_FOUND)
 
 # source and header files
 file(GLOB SOURCE_FILES src/*.cpp)
-file(GLOB HEADER_FILES include/*.cpp)
+file(GLOB HEADER_FILES include/*.h)
 
 # library target
 add_library(MotionEstimation SHARED ${SOURCE_FILES} ${HEADER_FILES})
