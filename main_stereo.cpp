@@ -61,7 +61,7 @@ int main(int argc, char** argv){
     g.addLegend("GPS",2);
 
     int image_nb=1;
-    double image_stamp=0, mean_error_VO=0;;
+    int64_t image_stamp=0;double mean_error_VO=0;
     Mat Rt_tot = (Mat)Matx44d::eye();
     Euld R_tot(0,0,0);
     Vec3d t_tot;

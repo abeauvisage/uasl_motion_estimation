@@ -168,7 +168,7 @@ int GpsFile::openFile(std::string filename){
     return 1;
 }
 
-int ImageFile::readData(int& nb, double& stamp){
+int ImageFile::readData(int& nb, int64_t& stamp){
     if(!m_file.is_open() || m_file.eof())
         return 0;
     char c;
@@ -182,40 +182,38 @@ int ImuFile::readData(ImuData& data){
         return 0;
 
     char c;
-    double value;
     Vec4d orientation;
     for(unsigned int i=0;i<m_file_desc.size();i++){
         if(!m_file.is_open() || m_file.eof())
         return 0;
-        m_file >> value >> c;
         if(m_file_desc[i] == "timestamp")
-            data.stamp = value;
+            m_file >> data.stamp >> c;
         if(m_file_desc[i] == "acc_x")
-            data.acc[0] = value;
+            m_file >> data.acc[0] >> c;
         if(m_file_desc[i] == "acc_y")
-            data.acc[1] = value;
+            m_file >> data.acc[1] >> c;
         if(m_file_desc[i] == "acc_z")
-            data.acc[2] = value;
+            m_file >> data.acc[2] >> c;
         if(m_file_desc[i] == "av_x")
-            data.gyr[0] = value;
+            m_file >> data.gyr[0] >> c;
         if(m_file_desc[i] == "av_y")
-            data.gyr[1] = value;
+            m_file >> data.gyr[1] >> c;
         if(m_file_desc[i] == "av_z")
-            data.gyr[2] = value;
+            m_file >> data.gyr[2] >> c;
         if(m_file_desc[i] == "pos_x")
-            data.pos[0] = value;
+            m_file >> data.pos[0] >> c;
         if(m_file_desc[i] == "pos_y")
-            data.pos[1] = value;
+            m_file >> data.pos[1] >> c;
         if(m_file_desc[i] == "pos_z")
-            data.pos[2] = value;
+            m_file >> data.pos[2] >> c;
         if(m_file_desc[i] == "q_w")
-            orientation[0] = value;
+            m_file >> orientation[0] >> c;
         if(m_file_desc[i] == "q_x")
-            orientation[1] = value;
+            m_file >> orientation[1] >> c;
         if(m_file_desc[i] == "q_y")
-            orientation[2] = value;
+            m_file >> orientation[2] >> c;
         if(m_file_desc[i] == "q_z")
-            orientation[3] = value;
+            m_file >> orientation[3] >> c;
     }
     data.orientation = Quatd(orientation[0],orientation[1],orientation[2],orientation[3]);
     return 1;
@@ -227,24 +225,22 @@ int GpsFile::readData(GpsData& data){
         return 0;
 
     char c;
-    double value;
     for(unsigned int i=0;i<m_file_desc.size();i++){
         if(!m_file.is_open() || m_file.eof())
         return 0;
-        m_file >> value >> c;
         if(m_file_desc[i] == "timestamp")
-            data.stamp = value;
+             m_file >> data.stamp >> c;
         if(m_file_desc[i] == "longitude")
-            data.lon = value;
+             m_file >> data.lon >> c;
         if(m_file_desc[i] == "latitude")
-            data.lat = value;
+             m_file >> data.lat >> c;
         if(m_file_desc[i] == "elevation")
-            data.alt = value;
+             m_file >> data.alt >> c;
     }
     return 1;
 }
 
-int ImuFile::getNextData(double stamp, ImuData& data){
+int ImuFile::getNextData(int64_t stamp, ImuData& data){
 
     if(!m_file.is_open() || m_file.eof())
         return 0;
@@ -264,7 +260,7 @@ int ImuFile::getNextData(double stamp, ImuData& data){
         return count;
 }
 
-int GpsFile::getNextData(double stamp, GpsData& data){
+int GpsFile::getNextData(int64_t stamp, GpsData& data){
 
     if(!m_file.is_open() || m_file.eof())
         return 0;

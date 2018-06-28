@@ -20,10 +20,10 @@ struct ImuData{
     //orientation
     Quat<double> orientation;
 
-    double stamp;
+    int64_t stamp;
 
     //! Main constructor. By default all parameters are equal to 0.
-    ImuData(double stamp_=0, double a_x=0, double a_y=0, double a_z=0, double g_x=0,double g_y=0, double g_z=0, double p_x=0, double p_y=0, double p_z=0, const Quat<double>& orient=Quat<double>()){acc=cv::Vec3d(a_x,a_y,a_z);gyr=cv::Vec3d(g_x,g_y,g_z);pos=cv::Vec3d(p_x,p_y,p_z),orientation=orient;stamp=stamp_;}
+    ImuData(int64_t stamp_=0, double a_x=0, double a_y=0, double a_z=0, double g_x=0,double g_y=0, double g_z=0, double p_x=0, double p_y=0, double p_z=0, const Quat<double>& orient=Quat<double>()){acc=cv::Vec3d(a_x,a_y,a_z);gyr=cv::Vec3d(g_x,g_y,g_z);pos=cv::Vec3d(p_x,p_y,p_z),orientation=orient;stamp=stamp_;}
     //! Copy constructor.
     ImuData(const ImuData& data){acc=data.acc;gyr=data.gyr;pos=data.pos;orientation=data.orientation;stamp=data.stamp;}
 
@@ -66,10 +66,10 @@ struct GpsData{
 
     int status; // deprecated
 
-    double stamp;
+    int64_t stamp;
 
     //! Main constructor. By defaut all parameters are equal to 0.
-    GpsData(double stamp_=0, double longitude=0, double latitude=0, double altitude=0, int status_=0){lon=longitude;lat=latitude;alt=altitude;stamp=stamp_;status=status_;}
+    GpsData(int64_t stamp_=0, double longitude=0, double latitude=0, double altitude=0, int status_=0){lon=longitude;lat=latitude;alt=altitude;stamp=stamp_;status=status_;}
     //! Copy constructor.
     GpsData(const GpsData& data){lon=data.lon;lat=data.lat;alt=data.alt;status=data.status;stamp=data.stamp;}
 };

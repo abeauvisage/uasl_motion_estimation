@@ -35,6 +35,22 @@ struct FrameInfo{
     int init = 0;
 };
 
+struct cv_sig_handler{
+
+    int _break_=0;
+    bool _quit_=false;
+
+    void wait(){
+        switch(cv::waitKey(_break_)){
+                case 'p':
+                _break_ = (_break_ == 0 ? 10 : 0);break;
+                case 'q':
+                    _quit_ = true;
+
+            }
+    }
+};
+
 // setting variables
 extern SetupType st;
 extern FilterType ft;
@@ -89,7 +105,7 @@ public:
     int readData(ImuData& data);
     //! get the first ImuData after the provided timestamp.
     /*! Corresponds to the average of all the imu data between current position in the file and the first imu data after the timestamp.*/
-    int getNextData(double stamp, ImuData& data);
+    int getNextData(int64_t stamp, ImuData& data);
 
 private:
     std::vector<std::string> m_file_desc;
@@ -105,7 +121,7 @@ public:
     /*! returns an GpsData structure containing the acceleration, angular velocity and the corresponding timestamp.*/
     int readData(GpsData& data);
     //! get the first GpsData after the provided timestamp.
-    int getNextData(double stamp, GpsData& data);
+    int getNextData(int64_t stamp, GpsData& data);
 
 private:
     std::vector<std::string> m_file_desc;
@@ -118,7 +134,7 @@ public:
     ImageFile(std::string filename):IOFile(filename){}
     //! reads the one ImageData (the next one in the file).
     /*! returns the number of the image and its corresponding timestamp.*/
-    int readData(int& nb,double& stamp);
+    int readData(int& nb, int64_t& stamp);
 
 };
 
