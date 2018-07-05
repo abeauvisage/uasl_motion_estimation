@@ -56,6 +56,8 @@ class Graph3D
 
         int getNbCameraPoses(){return m_poses.size();}
 
+        void display_text(const std::string& txt);
+
         //! stream operator to add text to the graph (only one line).
         friend std::istream& operator>>(std::istream& is, Graph3D& g);
 
