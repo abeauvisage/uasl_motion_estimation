@@ -23,7 +23,7 @@ Graph2D::Graph2D(string name, const int nb, bool orth, Type t, cv::Size s): m_na
         m_legend.push_back("");
     }
 
-    namedWindow(m_name,WINDOW_FREERATIO);
+    namedWindow(m_name,CV_WINDOW_NORMAL);
     plot_background();
 }
 

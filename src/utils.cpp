@@ -1,7 +1,7 @@
 #include "utils.h"
 
 #include <iostream>
-
+#include <opencv2/calib3d/calib3d.hpp>
 
 
 using namespace cv;
@@ -165,7 +165,7 @@ Vec<T,3> Euler<T>::getVector() const{
 }
 
 template <typename T>
-void Euler<T>::operator+=(Euler& e){
+void Euler<T>::operator+=(const Euler& e){
 
     m_roll += e.roll();
     m_pitch += e.pitch();
@@ -210,84 +210,20 @@ void Quat<T>::norm(){
     }
 }
 
-template <>
-void Quat<float>::fromMat(const cv::Mat& M){
 
-    assert((M.type() == CV_32F || M.type() == CV_64F) && M.channels() == 1);
+template <typename T>
+void Quat<T>::fromMat(const cv::Mat& M){
 
-    Mat_<float> m;
+    Vec3d vec;
+    cv::Rodrigues(M,vec);
 
-    if(M.type() == CV_64F)
-        M.convertTo(m,CV_32F);
-    else
-        m = M;
-
-
-    if(m(1,1) > -m(2,2) && m(0,0) > - m(1,1) && m(0,0) > -m(2,2)){
-        float norm = sqrt(1+m(0,0)+m(1,1)+m(2,2));
-        m_w = norm/2;
-        m_x = (m(1,2)-m(2,1))/(2*norm);
-        m_y = (m(2,0)-m(0,2))/(2*norm);
-        m_z = (m(0,1)-m(1,0))/(2*norm);
-    } else if (m(1,1) < -m(2,2) && m(0,0) > m(1,1) && m(0,0) > m(2,2)){
-        float norm = sqrt(1+m(0,0)-m(1,1)-m(2,2));
-        m_w = (m(1,2)-m(2,1))/(2*norm);
-        m_x = norm/2;
-        m_y = (m(0,1)+m(1,0))/(2*norm);
-        m_z = (m(2,0)+m(0,2))/(2*norm);
-    } else if (m(1,1) > m(2,2) && m(0,0) < m(1,1) && m(0,0) < -m(2,2)){
-        float norm = sqrt(1-m(0,0)+m(1,1)-m(2,2));
-        m_w = (m(2,0)-m(0,2))/(2*norm);
-        m_x = (m(0,1)+m(1,0))/(2*norm);
-        m_y = norm/2;
-        m_z = (m(1,2)+m(2,1))/(2*norm);
-    } else{
-        float norm = sqrt(1-m(0,0)-m(1,1)+m(2,2));
-        m_w = (m(0,1)-m(1,0))/(2*norm);
-        m_x = (m(2,0)+m(0,2))/(2*norm);
-        m_y = (m(1,2)+m(2,1))/(2*norm);
-        m_z = norm/2;
-    }
-}
-
-template <>
-void Quat<double>::fromMat(const cv::Mat& M){
-
-    assert((M.type() == CV_32F || M.type() == CV_64F) && M.channels() == 1);
-
-    Mat_<double> m;
-
-    if(M.type() == CV_32F)
-        M.convertTo(m,CV_64F);
-    else
-        m = M;
-
-
-    if(m(1,1) > -m(2,2) && m(0,0) > - m(1,1) && m(0,0) > -m(2,2)){
-        double norm = sqrt(1+m(0,0)+m(1,1)+m(2,2));
-        m_w = norm/2;
-        m_x = (m(1,2)-m(2,1))/(2*norm);
-        m_y = (m(2,0)-m(0,2))/(2*norm);
-        m_z = (m(0,1)-m(1,0))/(2*norm);
-    } else if (m(1,1) < -m(2,2) && m(0,0) > m(1,1) && m(0,0) > m(2,2)){
-        double norm = sqrt(1+m(0,0)-m(1,1)-m(2,2));
-        m_w = (m(1,2)-m(2,1))/(2*norm);
-        m_x = norm/2;
-        m_y = (m(0,1)+m(1,0))/(2*norm);
-        m_z = (m(2,0)+m(0,2))/(2*norm);
-    } else if (m(1,1) > m(2,2) && m(0,0) < m(1,1) && m(0,0) < -m(2,2)){
-        double norm = sqrt(1-m(0,0)+m(1,1)-m(2,2));
-        m_w = (m(2,0)-m(0,2))/(2*norm);
-        m_x = (m(0,1)+m(1,0))/(2*norm);
-        m_y = norm/2;
-        m_z = (m(1,2)+m(2,1))/(2*norm);
-    } else{
-        double norm = sqrt(1-m(0,0)-m(1,1)+m(2,2));
-        m_w = (m(0,1)-m(1,0))/(2*norm);
-        m_x = (m(2,0)+m(0,2))/(2*norm);
-        m_y = (m(1,2)+m(2,1))/(2*norm);
-        m_z = norm/2;
-    }
+    T norm = sqrt(pow(vec(0),2)+pow(vec(1),2)+pow(vec(2),2));
+    T theta = (norm < 1e-10 ? 1e-10:norm);
+    m_w = cos(theta/2.0);
+    m_x = vec(0)/theta*sin(theta/2.0);
+    m_y = vec(1)/theta*sin(theta/2.0);
+    m_z = vec(2)/theta*sin(theta/2.0);
+    this->norm();
 }
 
 template <typename T>

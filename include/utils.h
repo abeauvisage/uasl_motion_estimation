@@ -46,6 +46,8 @@ private:
 public:
     /*! Main constructor. Takes 3 angles as input and the unit. By default  all angles are 0 and expressed in radians. */
 	Euler(T r=0, T p=0, T y=0, bool rad=true ): m_roll(r), m_pitch(p), m_yaw(y) {if(!rad)deg2Rad();}
+	/*! Main constructor. Takes a vector as input and the unit. By default  all angles are 0 and expressed in radians. */
+	Euler(const cv::Vec<T,3>& vec, bool rad=true ): m_roll(vec(0)), m_pitch(vec(1)), m_yaw(vec(2)) {if(!rad)deg2Rad();}
 	/*! retrieves Euler angles from a rotation matrix and create an Euler object. */
 	Euler(const cv::Mat& M){fromMat(M);}
 	/*! copy constructor. */
@@ -70,7 +72,7 @@ public:
     Euler inverse() const {return Euler(-roll(),-pitch(),-yaw());}
 
     //operator
-    void operator+=(Euler& e); //!< concatenate with another Euler object.
+    void operator+=(const Euler& e); //!< concatenate with another Euler object.
     cv::Vec<T,3> operator*(const cv::Vec<T,3>& v); //!< rotate a 3-vector with the rotation described by the object.
 	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v); //!< rotate a 4-vector with the rotation described by the object.
 
@@ -93,7 +95,7 @@ private:
 public:
 
     /*! Main constructor. Default values are 1 for the real part and 0 for the axis components. */
-	Quat(T w=1, T x=0, T y=0, T z=0): m_w(w), m_x(x), m_y(y), m_z(z){}
+	Quat(T w=1, T x=0, T y=0, T z=0): m_w(w), m_x(x), m_y(y), m_z(z){norm();}
 	/*! Create a Quat object from a rotation matrix and normalize it. */
 	Quat(const cv::Mat& M){fromMat(M);norm();}
 	/*! copy constructor. */
