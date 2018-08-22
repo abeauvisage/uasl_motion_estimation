@@ -7,25 +7,31 @@
 
 namespace me{
 
+//! enumerate representing unit in which timestamps are expressed
+enum TimeUnit{SEC,MILLI,MICRO,NANO};
+
+struct Data{
+
+    int64_t stamp; //!< acquisition time stamp
+    TimeUnit time_unit; //!< unit
+
+    Data(int64_t stamp_, TimeUnit time_unit_): stamp(stamp_), time_unit(time_unit_) {}
+
+};
+
 //! Structure representing inertial data.
 /*! Contains acceleration, angular velocity, orientation and timestamp. */
-struct ImuData{
+struct ImuData: public Data{
 
-    //accelerometer
-    cv::Vec3d acc;
-    //gyroscope
-    cv::Vec3d gyr;
-    //position
-    cv::Vec3d pos;
-    //orientation
-    Quat<double> orientation;
-
-    int64_t stamp;
+    cv::Vec3d acc; //!< accelerometer
+    cv::Vec3d gyr; //!< angular velocity (gyro)
+    cv::Vec3d pos; //!< position
+    Quatd orientation; //!< orientation (optional)
 
     //! Main constructor. By default all parameters are equal to 0.
-    ImuData(int64_t stamp_=0, double a_x=0, double a_y=0, double a_z=0, double g_x=0,double g_y=0, double g_z=0, double p_x=0, double p_y=0, double p_z=0, const Quat<double>& orient=Quat<double>()){acc=cv::Vec3d(a_x,a_y,a_z);gyr=cv::Vec3d(g_x,g_y,g_z);pos=cv::Vec3d(p_x,p_y,p_z),orientation=orient;stamp=stamp_;}
+    ImuData(double a_x=0, double a_y=0, double a_z=0, double g_x=0,double g_y=0, double g_z=0, double p_x=0, double p_y=0, double p_z=0, int64_t stamp_=0, TimeUnit time_unit_=TimeUnit::SEC, const Quatd& orient=Quatd()): Data(stamp_,time_unit_),acc(cv::Vec3d(a_x,a_y,a_z)),gyr(cv::Vec3d(g_x,g_y,g_z)),pos(cv::Vec3d(p_x,p_y,p_z)),orientation(orient){}
     //! Copy constructor.
-    ImuData(const ImuData& data){acc=data.acc;gyr=data.gyr;pos=data.pos;orientation=data.orientation;stamp=data.stamp;}
+    ImuData(const ImuData& data):Data(data.stamp,data.time_unit), acc(data.acc), gyr(data.gyr), pos(data.pos), orientation(data.orientation){}
 
     //! concatenation operator. Sum up  acceleration, angular velocity and orientation. Timestamp is replaced by the one of the added ImuData.
     void operator+=(const ImuData& imu){
@@ -58,20 +64,18 @@ struct ImuData{
 
 //! Structure representing a GPS coordinate.
 /*! Contains longitude, latitude, altitude and timestamp. */
-struct GpsData{
+struct GpsData: Data{
 
-    double lon;
-    double lat;
-    double alt;
+    double lon; //!< longitude
+    double lat; //!< latitude
+    double alt; //!< altitude
 
-    int status; // deprecated
-
-    int64_t stamp;
+    int status; //!< Gps status (deprecated)
 
     //! Main constructor. By defaut all parameters are equal to 0.
-    GpsData(int64_t stamp_=0, double longitude=0, double latitude=0, double altitude=0, int status_=0){lon=longitude;lat=latitude;alt=altitude;stamp=stamp_;status=status_;}
+    GpsData(double longitude=0, double latitude=0, double altitude=0, int64_t stamp_=0, TimeUnit time_unit_=TimeUnit::SEC, int status_=0):Data(stamp_,time_unit_), lon(longitude), lat(latitude), alt(altitude), status(status_){}
     //! Copy constructor.
-    GpsData(const GpsData& data){lon=data.lon;lat=data.lat;alt=data.alt;status=data.status;stamp=data.stamp;}
+    GpsData(const GpsData& data): Data(data.stamp,data.time_unit), lon(data.lon), lat(data.lat), alt(data.alt), status(data.status){}
 };
 
 }
