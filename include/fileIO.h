@@ -83,6 +83,7 @@ inline void closeLogFile(){logFile.close();}
 class IOFile{
 
 public:
+    IOFile():m_filename(""){}
     IOFile(std::string filename):m_filename(filename){openFile(m_filename);}
     ~IOFile(){m_file.close();}
     bool is_open(){return m_file.is_open();}
@@ -98,6 +99,7 @@ protected:
 class ImuFile : public IOFile{
 
 public:
+    ImuFile():IOFile(""){}
     ImuFile(std::string filename):IOFile(filename){openFile(filename);}
     int openFile(std::string filename);
     //! reads the one ImuData (the next one in the file).
@@ -115,6 +117,7 @@ private:
 class GpsFile : public IOFile{
 
 public:
+    GpsFile():IOFile(""){}
     GpsFile(std::string filename):IOFile(filename){openFile(filename);}
     int openFile(std::string filename);
     //! reads the one GpsData (the next one in the file).
@@ -131,6 +134,7 @@ private:
 class ImageFile : public IOFile{
 
 public:
+    ImageFile():IOFile(""){}
     ImageFile(std::string filename):IOFile(filename){}
     //! reads the one ImageData (the next one in the file).
     /*! returns the number of the image and its corresponding timestamp.*/

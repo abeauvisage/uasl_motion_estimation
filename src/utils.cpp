@@ -200,7 +200,7 @@ std::string Euler<T>::getDegrees(){
 ************************/
 
 template <typename T>
-void Quat<T>::norm(){
+void Quat<T>::normalize(){
     T n = sqrt(m_w*m_w + m_x*m_x + m_y*m_y + m_z*m_z);
     if(n != 0.0){
         m_w /= n;
@@ -223,13 +223,13 @@ void Quat<T>::fromMat(const cv::Mat& M){
     m_x = vec(0)/theta*sin(theta/2.0);
     m_y = vec(1)/theta*sin(theta/2.0);
     m_z = vec(2)/theta*sin(theta/2.0);
-    this->norm();
+    this->normalize();
 }
 
 template <typename T>
 Euler<T> Quat<T>::getEuler(){
 
-    norm();
+    normalize();
     return Euler<T>(atan2( 2*(m_w*m_x + m_y*m_z),m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z),-asin(2*(m_x*m_z - m_w*m_y)),atan2(2*(m_x*m_y + m_w*m_z),m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z));
 }
 
@@ -265,7 +265,7 @@ void Quat<T>::operator+=(const Quat<T>& q){
     m_x += q.x();
     m_y += q.y();
     m_z += q.z();
-    norm();
+    normalize();
 }
 
 template <typename T>
@@ -274,7 +274,7 @@ void Quat<T>::operator-=(const Quat<T>& q){
     m_x -= q.x();
     m_y -= q.y();
     m_z -= q.z();
-    norm();
+    normalize();
 }
 
 template <typename T>
@@ -283,25 +283,21 @@ void Quat<T>::operator/=(double nb){
     m_x /=nb;
     m_y /=nb;
     m_z /=nb;
-    norm();
+    normalize();
 }
 
 template <typename T>
 Vec<T,3> Quat<T>::operator*(const Vec<T,3>& v){
 
-    Quat vq(0,v[0],v[1],v[2]);
-    Quat res = *(this) * vq * ((*(this)).conj());
-    return Vec<T,3>(res.m_x,res.m_y,res.m_z);
+    Vec<T,4> vq(0,v[0],v[1],v[2]);
+    Vec<T,4> v_r = (*this) * vq;
+    return Vec<T,3>(v_r(1),v_r(2),v_r(3));
 
 }
 
 template <typename T>
 Vec<T,4> Quat<T>::operator*(const Vec<T,4>& v){
-
-    Quat vq(v[0],v[1],v[2],v[3]);
-    Quat res = *(this) * vq * ((*(this)).conj());
-    return Vec<T,4>(res.w(),res.x(),res.y(),res.z());
-
+    return getQ_().t() * getQ() * v;
 }
 
 template class Euler<float>;

@@ -95,13 +95,13 @@ private:
 public:
 
     /*! Main constructor. Default values are 1 for the real part and 0 for the axis components. */
-	Quat(T w=1, T x=0, T y=0, T z=0): m_w(w), m_x(x), m_y(y), m_z(z){norm();}
+	Quat(T w=1, T x=0, T y=0, T z=0): m_w(w), m_x(x), m_y(y), m_z(z){normalize();}
 	/*! Create a Quat object from a rotation matrix and normalize it. */
-	Quat(const cv::Mat& M){fromMat(M);norm();}
+	Quat(const cv::Mat& M){fromMat(M);normalize();}
 	/*! copy constructor. */
-	Quat(const Quat& q): m_w(q.w()), m_x(q.x()), m_y(q.y()), m_z(q.z()){norm();}
+	Quat(const Quat& q): m_w(q.w()), m_x(q.x()), m_y(q.y()), m_z(q.z()){normalize();}
 
-	void norm(); //!< normalize the object
+	void normalize(); //!< normalize the object
 	Quat conj() const {return Quat(m_w,-m_x,-m_y,-m_z);} //!< returns the conjugate of the object.
 
 	friend std::ostream& operator<<(std::ostream& os, const Quat<T>& q){
@@ -112,14 +112,6 @@ public:
     // conversions
     inline cv::Matx<T,4,4> getQ() const;        //!< Q matrix to multiply with another quaternion.
     inline cv::Matx<T,4,4> getQ_() const;       //!< inverse of Q. Represents the inverse rotation.
-    inline cv::Matx<T,4,4> getdQdq0() const;    //!< dQ/dw.
-	inline cv::Matx<T,4,4> getdQ_dq0() const;   //!< dQ^-1/dw.
-	inline cv::Matx<T,4,4> getdQdq1() const;    //!< dQ/dx.
-	inline cv::Matx<T,4,4> getdQ_dq1() const;   //!< dQ^-1/dx.
-	inline cv::Matx<T,4,4> getdQdq2() const;    //!< dQ/dy.
-	inline cv::Matx<T,4,4> getdQ_dq2() const;   //!< dQ^-1/dy.
-	inline cv::Matx<T,4,4> getdQdq3() const;    //!< dQ/dz.
-	inline cv::Matx<T,4,4> getdQ_dq3() const;   //!< dQ^-1/dz.
 
 	inline cv::Matx<T,3,3> getR3() const;   //!< returns the 3x3 corresponding rotation matrix.
 	inline cv::Matx<T,4,4> getR4() const;   //!< returns the 4x4 corresponding rotation matrix.
@@ -145,6 +137,36 @@ public:
 	double z() const {return m_z;}
 };
 
+/**** inline funcitons ****/
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getR4() const{
+
+    return typename cv::Matx<T,4,4>::Matx(  m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z,  2*(m_x*m_y - m_w*m_z),                  2*(m_x*m_z + m_w*m_y),                  0,
+                                            2*(m_x*m_y + m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_y*m_z - m_w*m_x),                  0,
+                                            2*(m_x*m_z - m_w*m_y),                  2*(m_y*m_z + m_w*m_x),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z,  0,
+                                            0,                                      0,						                0,					                    1);
+}
+
+template <typename T>
+inline cv::Matx<T,3,3> Quat<T>::getR3() const{
+
+    return typename cv::Matx<T,3,3>::Matx(  m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z,  2*(m_x*m_y - m_w*m_z),                  2*(m_x*m_z + m_w*m_y),
+                                            2*(m_x*m_y + m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_y*m_z - m_w*m_x),
+                                            2*(m_x*m_z - m_w*m_y),                  2*(m_y*m_z + m_w*m_x),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getQ() const{
+    return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,-m_z,m_y,m_y,m_z,m_w,-m_x,m_z,-m_y,m_x,m_w);
+}
+
+template <typename T>
+inline cv::Matx<T,4,4> Quat<T>::getQ_() const{
+    return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,m_z,-m_y,m_y,-m_z,m_w,m_x,m_z,m_y,-m_x,m_w);
+}
+
+
 template<typename T>
 void convertToOpenCV(Euler<T>& e);
 template<typename T>
@@ -164,76 +186,6 @@ typedef CamPose<Euld,double> CamPose_ed;
 typedef CamPose<Eulf,float> CamPose_ef;
 typedef CamPose<Quatd,double> CamPose_qd;
 typedef CamPose<Quatf,float> CamPose_qf;
-
-//inline functions
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getR4() const{
-
-    return typename cv::Matx<T,4,4>::Matx(  m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z,  2*(m_x*m_y + m_w*m_z),                  2*(m_x*m_z - m_w*m_y),                  0,
-                                        2*(m_x*m_y - m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_y*m_z + m_w*m_x),                  0,
-                                        2*(m_x*m_z + m_w*m_y),			        2*(m_y*m_z - m_w*m_x),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z,  0,
-                                        0,                                      0,						                0,					                    1);
-}
-
-template <typename T>
-inline cv::Matx<T,3,3> Quat<T>::getR3() const{
-
-    return typename cv::Matx<T,3,3>::Matx(  m_w*m_w + m_x*m_x - m_y*m_y - m_z*m_z,  2*(m_x*m_y + m_w*m_z),                  2*(m_x*m_z - m_w*m_y),
-                                        2*(m_x*m_y - m_w*m_z),                  m_w*m_w - m_x*m_x + m_y*m_y - m_z*m_z,  2*(m_y*m_z + m_w*m_x),
-                                        2*(m_x*m_z + m_w*m_y),			        2*(m_y*m_z - m_w*m_x),			        m_w*m_w - m_x*m_x - m_y*m_y + m_z*m_z);
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getQ() const{
-    return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,-m_z,m_y,m_y,m_z,m_w,-m_x,m_z,-m_y,m_x,m_w);
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getQ_() const{
-    return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,m_z,-m_y,m_y,-m_z,m_w,m_x,m_z,m_y,-m_x,m_w);
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getdQdq0() const{
-    return cv::Matx<T,4,4>::eye();
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getdQ_dq0() const{
-    return cv::Matx<T,4,4>::eye();
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getdQdq1() const{
-    return typename cv::Matx<T,4,4>::Matx(0,-1,0,0,1,0,0,0,0,0,0,-1,0,0,1,0);
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getdQ_dq1() const{
-    return typename cv::Matx<T,4,4>::Matx(0,-1,0,0,1,0,0,0,0,0,0,1,0,0,-1,0);
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getdQdq2() const{
-    return typename cv::Matx<T,4,4>::Matx(0,0,-1,0,0,0,0,1,1,0,0,0,0,-1,0,0);
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getdQ_dq2() const{
-    return typename cv::Matx<T,4,4>::Matx(0,0,-1,0,0,0,0,-1,1,0,0,0,0,1,0,0);
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getdQdq3() const{
-    return typename cv::Matx<T,4,4>::Matx(0,0,0,-1,0,0,-1,0,0,1,0,0,1,0,0,0);
-}
-
-template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getdQ_dq3() const{
-    return typename cv::Matx<T,4,4>::Matx(0,0,0,-1,0,0,1,0,0,-1,0,0,1,0,0,0);
-}
-
 
 }
 
