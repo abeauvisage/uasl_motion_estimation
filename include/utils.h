@@ -3,7 +3,7 @@
 
 #include <ostream>
 
-#include "featureType.h"
+//#include "featureType.h"
 
 #include <opencv2/core.hpp>
 
@@ -182,12 +182,6 @@ void convertToOpenCV(cv::Vec<T,3>& e);
 template<typename T>
 void convertToXYZ(cv::Vec<T,3>& e);
 
-std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output);
-
-typedef CamPose<Euld,double> CamPose_ed;
-typedef CamPose<Eulf,float> CamPose_ef;
-typedef CamPose<Quatd,double> CamPose_qd;
-typedef CamPose<Quatf,float> CamPose_qf;
 
 }
 

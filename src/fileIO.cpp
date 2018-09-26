@@ -174,7 +174,7 @@ int ImageFile::readData(int& nb, int64_t& stamp){
     if(!m_file.is_open() || m_file.eof())
         return 0;
     char c;
-    m_file >> nb >> c >> stamp >> c;
+    m_file >> nb >> c >> stamp;
     return 1;
 }
 

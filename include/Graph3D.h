@@ -6,7 +6,7 @@
 #include <thread>
 #include <mutex>
 
-#include "utils.h"
+#include "featureType.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/viz.hpp>

@@ -7,7 +7,6 @@
 
 #include <opencv2/core.hpp>
 
-#include <utils.h>
 #include <featureType.h>
 #include <stereo_viso.h>
 #include <mono_viso.h>
