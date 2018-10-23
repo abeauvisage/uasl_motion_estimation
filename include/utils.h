@@ -125,6 +125,8 @@ public:
 	Quat operator*(const double d) const;
 	cv::Vec<T,3> operator*(const cv::Vec<T,3>& v);
 	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v);
+	cv::Matx<T,3,1> operator*(const cv::Matx<T,3,1>& v);
+	cv::Matx<T,4,1> operator*(const cv::Matx<T,4,1>& v);
 	Quat operator+(const Quat& q) const;
 	void operator+=(const Quat& q);
 	void operator-=(const Quat& q);

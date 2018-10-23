@@ -329,6 +329,7 @@ friend std::ostream& operator<<(std::ostream& os, const WBA_Point& pt){
 };
 
 typedef WBA_Point<cv::Point2f> WBA_Ptf;
+typedef WBA_Point<std::pair<cv::Point2f,cv::Point2f>> WBA_stereo_Ptf;
 
 template<typename T>
 int WBA_Point<T>::latestID=0;

@@ -122,6 +122,7 @@ int IOFile::openFile(std::string filename){
 
 int ImuFile::openFile(std::string filename){
 
+    m_file.open(filename);
     if(!m_file.is_open())
         return 0;
     string header;getline(m_file,header);
@@ -146,6 +147,7 @@ int ImuFile::openFile(std::string filename){
 
 int GpsFile::openFile(std::string filename){
 
+     m_file.open(filename);
     if(!m_file.is_open())
         return 0;
     string header;getline(m_file,header);
