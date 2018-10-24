@@ -78,6 +78,19 @@ struct GpsData: Data{
     GpsData(const GpsData& data): Data(data.stamp,data.time_unit), lon(data.lon), lat(data.lat), alt(data.alt), status(data.status){}
 };
 
+//! Structure representing the pose of a camera/vehicle.
+/*! Contains orientation and attitude. */
+struct PoseData: Data{
+
+    cv::Vec3d position; //!< position
+    Quatd orientation; //!< orientation
+
+    //! Main constructor. By defaut all parameters are equal to 0.
+    PoseData(const cv::Vec3d& pos=cv::Vec3d(), const Quatd& ori=Quatd(), const int64_t stamp_=0, const TimeUnit time_unit_=TimeUnit::SEC):Data(stamp_,time_unit_), position(pos), orientation(ori){}
+    //! Copy constructor.
+    PoseData(const PoseData& data): Data(data.stamp,data.time_unit), position(data.position), orientation(data.orientation){}
+};
+
 }
 
 #endif // DATA_UTILS_H_INCLUDED

@@ -90,18 +90,22 @@ public:
     int openFile(std::string filename);
     void closeFile(){m_file.close();}
 
+private:
+    int check_header();
+
 protected:
+
     std::string m_filename;
     std::ifstream m_file;
+    std::vector<std::string> m_file_desc;
 
 };
 
 class ImuFile : public IOFile{
 
 public:
-    ImuFile():IOFile(""){}
-    ImuFile(std::string filename):IOFile(filename){openFile(filename);}
-    int openFile(std::string filename);
+    ImuFile():IOFile(){}
+    ImuFile(std::string filename):IOFile(filename){}
     //! reads the one ImuData (the next one in the file).
     /*! returns an ImuData structure containing the acceleration, angular velocity and the corresponding timestamp.*/
     int readData(ImuData& data);
@@ -109,32 +113,38 @@ public:
     /*! Corresponds to the average of all the imu data between current position in the file and the first imu data after the timestamp.*/
     int getNextData(int64_t stamp, ImuData& data);
 
-private:
-    std::vector<std::string> m_file_desc;
-
 };
 
 class GpsFile : public IOFile{
 
 public:
-    GpsFile():IOFile(""){}
-    GpsFile(std::string filename):IOFile(filename){openFile(filename);}
-    int openFile(std::string filename);
+    GpsFile():IOFile(){}
+    GpsFile(std::string filename):IOFile(filename){}
     //! reads the one GpsData (the next one in the file).
     /*! returns an GpsData structure containing the acceleration, angular velocity and the corresponding timestamp.*/
     int readData(GpsData& data);
     //! get the first GpsData after the provided timestamp.
     int getNextData(int64_t stamp, GpsData& data);
 
-private:
-    std::vector<std::string> m_file_desc;
+};
+
+class PoseFile : public IOFile{
+
+public:
+    PoseFile():IOFile(){}
+    PoseFile(std::string filename):IOFile(filename){}
+    //! reads the one PoseData (the next one in the file).
+    /*! returns an PoseData structure containing the acceleration, angular velocity and the corresponding timestamp.*/
+    int readData(PoseData& data);
+    //! get the first PoseData after the provided timestamp.
+    int getNextData(int64_t stamp, PoseData& data);
 
 };
 
 class ImageFile : public IOFile{
 
 public:
-    ImageFile():IOFile(""){}
+    ImageFile():IOFile(){}
     ImageFile(std::string filename):IOFile(filename){}
     //! reads the one ImageData (the next one in the file).
     /*! returns the number of the image and its corresponding timestamp.*/

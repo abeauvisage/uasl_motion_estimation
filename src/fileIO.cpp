@@ -117,43 +117,17 @@ int IOFile::openFile(std::string filename){
         cerr << "could not open " << filename << endl;
         return 0;
     }
-    return 1;
+    return check_header();
 }
 
-int ImuFile::openFile(std::string filename){
+int IOFile::check_header(){
 
-    m_file.open(filename);
     if(!m_file.is_open())
         return 0;
     string header;getline(m_file,header);
     int pos = header.find("#");
     if(pos < 0){
-        cerr << "could not find header in " << filename << endl;
-        m_file.close();
-        return 0;
-    }
-    else{
-        string h_(header.substr(pos+1,header.length()));
-        string buff;
-        for(auto n:h_){
-            if(n != ',') buff+=n;else
-            if(n == ',' && buff != ""){m_file_desc.push_back(buff);buff="";}
-        }
-        if(buff != "") m_file_desc.push_back(buff);
-    }
-
-    return 1;
-}
-
-int GpsFile::openFile(std::string filename){
-
-     m_file.open(filename);
-    if(!m_file.is_open())
-        return 0;
-    string header;getline(m_file,header);
-    int pos = header.find("#");
-    if(pos < 0){
-        cerr << "could not find header in " << filename << endl;
+        cerr << "could not find header in " << m_filename << endl;
         m_file.close();
         return 0;
     }
@@ -173,9 +147,16 @@ int GpsFile::openFile(std::string filename){
 int ImageFile::readData(int& nb, int64_t& stamp){
     if(!m_file.is_open() || m_file.eof())
         return 0;
+
     char c;
-    m_file >> nb >> c >> stamp;
-    return 1;
+    std::string line;
+    getline(m_file,line);
+    std::stringstream sline(line);
+
+    if(sline >> nb >> c >> stamp)
+        return 1;
+    else
+        return 0;
 }
 
 int ImuFile::readData(ImuData& data){
@@ -185,37 +166,40 @@ int ImuFile::readData(ImuData& data){
 
     char c;
     Vec4d orientation;
-    for(unsigned int i=0;i<m_file_desc.size();i++){
-        if(!m_file.is_open() || m_file.eof())
+    std::string line;
+    if(!getline(m_file,line))
         return 0;
+    std::stringstream sline(line);
+
+    for(unsigned int i=0;i<m_file_desc.size();i++){
         if(m_file_desc[i] == "timestamp")
-            m_file >> data.stamp >> c;
+            sline >> data.stamp >> c;
         if(m_file_desc[i] == "acc_x")
-            m_file >> data.acc[0] >> c;
+            sline >> data.acc[0] >> c;
         if(m_file_desc[i] == "acc_y")
-            m_file >> data.acc[1] >> c;
+            sline >> data.acc[1] >> c;
         if(m_file_desc[i] == "acc_z")
-            m_file >> data.acc[2] >> c;
+            sline >> data.acc[2] >> c;
         if(m_file_desc[i] == "av_x")
-            m_file >> data.gyr[0] >> c;
+            sline >> data.gyr[0] >> c;
         if(m_file_desc[i] == "av_y")
-            m_file >> data.gyr[1] >> c;
+            sline >> data.gyr[1] >> c;
         if(m_file_desc[i] == "av_z")
-            m_file >> data.gyr[2] >> c;
+            sline >> data.gyr[2] >> c;
         if(m_file_desc[i] == "pos_x")
-            m_file >> data.pos[0] >> c;
+            sline >> data.pos[0] >> c;
         if(m_file_desc[i] == "pos_y")
-            m_file >> data.pos[1] >> c;
+            sline >> data.pos[1] >> c;
         if(m_file_desc[i] == "pos_z")
-            m_file >> data.pos[2] >> c;
+            sline >> data.pos[2] >> c;
         if(m_file_desc[i] == "q_w")
-            m_file >> orientation[0] >> c;
+            sline >> orientation[0] >> c;
         if(m_file_desc[i] == "q_x")
-            m_file >> orientation[1] >> c;
+            sline >> orientation[1] >> c;
         if(m_file_desc[i] == "q_y")
-            m_file >> orientation[2] >> c;
+            sline >> orientation[2] >> c;
         if(m_file_desc[i] == "q_z")
-            m_file >> orientation[3] >> c;
+            sline >> orientation[3] >> c;
     }
     data.orientation = Quatd(orientation[0],orientation[1],orientation[2],orientation[3]);
     return 1;
@@ -227,18 +211,56 @@ int GpsFile::readData(GpsData& data){
         return 0;
 
     char c;
-    for(unsigned int i=0;i<m_file_desc.size();i++){
-        if(!m_file.is_open() || m_file.eof())
+    std::string line;
+    if(!getline(m_file,line))
         return 0;
+    std::stringstream sline(line);
+    for(unsigned int i=0;i<m_file_desc.size();i++){
+
         if(m_file_desc[i] == "timestamp")
-             m_file >> data.stamp >> c;
+             sline >> data.stamp >> c;
         if(m_file_desc[i] == "longitude")
-             m_file >> data.lon >> c;
+             sline >> data.lon >> c;
         if(m_file_desc[i] == "latitude")
-             m_file >> data.lat >> c;
+             sline >> data.lat >> c;
         if(m_file_desc[i] == "elevation")
-             m_file >> data.alt >> c;
+             sline >> data.alt >> c;
     }
+
+    return 1;
+}
+
+int PoseFile::readData(PoseData& data){
+
+    if(!m_file.is_open() || m_file.eof())
+        return 0;
+
+    char c;
+    Vec4d orientation;
+    std::string line;
+    if(!getline(m_file,line))
+        return 0;
+    std::stringstream sline(line);
+
+    for(unsigned int i=0;i<m_file_desc.size();i++){
+        if(m_file_desc[i] == "timestamp")
+            sline >> data.stamp >> c;
+        if(m_file_desc[i] == "x")
+            sline >> data.position[0] >> c;
+        if(m_file_desc[i] == "y")
+            sline >> data.position[1] >> c;
+        if(m_file_desc[i] == "z")
+            sline >> data.position[2] >> c;
+        if(m_file_desc[i] == "q_w")
+            sline >> orientation[0] >> c;
+        if(m_file_desc[i] == "q_x")
+            sline >> orientation[1] >> c;
+        if(m_file_desc[i] == "q_y")
+            sline >> orientation[2] >> c;
+        if(m_file_desc[i] == "q_z")
+            sline >> orientation[3] >> c;
+    }
+    data.orientation = Quatd(orientation[0],orientation[1],orientation[2],orientation[3]);
     return 1;
 }
 
@@ -263,6 +285,18 @@ int ImuFile::getNextData(int64_t stamp, ImuData& data){
 }
 
 int GpsFile::getNextData(int64_t stamp, GpsData& data){
+
+    if(!m_file.is_open() || m_file.eof())
+        return 0;
+    bool success=true;
+    do{
+        success = readData(data);
+    }while( success && data.stamp <= stamp);
+
+    return success;
+}
+
+int PoseFile::getNextData(int64_t stamp, PoseData& data){
 
     if(!m_file.is_open() || m_file.eof())
         return 0;
