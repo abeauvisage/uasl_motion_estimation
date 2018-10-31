@@ -342,8 +342,8 @@ class CamPose{
     O orientation;
     cv::Vec<T,3> position;
     int ID;
-    cv::Matx44d TrMat() const;
-    CamPose<O,T>(int id, O e, cv::Vec<T,3> v):orientation(e),position(v),ID(id){}
+    cv::Matx<T,4,4> TrMat() const;
+    CamPose<O,T>(int id=0, O e=O(), cv::Vec<T,3> v=cv::Vec<T,3>()):orientation(e),position(v),ID(id){}
 
     friend std::ostream& operator<<(std::ostream& os, const CamPose& pose){
     os << "ID: " << pose.ID << std::endl << "orientation: " << pose.orientation << std::endl << "position: " << pose.position << std::endl;
@@ -355,6 +355,8 @@ typedef CamPose<Euld,double> CamPose_ed;
 typedef CamPose<Eulf,float> CamPose_ef;
 typedef CamPose<Quatd,double> CamPose_qd;
 typedef CamPose<Quatf,float> CamPose_qf;
+typedef CamPose<cv::Matx33d,double> CamPose_md;
+typedef CamPose<cv::Matx33f,float> CamPose_mf;
 
 std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output);
 

@@ -5,7 +5,7 @@ namespace me{
 template class WBA_Point<cv::Point2f>;
 
 template<>
-cv::Matx44d CamPose_ef::TrMat() const {
+cv::Matx44f CamPose_ef::TrMat() const {
     cv::Mat Tr = (cv::Mat) orientation.getR4();
     ((cv::Mat) position).copyTo(Tr(cv::Range(0,3),cv::Range(3,4)));
     return Tr;
@@ -19,7 +19,7 @@ cv::Matx44d CamPose_ed::TrMat() const {
 }
 
 template<>
-cv::Matx44d CamPose_qf::TrMat() const {
+cv::Matx44f CamPose_qf::TrMat() const {
     cv::Mat Tr = (cv::Mat) orientation.getR4();
     ((cv::Mat) position).copyTo(Tr(cv::Range(0,3),cv::Range(3,4)));
     return Tr;
@@ -28,6 +28,22 @@ cv::Matx44d CamPose_qf::TrMat() const {
 template<>
 cv::Matx44d CamPose_qd::TrMat() const {
     cv::Mat Tr = (cv::Mat) orientation.getR4();
+    ((cv::Mat) position).copyTo(Tr(cv::Range(0,3),cv::Range(3,4)));
+    return Tr;
+}
+
+template<>
+cv::Matx44d CamPose_md::TrMat() const {
+    cv::Mat Tr = cv::Mat::eye(4,4,CV_64F);
+    ((cv::Mat)orientation).copyTo(Tr(cv::Range(0,3),cv::Range(0,3)));
+    ((cv::Mat) position).copyTo(Tr(cv::Range(0,3),cv::Range(3,4)));
+    return Tr;
+}
+
+template<>
+cv::Matx44f CamPose_mf::TrMat() const {
+    cv::Mat Tr = cv::Mat::eye(4,4,CV_32F);
+    ((cv::Mat)orientation).copyTo(Tr(cv::Range(0,3),cv::Range(0,3)));
     ((cv::Mat) position).copyTo(Tr(cv::Range(0,3),cv::Range(3,4)));
     return Tr;
 }

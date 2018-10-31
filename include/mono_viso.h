@@ -26,15 +26,7 @@ public:
         double fv;                   //! focal length of the camera.
         double cu;                  //! principal point.
         double cv;                  //! principal point.
-        parameters () {
-            ransac=true;
-            prob=0.99;
-            inlier_threshold = 1.0;
-            fu=1;
-            fv=1;
-            cu=0;
-            cv=0;
-        }
+        parameters () : ransac(true),prob(0.99),inlier_threshold(1.0),fu(1.0),fv(1.0),cu(0.0),cv(0.0){}
     };
         /*! Main constructor. Takes a set of stereo parameters as input. */
         MonoVisualOdometry(parameters param=parameters());
