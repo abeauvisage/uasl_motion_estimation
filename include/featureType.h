@@ -278,13 +278,14 @@ std::deque<cv::Matx22d> cov;
 ptH3D pt;
 int count=0;
 int ID;
+int cam_num;
 
 static int latestID;
 
 public:
-WBA_Point(const T match, const int frame_nb, const cv::Matx22d& cov_=cv::Matx22d::zeros(), const ptH3D pt_=ptH3D(0,0,0,1)): count(1), ID(latestID++){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);pt=pt_;}
-WBA_Point(const WBA_Point& point): count(point.count), ID(point.ID){features=point.features;indices=point.indices;cov=point.cov;pt=point.pt;}
-WBA_Point(WBA_Point& point): count(point.count), ID(point.ID){features=point.features;indices=point.indices;cov=point.cov;pt=point.pt;}
+WBA_Point(const T match, const int frame_nb, const int cam_number=0, const cv::Matx22d& cov_=cv::Matx22d::zeros(), const ptH3D pt_=ptH3D(0,0,0,1)): count(1), ID(latestID++), cam_num(cam_number){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);pt=pt_;}
+WBA_Point(const WBA_Point& point): count(point.count), ID(point.ID), cam_num(point.cam_num){features=point.features;indices=point.indices;cov=point.cov;pt=point.pt;}
+WBA_Point(WBA_Point& point): count(point.count), ID(point.ID),cam_num(cam_num){features=point.features;indices=point.indices;cov=point.cov;pt=point.pt;}
 void addMatch(const T match, const int frame_nb, const cv::Matx22d& cov_=cv::Matx22d::zeros()){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);count++;assert(indices.size() == features.size()); if(indices.size() != getLastFrameIdx()-getFirstFrameIdx()+1) std::cout << indices.size() << " [] " << getLastFrameIdx() << " " << getFirstFrameIdx() << std::endl;assert(indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1); assert(cov.size() == indices.size());}
 void pop(){features.pop_front();indices.pop_front();cov.pop_front();assert(indices.size() == features.size() && indices.size() == cov.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
 bool isValid() const {return !features.empty();}
