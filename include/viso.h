@@ -1,5 +1,5 @@
-#ifndef VISO_H
-#define VISO_H
+#ifndef VISOME_H
+#define VISOME_H
 
 #include "opencv2/core.hpp"
 

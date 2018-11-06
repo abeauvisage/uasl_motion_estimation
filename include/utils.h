@@ -1,11 +1,8 @@
 #ifndef UTILS_H_INCLUDED
 #define UTILS_H_INCLUDED
 
-#include <ostream>
-
-//#include "featureType.h"
-
 #include <opencv2/core.hpp>
+#include <opencv2/calib3d.hpp>
 
 #define PI 3.14156592
 
@@ -138,6 +135,36 @@ public:
 	double y() const {return m_y;}
 	double z() const {return m_z;}
 };
+
+template<typename T>
+Quat<T> exp_map_Quat(const cv::Vec<T,3>& vec){
+    double norm = sqrt(pow(vec(0),2)+pow(vec(1),2)+pow(vec(2),2));
+    double theta = (norm < 1e-10 ? 1e-10:norm);
+    Quat<T> q(cos(theta/2),vec(0)/theta*sin(theta/2),vec(1)/theta*sin(theta/2),vec(2)/theta*sin(theta/2));
+    q.normalize();
+    return q;
+}
+
+template<typename T>
+cv::Vec<T,3> log_map_Quat(const Quat<T>& quat){
+    double norm = sqrt(pow(quat.x(),2)+pow(quat.y(),2)+pow(quat.z(),2));
+    double theta = (norm < 1e-10 ? 1e-10:norm);
+    return acos(quat.w()) * 2.0 * (cv::Vec3d(quat.x(),quat.y(),quat.z())/theta);
+}
+
+template<typename T>
+cv::Matx<T,3,3> exp_map_Mat(const cv::Vec<T,3>& vec){
+    cv::Mat R;
+    cv::Rodrigues(vec,R);
+    return (cv::Matx<T,3,3>) R;
+}
+
+template<typename T>
+cv::Vec<T,3> log_map_Mat(const cv::Matx<T,3,3>& mat){
+    cv::Vec<T,3> vec;
+    cv::Rodrigues(mat,vec);
+    return vec;
+}
 
 /**** inline funcitons ****/
 
