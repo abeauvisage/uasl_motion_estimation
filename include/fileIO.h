@@ -74,6 +74,8 @@ void loadImagesKitti(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>&
 cv::Mat loadImageKitti(const std::string& dir, int cam_nb, int img_nb, const int padding=8);
 void loadImages(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs, const int padding=5);
 cv::Mat loadImage(const std::string& dir, int cam_nb, int img_nb, const int padding=5);
+void loadPCImages(const std::string& dir, int nb, std::vector<std::pair<cv::Mat,cv::Mat>>& imgs, const int padding=5);
+std::vector<cv::Mat> loadPCImage(const std::string& dir, int cam_nb, int img_nb, const int padding=5);
 
 inline void openLogFile(std::string filename){logFile.open(filename,std::ofstream::trunc);}
 //! write a string in the logFile. Useful for displaying data without flooding the standard output.

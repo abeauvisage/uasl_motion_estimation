@@ -152,7 +152,6 @@ int ImageFile::readData(int& nb, int64_t& stamp){
     std::string line;
     getline(m_file,line);
     std::stringstream sline(line);
-
     if(sline >> nb >> c >> stamp)
         return 1;
     else
@@ -312,13 +311,13 @@ pair<Mat,Mat> loadImages(const std::string& dir, int nb){
 
     pair<Mat,Mat> imgs;
     stringstream num;num <<  std::setfill('0') << std::setw(5) << nb;
-    imgs.first = imread(dir+"/cam0_image"+num.str()+"_"+appendix+".png",0);
+    imgs.first = imread(dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
     if(imgs.first.empty())
-        cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+appendix+".png" << endl;
+        cerr << "cannot read " << dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
     if(st == stereo){
-        imgs.second = imread(dir+"/cam1_image"+num.str()+"_"+appendix+".png",0);
+        imgs.second = imread(dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
         if(imgs.second.empty())
-            cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_"+appendix+".png" << endl;
+            cerr << "cannot read " << dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
     }
 
     return imgs;
@@ -328,11 +327,11 @@ pair<Mat,Mat> loadImages(const std::string& dir, int nb){
 void loadImagesKitti(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs, const int padding){
 
     stringstream num;num <<  std::setfill('0') << std::setw(padding) << nb;
-    imgs.first = imread(dir+"/L_"+num.str()+".png",0);
+    imgs.first = imread(dir+"/L_"+num.str()+".png",0).rowRange(Range(0,374));
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
     if(st == stereo){
-        imgs.second = imread(dir+"/R_"+num.str()+".png",0);
+        imgs.second = imread(dir+"/R_"+num.str()+".png",0).rowRange(Range(0,374));
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
     }
@@ -342,7 +341,7 @@ cv::Mat loadImageKitti(const std::string& dir, int cam_nb, int img_nb, const int
 
     Mat img;
     stringstream num;num <<  std::setfill('0') << std::setw(padding) << img_nb;
-    img= imread(dir+"/L_"+num.str()+".png",0);
+    img= imread(dir+"/L_"+num.str()+".png",0).rowRange(Range(0,374));
     if(img.empty())
         cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
     return img;
@@ -351,13 +350,13 @@ cv::Mat loadImageKitti(const std::string& dir, int cam_nb, int img_nb, const int
 void loadImages(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs, const int padding){
 
     stringstream num;num <<  std::setfill('0') << std::setw(padding) << nb;
-    imgs.first = imread(dir+"/cam0_image"+num.str()+"_"+appendix+".png",0);
+    imgs.first = imread(dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
     if(imgs.first.empty())
-        cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_"+appendix+".png" << endl;
+        cerr << "cannot read " << dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
     if(st == stereo){
-        imgs.second = imread(dir+"/cam1_image"+num.str()+"_"+appendix+".png",0);
+        imgs.second = imread(dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
         if(imgs.second.empty())
-            cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_"+appendix+".png" << endl;
+            cerr << "cannot read " << dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
     }
 }
 
@@ -370,6 +369,42 @@ cv::Mat loadImage(const std::string& dir, int cam_nb, int img_nb, const int padd
     if(img.empty())
         cerr << "cannot read " << dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
     return img;
+}
+
+void loadPCImages(const std::string& dir, int nb, std::vector<std::pair<cv::Mat,cv::Mat>>& imgs, const int padding){
+
+    imgs = std::vector<std::pair<cv::Mat,cv::Mat>>(4);
+    stringstream num;num <<  std::setfill('0') << std::setw(padding) << nb;
+    imread(dir+"/cam0_image"+num.str()+"_M.png",0).convertTo(imgs[0].first,CV_32F);
+    imread(dir+"/cam0_image"+num.str()+"_m.png",0).convertTo(imgs[1].first,CV_32F);
+    imread(dir+"/cam0_image"+num.str()+"_PC.png",0).convertTo(imgs[2].first,CV_32F);
+    imread(dir+"/cam0_image"+num.str()+"_ft.png",0).convertTo(imgs[3].first,CV_32F);
+    if(imgs[0].first.empty())
+        cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_M.png" << endl;
+    if(st == stereo){
+        imread(dir+"/cam1_image"+num.str()+"_M.png",0).convertTo(imgs[0].second,CV_32F);
+        imread(dir+"/cam1_image"+num.str()+"_m.png",0).convertTo(imgs[1].second,CV_32F);
+        imread(dir+"/cam1_image"+num.str()+"_PC.png",0).convertTo(imgs[2].second,CV_32F);
+        imread(dir+"/cam1_image"+num.str()+"_ft.png",0).convertTo(imgs[3].second,CV_32F);
+        if(imgs[0].second.empty())
+            cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_M.png" << endl;
+    }
+    for_each(begin(imgs),end(imgs),[](pair<Mat,Mat> img){img.first /= 255.0;img.second /= 255.0;});
+}
+
+
+std::vector<cv::Mat> loadPCImage(const std::string& dir, int cam_nb, int img_nb, const int padding){
+
+    vector<Mat> imgs(4);
+    stringstream num;num <<  std::setfill('0') << std::setw(padding) << img_nb;
+    imgs[0] = imread(dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_M.png",0);
+    imgs[1] = imread(dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_m.png",0);
+    imgs[2] = imread(dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_PC.png",0);
+    imgs[3] = imread(dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_ft.png",0);
+    if(imgs[0].empty())
+        cerr << "cannot read " << dir+"/cam"+to_string(cam_nb)+"_image"+num.str()+"_M.png" << endl;
+    for_each(begin(imgs),end(imgs),[](Mat img){img /= 255.0;});
+    return imgs;
 }
 
 
