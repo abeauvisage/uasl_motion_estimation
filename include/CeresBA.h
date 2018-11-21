@@ -52,21 +52,20 @@ struct ReprojectionError {
   double observed_y;
 };
 
-struct ReprojectionErrorRight {
-  ReprojectionErrorRight(double observed_x, double observed_y) : observed_x(observed_x), observed_y(observed_y) {}
+struct ReprojectionErrorMonoRight {
+  ReprojectionErrorMonoRight(double observed_x, double observed_y) : observed_x(observed_x), observed_y(observed_y) {}
 
   template <typename T>
   bool operator()(const T* const camera,
                   const T* const point,
                   T* residuals) const {
     // camera[0,1,2] are the angle-axis rotation.
-    T p[3],base[3],Rb[3];base[0]=baseline_;base[1];base[2];
+    T p[3];//,base[3],Rb[3],point_[3],p_[3];base[0]=baseline_;base[1]=0;base[2]=0;
     ceres::AngleAxisRotatePoint(camera, point, p);
-    ceres::AngleAxisRotatePoint(camera, base, Rb);
     // camera[3,4,5] are the translation.
-    p[0] += camera[3]+Rb[0];
-    p[1] += camera[4]+Rb[1];
-    p[2] += camera[5]+Rb[2];
+    p[0] += camera[3]-baseline_;
+    p[1] += camera[4];
+    p[2] += camera[5];
 
     T xp =  p[0] / p[2];
     T yp =  p[1] / p[2];
@@ -82,8 +81,8 @@ struct ReprojectionErrorRight {
   // the client code.
   static ceres::CostFunction* Create(const double observed_x,
                                      const double observed_y) {
-    return (new ceres::AutoDiffCostFunction<ReprojectionError, 2, 6, 3>(
-                new ReprojectionError(observed_x, observed_y)));
+    return (new ceres::AutoDiffCostFunction<ReprojectionErrorMonoRight, 2, 6, 3>(
+                new ReprojectionErrorMonoRight(observed_x, observed_y)));
   }
   double observed_x;
   double observed_y;
@@ -129,7 +128,7 @@ struct StereoReprojectionError {
   static cv::Matx33d K_;
   static double baseline_;
 
-    CeresBA(int nb_view, int nb_pts, cv::Matx33d K, double baseline=0);
+    CeresBA(int nb_view, int nb_pts, const cv::Matx33d& K, double baseline=0);
   ~CeresBA() {
     if(problem)
         delete problem;

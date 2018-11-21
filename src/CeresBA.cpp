@@ -33,12 +33,12 @@ vector<int> selectRandomIndices(int nb_samples, int nb_tot) {
   return samples_idx;
 }
 
-CeresBA::CeresBA(int nb_view, int nb_pts, cv::Matx33d K, double baseline):num_cameras_(nb_view),num_points_(nb_pts),num_observations_(nb_view*nb_pts){
+CeresBA::CeresBA(int nb_view, int nb_pts, const cv::Matx33d& K, double baseline):num_cameras_(nb_view),num_points_(nb_pts),num_observations_(nb_view*nb_pts){
         num_parameters_ = 6 * num_cameras_ + 3 * num_points_;
         parameters_ = new double[num_parameters_];
         K_=K;
         baseline_=baseline;
-    }
+}
 
 void CeresBA::fillData(const std::vector<std::vector<Point2f>>& obs, const std::vector<ptH3D>& pts){
     assert((int) obs.size() == num_cameras_ && (int) pts.size() == num_points_);
@@ -114,7 +114,7 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
 
 void CeresBA::fillData(const std::vector<me::WBA_Ptf*>& pts, const std::vector<me::CamPose_qd>& poses){
 
-    assert(num_cameras_ == poses.size() && num_points_ == pts.size());
+    assert(num_cameras_ == (int) poses.size() && num_points_ == (int) pts.size());
     int start = poses[0].ID;
 
     for(uint i=0;i<pts.size();i++){
@@ -138,12 +138,8 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf*>& pts, const std::vector<m
         }
     }
 
-//    for(int i=0;i<num_parameters_;i++)
-//        cout << parameters_[i] << ", ";
-//    cout << endl;
-
     int nb =0;
-    for(uint i=0;i<num_points_;i++)
+    for(int i=0;i<num_points_;i++)
         nb += pts[i]->getNbFeatures();
 
     num_observations_ = nb;
@@ -153,7 +149,7 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf*>& pts, const std::vector<m
     observations_ = new double[2 * num_observations_];
 
     nb=0;
-    for(uint i=0;i<num_points_;i++){
+    for(int i=0;i<num_points_;i++){
         for(uint j=0;j<pts[i]->getNbFeatures();j++){
             camera_index_[nb] = pts[i]->getFrameIdx(j)-start;
             point_index_[nb] = i;
@@ -166,12 +162,11 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf*>& pts, const std::vector<m
 
 void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me::CamPose_qd>& poses){
 
-    assert(num_cameras_ == poses.size() && num_points_ == pts.size());
+    assert(num_cameras_ == (int) poses.size() && num_points_ == (int) pts.size());
     int start = poses[0].ID;
     camera_nbs.clear();
     for(uint i=0;i<pts.size();i++){
         pt3D pt = to_euclidean(pts[i].get3DLocation());
-//        cout << pt << endl;
         parameters_[num_cameras_*6+i*3+0] = pt(0);
         parameters_[num_cameras_*6+i*3+1] = pt(1);
         parameters_[num_cameras_*6+i*3+2] = pt(2);
@@ -196,7 +191,7 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
 //    cout << endl;
 
     int nb =0;
-    for(uint i=0;i<num_points_;i++)
+    for(int i=0;i<num_points_;i++)
         nb += pts[i].getNbFeatures();
 
     num_observations_ = nb;
@@ -206,7 +201,7 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
     observations_ = new double[2 * num_observations_];
 
     nb=0;
-    for(uint i=0;i<num_points_;i++){
+    for(int i=0;i<num_points_;i++){
         for(uint j=0;j<pts[i].getNbFeatures();j++){
             camera_index_[nb] = pts[i].getFrameIdx(j)-start;
             point_index_[nb] = i;
@@ -219,21 +214,24 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
 
 void CeresBA::fillStereoData(const std::pair<std::vector<me::WBA_Ptf>,std::vector<me::WBA_Ptf>>& pts, const std::vector<me::CamPose_qd>& poses){
 
-    assert(num_cameras_ == poses.size() && num_points_ == pts.first.size()+pts.second.size());
+    assert(num_cameras_ == (int) poses.size() && num_points_ == (int)(pts.first.size()+pts.second.size()));
     int start = poses[0].ID;
+	camera_nbs.clear();
 
     for(uint i=0;i<pts.first.size();i++){
         pt3D pt = to_euclidean(pts.first[i].get3DLocation());
         parameters_[num_cameras_*6+i*3+0] = pt(0);
         parameters_[num_cameras_*6+i*3+1] = pt(1);
         parameters_[num_cameras_*6+i*3+2] = pt(2);
+        camera_nbs.push_back(pts.first[i].getCameraNum());
     }
 
     for(uint i=0;i<pts.second.size();i++){
         pt3D pt = to_euclidean(pts.second[i].get3DLocation());
-        parameters_[num_cameras_*6+pts.first.size()+i*3+0] = pt(0);
-        parameters_[num_cameras_*6+pts.first.size()+i*3+1] = pt(1);
-        parameters_[num_cameras_*6+pts.first.size()+i*3+2] = pt(2);
+        parameters_[num_cameras_*6+(pts.first.size()+i)*3+0] = pt(0);
+        parameters_[num_cameras_*6+(pts.first.size()+i)*3+1] = pt(1);
+        parameters_[num_cameras_*6+(pts.first.size()+i)*3+2] = pt(2);
+        camera_nbs.push_back(pts.second[i].getCameraNum());
     }
 
     cam_idx = new int[poses.size()];
@@ -285,8 +283,8 @@ void CeresBA::fillStereoData(const std::pair<std::vector<me::WBA_Ptf>,std::vecto
 
 void CeresBA::fillPoints(const std::vector<me::ptH3D>& pts, const std::vector<uchar>& mask){
 
-    assert(pts.size() == num_points_);
-    assert(mask.empty() || mask.size() == num_points_);
+    assert((int) pts.size() == num_points_);
+    assert(mask.empty() || (int) mask.size() == num_points_);
 
     m_mask = mask;
 
@@ -300,15 +298,13 @@ void CeresBA::fillPoints(const std::vector<me::ptH3D>& pts, const std::vector<uc
 
 void CeresBA::fillCameras(const std::vector<me::CamPose_md>& poses){
 
-    assert(poses.size() == num_cameras_);
+    assert((int) poses.size() == num_cameras_);
     for(uint j=0;j<poses.size();j++){
         //orientation
-//        cout << poses[j].orientation << endl;
         Vec3d rot_vec = log_map_Mat<double>(poses[j].orientation);
         parameters_[j*6] = rot_vec[0];
         parameters_[j*6+1] = rot_vec[1];
         parameters_[j*6+2] = rot_vec[2];
-//        cout << "rot vec " << rot_vec << endl;
         // position
         Vec3d new_t = poses[j].position;
         for(uint k=3;k<6;k++){
@@ -319,7 +315,7 @@ void CeresBA::fillCameras(const std::vector<me::CamPose_md>& poses){
 
 void CeresBA::fillCameras(const std::vector<me::CamPose_qd>& poses){
 
-    assert(poses.size() == num_cameras_);
+    assert((int)poses.size() == num_cameras_);
     for(uint j=0;j<poses.size();j++){
         //orientation
         Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
@@ -338,7 +334,7 @@ void CeresBA::fillObservations(const std::vector<me::WBA_Ptf>& obs){}
 
 void CeresBA::fillObservations(const std::vector<me::StereoOdoMatchesf>& obs){
 
-    assert(obs.size() == num_points_);
+    assert((int) obs.size() == num_points_);
     num_observations_ = num_points_*2;
 
     point_index_ = new int[num_observations_];
@@ -391,28 +387,21 @@ bool CeresBA::runRansac(int nb_iterations,double inlier_threshold,int fixedFrame
             inliers_tmp = get_inliers(inlier_threshold);
         }
 
-        cout << inliers_tmp.size() << " ";
         if(inliers_tmp.size() > inliers_idx.size()){
             inliers_idx = inliers_tmp;
             best_poses = getQuatPoses();
         }
     }
 
-    cout << best_poses[1].orientation << " " << best_poses[1].position << endl;
     cout << "final optim (" << inliers_idx.size() << " inliers) " << inlier_threshold << endl;
 
     if (inliers_idx.size()>=6){ // check that more than 6 inliers have been obtained
 
         vector<uchar> mask(num_points_,0);
         for(uint j=0;j<inliers_idx.size();j++)
-//            if(norm(Vec3d(init_parameters[6+inliers_idx[j]*3],init_parameters[6+inliers_idx[j]*3+1],init_parameters[6+inliers_idx[j]*3+2]))> 1e3)
                 mask[inliers_idx[j]] = 1;
 
         m_mask = mask;
-//        for(uint i=0;i < m_mask.size();i++)
-//            if(m_mask[i])
-//                cout << init_parameters[6+i*3] << "," << init_parameters[6+i*3+1] << "," << init_parameters[6+i*3+2] << " " ;
-//        cout << endl;
         std::copy(init_parameters.begin(),init_parameters.end(),parameters_);
 
         if(stereo)
@@ -420,7 +409,6 @@ bool CeresBA::runRansac(int nb_iterations,double inlier_threshold,int fixedFrame
         else
             runSolver(fixedFrames);
         best_poses = getQuatPoses();
-        cout << best_poses[1].orientation << " " << best_poses[1].position << endl;
         return true;
     }else{
         std::copy(init_parameters.begin(),init_parameters.end(),parameters_);
@@ -433,49 +421,26 @@ void CeresBA::runSolver(int fixedFrames){
     problem = new ceres::Problem();
 
     const double* obs = observations();
-	double sum_cost=0;
 
-    for(uint i=0;i<num_observations();++i){
+	assert((int) camera_nbs.size() == num_points_);
 
-			double* camera = mutable_camera_for_observation(i);
-			double * point = mutable_point_for_observation(i);
-			/* initial cost */
-			double p[3];
-			ceres::AngleAxisRotatePoint(camera, point, p);
-		    // camera[3,4,5] are the translation.
-		    p[0] += camera[3];
-		    p[1] += camera[4];
-			p[2] += camera[5];
+    for(int i=0;i<num_observations();++i){
 
-			double xp =  p[0] / p[2];
-			double yp =  p[1] / p[2];
+       ceres::CostFunction* cstFunc;
+       if(camera_nbs.empty() || camera_nbs[point_index_[i]] == 0 )
+            cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1]);
+        else
+            cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1]);
 
-			double predicted_x = (double)(K_(0,0)) * xp + (double)(K_(0,2));
-			double predicted_y = K_(1,1) * yp + K_(1,2);
-			// The error is the difference between the predicted and observed position.
-			double residuals[2];
-			residuals[0] = predicted_x - obs[2*i+0];
-			residuals[1] = predicted_y - obs[2*i+1];
-			sum_cost += (residuals[0] * residuals[0] + residuals[1] * residuals[1])/2;
-
-			/***************/
-//            cout << i << " ";
-            ceres::CostFunction* cstFunc;
-            if(camera_nbs.empty() || camera_nbs[point_index_[i]] == 0 )
-                cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1]);
-            else
-                cstFunc = CeresBA::ReprojectionErrorRight::Create(obs[2*i+0],obs[2*i+1]);
-
-            ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
-            problem->AddResidualBlock(cstFunc,lossFunc,camera,point);
-            if(camera_index_[i] < fixedFrames)
-                problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
-//            problem->SetParameterBlockConstant(mutable_point_for_observation(i));
+        ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
+        problem->AddResidualBlock(cstFunc,lossFunc,mutable_camera_for_observation(i),mutable_point_for_observation(i));
+        if(camera_index_[i] < fixedFrames)
+            problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
     }
-//    cout << endl;
+
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_SCHUR;
-    options.function_tolerance = 1e-6;
+    options.function_tolerance = 1e-3;
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
     ceres::Solve(options,problem,&summary);
@@ -489,31 +454,23 @@ void CeresBA::runStereoSolver(int fixedFrames){
 
     double initial_cost=0;
 
-//    cout << " K " << K_ << endl;
-//    cout << "base: " << baseline_ << endl;
-//    double sum=0.0;
-//    for_each(begin(m_mask),end(m_mask),[&sum](const uchar& v){sum+=v;});
-//    cout << "nb inliers: " << sum << endl;;
+    for(int i=0;i<num_observations();++i){
 
-    for(uint i=0;i<num_observations();++i){
+	if(!m_mask.empty() && !m_mask[point_index_[i]])
+        	continue;
 
-        if(!m_mask.empty() && !m_mask[point_index_[i]])
-                continue;
-
-        ceres::CostFunction* cstFunc = CeresBA::StereoReprojectionError::Create(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
+	ceres::CostFunction* cstFunc = CeresBA::StereoReprojectionError::Create(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
 //        ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
-        problem->AddResidualBlock(cstFunc,nullptr,mutable_camera_for_observation(i),mutable_point_for_observation(i));
-        problem->SetParameterBlockConstant(mutable_point_for_observation(i));
-        if(camera_index_[i] < fixedFrames)
-            problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
+    problem->AddResidualBlock(cstFunc,nullptr,mutable_camera_for_observation(i),mutable_point_for_observation(i));
+    problem->SetParameterBlockConstant(mutable_point_for_observation(i));
+    if(camera_index_[i] < fixedFrames)
+        problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
 
-            double residual[4];
-            StereoReprojectionError rep(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
-            rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
-            initial_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
-    }
-
-//    cout << "initial cost: " << initial_cost << endl;
+    double residual[4];
+    StereoReprojectionError rep(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
+    rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
+    initial_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
+}
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_SCHUR;
@@ -527,7 +484,7 @@ void CeresBA::runStereoSolver(int fixedFrames){
 std::vector<int> CeresBA::get_inliers_stereo(const double threshold){
     std::vector<int> inliers;
     vector<Point2f> reproj_feats = reproject_features(1);
-    for(uint i=0;i<num_observations();i+=2){
+    for(int i=0;i<num_observations();i+=2){
         double residual[4], error=0;
         StereoReprojectionError rep1(observations_[4*i+0],observations_[4*i+1],observations_[4*i+2],observations_[4*i+3]);
         StereoReprojectionError rep2(observations_[4*i+4],observations_[4*i+5],observations_[4*i+6],observations_[4*i+7]);
@@ -545,15 +502,13 @@ std::vector<int> CeresBA::get_inliers_stereo(const double threshold){
 std::vector<int> CeresBA::get_inliers(const double threshold){
     std::vector<int> inliers;
     vector<Point2f> reproj_feats = reproject_features(1);
-    for(uint i=0;i<num_observations();i+=2){
+    for(int i=0;i<num_observations();i+=2){
         double residual[2], error=0;
         ReprojectionError rep1(observations_[2*i+0],observations_[2*i+1]);
         ReprojectionError rep2(observations_[2*i+2],observations_[2*i+3]);
         rep1(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
-//        cout << residual[0] << " , " << residual[1] << " , ";
         error += sqrt(residual[0]*residual[0]+residual[1]*residual[1]);
         rep2(mutable_camera_for_observation(i+1),mutable_point_for_observation(i+1),residual);
-//        cout << residual[0] << " , " << residual[1] << endl;
         error += sqrt(residual[0]*residual[0]+residual[1]*residual[1]);
         if(error/2.0 < threshold)
             inliers.push_back(point_index_[i]);
@@ -582,9 +537,9 @@ bool CeresBA::getCovariance(std::vector<cv::Matx66d>& poseCov, std::vector<cv::M
     std::vector<double*> param_blocks;
     //retrieving param blocks
     problem->GetParameterBlocks(&param_blocks);
-    assert(param_blocks.size() == num_cameras_+num_points_);
+    assert((int)param_blocks.size() == num_cameras_+num_points_);
 
-    for(int i=0;i<param_blocks.size();i++){
+    for(uint i=0;i<param_blocks.size();i++){
         cov_blocks.push_back(make_pair(param_blocks[i],param_blocks[i]));
     }
     //creating Covariance structure
@@ -615,7 +570,7 @@ std::vector<me::CamPose_qd> CeresBA::getQuatPoses(){
     for(int i=0;i<num_cameras_;i++){
         Mat rot_vec(1,3,CV_64F,cam_ptr),pos_vec(3,1,CV_64F,cam_ptr+3);
         Quatd orientation = exp_map_Quat<double>(rot_vec);
-        poses.push_back(CamPose_qd(i,orientation,(Vec3d)pos_vec));
+        poses.push_back(CamPose_qd(cam_idx[i],orientation,(Vec3d)pos_vec));
 //        cout << "[BA] final pose" << orientation << pos_vec.t() << endl;
         cam_ptr +=6;
     }
@@ -629,7 +584,7 @@ std::vector<me::CamPose_md> CeresBA::getMatPoses(){
     for(int i=0;i<num_cameras_;i++){
         Mat rot_vec(1,3,CV_64F,cam_ptr),pos_vec(3,1,CV_64F,cam_ptr+3);
         Matx33d orientation = exp_map_Mat<double>(rot_vec);
-        poses.push_back(CamPose_md(i,orientation,(Vec3d)pos_vec));
+        poses.push_back(CamPose_md(cam_idx[i],orientation,(Vec3d)pos_vec));
         cout << "[BA] final pose" << orientation << pos_vec.t() << endl;
         cam_ptr +=6;
     }
