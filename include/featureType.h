@@ -348,6 +348,15 @@ class CamPose{
     cv::Matx<T,4,4> TrMat() const;
     CamPose<O,T>(int id=0, O e=O(), cv::Vec<T,3> v=cv::Vec<T,3>()):orientation(e),position(v),ID(id){}
 
+    CamPose<O,T> operator*(const CamPose<O,T>& pose){
+        CamPose<O,T> new_pose(pose);
+        new_pose.orientation = orientation * pose.orientation;
+        new_pose.position = orientation * pose.position + position;
+        return new_pose;
+    }
+
+    CamPose<O,T> inv();
+
     friend std::ostream& operator<<(std::ostream& os, const CamPose& pose){
     os << "ID: " << pose.ID << std::endl << "orientation: " << pose.orientation << std::endl << "position: " << pose.position << std::endl;
     return os;

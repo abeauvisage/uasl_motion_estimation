@@ -48,6 +48,26 @@ cv::Matx44f CamPose_mf::TrMat() const {
     return Tr;
 }
 
+template<>
+CamPose_qd CamPose_qd::inv(){
+    return CamPose_qd(ID,orientation.conj(),-(orientation.conj()*position));
+}
+
+template<>
+CamPose_qf CamPose_qf::inv(){
+    return CamPose_qf(ID,orientation.conj(),-(orientation.conj()*position));
+}
+
+template<>
+CamPose_md CamPose_md::inv(){
+    return CamPose_md(ID,orientation.t(),-orientation.t()*position);
+}
+
+template<>
+CamPose_mf CamPose_mf::inv(){
+    return CamPose_mf(ID,orientation.t(),-orientation.t()*position);
+}
+
 std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output)
 {
     //Identify the regional maxima in the image

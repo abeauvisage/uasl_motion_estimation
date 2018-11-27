@@ -8,7 +8,12 @@ namespace me{
 
 static cv::Point2d m_origin=cv::Point2d(51.604834,-1.636528);
 static double m_angle=0;
-static const cv::Point2d conv(111259.701456712,69288.4150563286);
+#ifdef Kitti
+static const cv::Point2d conv(111209.88256343921,73158.07119382407); // Kitti
+#else
+static const cv::Point2d conv(111259.701456712,69288.4150563286); // DA
+#endif // Kitti
+// values obtained from: http://www.csgnetwork.com/degreelenllavcalc.html
 
 inline void setOrigin(const cv::Point2d& origin){m_origin=origin;}
 inline cv::Point2d getOrigin(){return m_origin;}
