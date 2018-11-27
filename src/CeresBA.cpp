@@ -299,7 +299,9 @@ void CeresBA::fillPoints(const std::vector<me::ptH3D>& pts, const std::vector<uc
 void CeresBA::fillCameras(const std::vector<me::CamPose_md>& poses){
 
     assert((int) poses.size() == num_cameras_);
+    cam_idx = new int[poses.size()];
     for(uint j=0;j<poses.size();j++){
+        cam_idx[j] = poses[j].ID;
         //orientation
         Vec3d rot_vec = log_map_Mat<double>(poses[j].orientation);
         parameters_[j*6] = rot_vec[0];
@@ -316,7 +318,9 @@ void CeresBA::fillCameras(const std::vector<me::CamPose_md>& poses){
 void CeresBA::fillCameras(const std::vector<me::CamPose_qd>& poses){
 
     assert((int)poses.size() == num_cameras_);
+    cam_idx = new int[poses.size()];
     for(uint j=0;j<poses.size();j++){
+        cam_idx[j] = poses[j].ID;
         //orientation
         Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
         parameters_[j*6] = rot_vec[0];
@@ -421,6 +425,7 @@ void CeresBA::runSolver(int fixedFrames){
     problem = new ceres::Problem();
 
     const double* obs = observations();
+    cout << "[BA] " << num_cameras_ << " cams | " << num_points_ << " points | " << num_observations() << " observations" << endl;
 
 	assert((int) camera_nbs.size() == num_points_);
 
@@ -440,7 +445,7 @@ void CeresBA::runSolver(int fixedFrames){
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_SCHUR;
-    options.function_tolerance = 1e-3;
+    options.function_tolerance = 1e-6;
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
     ceres::Solve(options,problem,&summary);
@@ -474,7 +479,7 @@ void CeresBA::runStereoSolver(int fixedFrames){
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_SCHUR;
-    options.function_tolerance = 1e-3;
+    options.function_tolerance = 1e-6;
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
     ceres::Solve(options,problem,&summary);
@@ -571,7 +576,7 @@ std::vector<me::CamPose_qd> CeresBA::getQuatPoses(){
         Mat rot_vec(1,3,CV_64F,cam_ptr),pos_vec(3,1,CV_64F,cam_ptr+3);
         Quatd orientation = exp_map_Quat<double>(rot_vec);
         poses.push_back(CamPose_qd(cam_idx[i],orientation,(Vec3d)pos_vec));
-//        cout << "[BA] final pose" << orientation << pos_vec.t() << endl;
+        cout << "[BA] final pose" << orientation << pos_vec.t() << endl;
         cam_ptr +=6;
     }
     return poses;

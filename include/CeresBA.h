@@ -140,8 +140,8 @@ struct StereoReprojectionError {
         delete[] observations_;
     if(parameters_)
         delete[] parameters_;
-//    if(cam_idx)
-//        delete[] cam_idx;
+    if(cam_idx)
+        delete[] cam_idx;
   }
   int num_observations()       const { return num_observations_;               }
   const double* observations() const { return observations_;                   }
@@ -201,7 +201,7 @@ struct StereoReprojectionError {
 
  private:
 
-  ceres::Problem* problem;
+  ceres::Problem* problem=nullptr;
 
   std::vector<uchar> m_mask;
 
