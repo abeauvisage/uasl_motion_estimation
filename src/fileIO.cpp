@@ -106,7 +106,7 @@ int loadYML(string filename){
         ft = MREKF;
     configFile["appendix"] >> appendix;
 
-    configFile ["gps"] >> gps_orientation;
+    configFile["gps"] >> gps_orientation;
 
     return 1;
 }
@@ -381,14 +381,12 @@ void loadPCImages(const std::string& dir, int nb, std::vector<std::pair<cv::Mat,
     imread(dir+"/cam0_image"+num.str()+"_ft.png",0).convertTo(imgs[3].first,CV_32F);
     if(imgs[0].first.empty())
         cerr << "cannot read " << dir+"/cam0_image"+num.str()+"_M.png" << endl;
-    if(st == stereo){
-        imread(dir+"/cam1_image"+num.str()+"_M.png",0).convertTo(imgs[0].second,CV_32F);
-        imread(dir+"/cam1_image"+num.str()+"_m.png",0).convertTo(imgs[1].second,CV_32F);
-        imread(dir+"/cam1_image"+num.str()+"_PC.png",0).convertTo(imgs[2].second,CV_32F);
-        imread(dir+"/cam1_image"+num.str()+"_ft.png",0).convertTo(imgs[3].second,CV_32F);
-        if(imgs[0].second.empty())
-            cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_M.png" << endl;
-    }
+    imread(dir+"/cam1_image"+num.str()+"_M.png",0).convertTo(imgs[0].second,CV_32F);
+    imread(dir+"/cam1_image"+num.str()+"_m.png",0).convertTo(imgs[1].second,CV_32F);
+    imread(dir+"/cam1_image"+num.str()+"_PC.png",0).convertTo(imgs[2].second,CV_32F);
+    imread(dir+"/cam1_image"+num.str()+"_ft.png",0).convertTo(imgs[3].second,CV_32F);
+    if(imgs[0].second.empty())
+        cerr << "cannot read " << dir+"/cam1_image"+num.str()+"_M.png" << endl;
     for_each(begin(imgs),end(imgs),[](pair<Mat,Mat> img){img.first /= 255.0;img.second /= 255.0;});
 }
 
