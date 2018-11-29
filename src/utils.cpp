@@ -287,7 +287,7 @@ void Quat<T>::operator/=(double nb){
 }
 
 template <typename T>
-Vec<T,3> Quat<T>::operator*(const Vec<T,3>& v){
+Vec<T,3> Quat<T>::operator*(const Vec<T,3>& v) const{
 
     Vec<T,4> vq(0,v[0],v[1],v[2]);
     Vec<T,4> v_r = (*this) * vq;
@@ -296,7 +296,7 @@ Vec<T,3> Quat<T>::operator*(const Vec<T,3>& v){
 }
 
 template <typename T>
-Matx<T,3,1> Quat<T>::operator*(const Matx<T,3,1>& v){
+Matx<T,3,1> Quat<T>::operator*(const Matx<T,3,1>& v) const{
 
     Matx41d vq(0,v(0),v(1),v(2));
     Matx41d v_r = (*this) * vq;
@@ -305,12 +305,12 @@ Matx<T,3,1> Quat<T>::operator*(const Matx<T,3,1>& v){
 }
 
 template <typename T>
-Matx<T,4,1> Quat<T>::operator*(const Matx<T,4,1>& v){
+Matx<T,4,1> Quat<T>::operator*(const Matx<T,4,1>& v) const{
     return getQ_().t() * getQ() * v;
 }
 
 template <typename T>
-Vec<T,4> Quat<T>::operator*(const Vec<T,4>& v){
+Vec<T,4> Quat<T>::operator*(const Vec<T,4>& v) const{
     return getQ_().t() * getQ() * v;
 }
 
