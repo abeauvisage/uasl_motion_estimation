@@ -9,13 +9,13 @@ using namespace cv;
 
 namespace me{
 
-SetupType st;
-FilterType ft;
-FrameInfo fi;
-double gps_orientation;
+FrameInfo frame_info;
+DatasetInfo dataset_info;
+TrackingInfo tracking_info;
 MonoVisualOdometry::parameters param_mono;
 StereoVisualOdometry::parameters param_stereo;
 std::string appendix;
+
 
 int loadYML(string filename){
 
@@ -25,28 +25,30 @@ int loadYML(string filename){
         return 0;
     }
 
-    // defining type (mono / stereo)
-    string type; configFile["type"] >> type;
-    if(type=="stereo"){
-        st = stereo;
-        #define STEREO
-    }
-    else{
-        st = mono;
-        #define MONO
-    }
+    //defining dataset information
+    FileNode dataset = configFile["dataset"];
+    dataset["gps"] >> dataset_info.gps_orientation;
+    dataset["dir"] >> dataset_info.dir;
+    std::string type;
+    dataset["type"] >> type;
+    dataset["camID"] >> dataset_info.cam_ID;
 
-    // defining frame rate
+    if(type=="stereo")
+        dataset_info.type = stereo;
+    else
+        dataset_info.type = mono;
+
+    // defining frame informations
     FileNode frames = configFile["frames"];
-    fi.fframe = frames["start"];
-    fi.lframe = frames["stop"];
-    fi.skip = frames["rate"];
-    fi.bias_frame = frames["bias"];
-    fi.init = frames["init"];
+    frame_info.fframe = frames["start"];
+    frame_info.lframe = frames["stop"];
+    frame_info.skip = frames["rate"];
+    frame_info.bias_frame = frames["bias"];
+    frame_info.init = frames["init"];
 
     //defining calibration parameters
     FileNode calib = configFile["calib"];
-    if(st == stereo){
+    if(dataset_info.type == stereo){
         calib["f1"] >> param_stereo.fu1;
         calib["f2"] >> param_stereo.fu2;
         calib["f1"] >> param_stereo.fv1;
@@ -92,21 +94,13 @@ int loadYML(string filename){
         calib["threshold"] >> param_mono.inlier_threshold;
     }
 
-    string filter;
-    configFile["filter"] >> filter;
-    if(filter == "EKF")
-        ft = EKF;
-    if(filter == "Linear")
-        ft = Linear;
-    if(filter == "EKFE")
-        ft = EKFE;
-    if(filter == "RCEKF")
-        ft = RCEKF;
-    if(filter == "MREKF")
-        ft = MREKF;
-    configFile["appendix"] >> appendix;
+    //defining tracking parameters
+    FileNode tracking = configFile["tracking"];
+    tracking["feats"] >> tracking_info.nb_feats;
+    tracking["window"] >> tracking_info.window_size;
+    tracking["parallax"] >> tracking_info.parallax;
 
-    configFile["gps"] >> gps_orientation;
+    configFile["appendix"] >> appendix;
 
     return 1;
 }
@@ -314,7 +308,7 @@ pair<Mat,Mat> loadImages(const std::string& dir, int nb){
     imgs.first = imread(dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
-    if(st == stereo){
+    if(dataset_info.type == stereo){
         imgs.second = imread(dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
@@ -330,7 +324,7 @@ void loadImagesKitti(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>&
     imgs.first = imread(dir+"/L_"+num.str()+".png",0).rowRange(Range(0,374));
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
-    if(st == stereo){
+    if(dataset_info.type == stereo){
         imgs.second = imread(dir+"/R_"+num.str()+".png",0).rowRange(Range(0,374));
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
@@ -353,7 +347,7 @@ void loadImages(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs
     imgs.first = imread(dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
-    if(st == stereo){
+    if(dataset_info.type == stereo){
         imgs.second = imread(dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;

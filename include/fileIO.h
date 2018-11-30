@@ -35,6 +35,21 @@ struct FrameInfo{
     int init = 0;
 };
 
+//! structure containing tracking parameters
+struct TrackingInfo{
+    int nb_feats=500;
+    int window_size=5;
+    double parallax=10.0;
+};
+
+//! structure containing various information about the dataset to use
+struct DatasetInfo{
+    std::string dir="";
+    double gps_orientation = 0;
+    SetupType type=SetupType::mono;
+    int cam_ID=0;
+};
+
 struct cv_sig_handler{
 
     int _break_=0;
@@ -52,10 +67,9 @@ struct cv_sig_handler{
 };
 
 // setting variables
-extern SetupType st;
-extern FilterType ft;
-extern FrameInfo fi;
-extern double gps_orientation;
+extern FrameInfo frame_info;
+extern DatasetInfo dataset_info;
+extern TrackingInfo tracking_info;
 extern MonoVisualOdometry::parameters param_mono;
 extern StereoVisualOdometry::parameters param_stereo;
 extern std::string appendix;
