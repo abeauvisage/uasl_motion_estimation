@@ -28,9 +28,3 @@ add_library(MotionEstimation SHARED ${SOURCE_FILES} ${HEADER_FILES})
 install(TARGETS MotionEstimation LIBRARY DESTINATION lib)
 target_link_libraries(MotionEstimation ${OpenCV_LIBS})
 include_directories(include ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
-
-# examples
-add_executable(stereo_example main_stereo.cpp)
-target_link_libraries(stereo_example MotionEstimation ${OpenCV_LIBS})
-add_executable(mono_example main_mono.cpp)
-target_link_libraries(mono_example MotionEstimation ${OpenCV_LIBS})
