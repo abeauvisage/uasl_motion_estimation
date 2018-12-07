@@ -222,7 +222,7 @@ float computeMutualInformation(const Mat& imgL, const Mat& imgR){
     float range[] = { 0, 256 } ;
     const float* histRange = { range };
     const float* histRangeJoint[] = { range, range };
-    int histSize = 20;
+    int histSize = 10;
     int histSizeJoint[] = {histSize,histSize};
     Mat imgs[] = {imgL_,imgR_};
 
