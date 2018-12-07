@@ -7,7 +7,6 @@
 #include <iostream>
 #include "ceres/ceres.h"
 #include "ceres/rotation.h"
-// Read a Bundle Adjustment in the Large dataset.
 #include <featureType.h>
 #include <utils.h>
 #include <opencv2/core/core.hpp>
@@ -159,6 +158,7 @@ struct StereoReprojectionError {
   void fillData(const std::vector<me::WBA_Ptf*>& pts, const std::vector<me::CamPose_qd>& poses);
   void fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me::CamPose_qd>& poses);
   void fillStereoData(const std::pair<std::vector<me::WBA_Ptf>,std::vector<me::WBA_Ptf>>& pts, const std::vector<me::CamPose_qd>& poses);
+  void fillStereoData(const std::vector<me::WBA_stereo_Ptf>& pts, const std::vector<me::CamPose_qd>& poses);
 
   void fillPoints(const std::vector<me::ptH3D>& pts, const std::vector<uchar>& mask=std::vector<uchar>());
   void fillCameras(const std::vector<me::CamPose_md>& poses);

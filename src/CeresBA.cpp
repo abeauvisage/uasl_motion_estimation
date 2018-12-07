@@ -212,6 +212,56 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
     }
 }
 
+void CeresBA::fillStereoData(const std::vector<me::WBA_stereo_Ptf>& pts, const std::vector<me::CamPose_qd>& poses){
+
+    assert(num_cameras_ == (int) poses.size() && num_points_ == (int) pts.size());
+    int start = poses[0].ID;
+    camera_nbs.clear();
+    for(uint i=0;i<pts.size();i++){
+        pt3D pt = to_euclidean(pts[i].get3DLocation());
+        parameters_[num_cameras_*6+i*3+0] = pt(0);
+        parameters_[num_cameras_*6+i*3+1] = pt(1);
+        parameters_[num_cameras_*6+i*3+2] = pt(2);
+        camera_nbs.push_back(pts[i].getCameraNum());
+    }
+
+    cam_idx = new int[poses.size()];
+    for(uint j=0;j<poses.size();j++){
+        cam_idx[j] = poses[j].ID;
+        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
+        parameters_[j*6] = rot_vec[0];
+        parameters_[j*6+1] = rot_vec[1];
+        parameters_[j*6+2] = rot_vec[2];
+        Vec3d new_t = poses[j].position;
+        for(uint k=3;k<6;k++){
+            parameters_[j*6+k] = new_t[k-3];
+        }
+    }
+
+    int nb =0;
+    for(int i=0;i<num_points_;i++)
+        nb += pts[i].getNbFeatures();
+
+    num_observations_ = nb;
+
+    point_index_ = new int[num_observations_];
+    camera_index_ = new int[num_observations_];
+    observations_ = new double[4 * num_observations_];
+
+    nb=0;
+    for(int i=0;i<num_points_;i++){
+        for(uint j=0;j<pts[i].getNbFeatures();j++){
+            camera_index_[nb] = pts[i].getFrameIdx(j)-start;
+            point_index_[nb] = i;
+            observations_[4*nb+0] = pts[i].getFeat(j).first.x;
+            observations_[4*nb+1] = pts[i].getFeat(j).first.y;
+            observations_[4*nb+2] = pts[i].getFeat(j).second.x;
+            observations_[4*nb+3] = pts[i].getFeat(j).second.y;
+            nb++;
+        }
+    }
+}
+
 void CeresBA::fillStereoData(const std::pair<std::vector<me::WBA_Ptf>,std::vector<me::WBA_Ptf>>& pts, const std::vector<me::CamPose_qd>& poses){
 
     assert(num_cameras_ == (int) poses.size() && num_points_ == (int)(pts.first.size()+pts.second.size()));
@@ -412,6 +462,7 @@ bool CeresBA::runRansac(int nb_iterations,double inlier_threshold,int fixedFrame
             runStereoSolver(fixedFrames);
         else
             runSolver(fixedFrames);
+        cout << "end ransac" << endl;
         best_poses = getQuatPoses();
         return true;
     }else{
@@ -457,25 +508,26 @@ void CeresBA::runStereoSolver(int fixedFrames){
 
     const double* obs = observations();
 
-    double initial_cost=0;
+    double initial_cost=0,final_cost=0;
 
     for(int i=0;i<num_observations();++i){
 
-	if(!m_mask.empty() && !m_mask[point_index_[i]])
-        	continue;
+        if(!m_mask.empty() && !m_mask[point_index_[i]])
+                continue;
 
-	ceres::CostFunction* cstFunc = CeresBA::StereoReprojectionError::Create(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
-//        ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
-    problem->AddResidualBlock(cstFunc,nullptr,mutable_camera_for_observation(i),mutable_point_for_observation(i));
-    problem->SetParameterBlockConstant(mutable_point_for_observation(i));
-    if(camera_index_[i] < fixedFrames)
-        problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
+        ceres::CostFunction* cstFunc = CeresBA::StereoReprojectionError::Create(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
+    //        ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
+        problem->AddResidualBlock(cstFunc,nullptr,mutable_camera_for_observation(i),mutable_point_for_observation(i));
+        problem->SetParameterBlockConstant(mutable_point_for_observation(i));
+        if(camera_index_[i] < fixedFrames)
+            problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
 
-    double residual[4];
-    StereoReprojectionError rep(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
-    rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
-    initial_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
-}
+        double residual[4];
+        StereoReprojectionError rep(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
+        rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
+        initial_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
+    }
+        cout << "inital cost " << initial_cost << endl;
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_SCHUR;
@@ -484,12 +536,21 @@ void CeresBA::runStereoSolver(int fixedFrames){
     ceres::Solver::Summary summary;
     ceres::Solve(options,problem,&summary);
 //    cout << summary.FullReport() << endl;
+    cout << "finished solving" << endl;
+    for(int i=0;i<num_observations();++i){
+        if(!m_mask.empty() && !m_mask[point_index_[i]])
+                continue;
+        double residual[4];
+        StereoReprojectionError rep(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
+        rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
+        final_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
+    }
+    cout << "final cost " << final_cost << endl;
 }
 
 std::vector<int> CeresBA::get_inliers_stereo(const double threshold){
     std::vector<int> inliers;
-    vector<Point2f> reproj_feats = reproject_features(1);
-    for(int i=0;i<num_observations();i+=2){
+    for(int i=0;i<num_observations()-1;i+=4){
         double residual[4], error=0;
         StereoReprojectionError rep1(observations_[4*i+0],observations_[4*i+1],observations_[4*i+2],observations_[4*i+3]);
         StereoReprojectionError rep2(observations_[4*i+4],observations_[4*i+5],observations_[4*i+6],observations_[4*i+7]);
@@ -507,7 +568,7 @@ std::vector<int> CeresBA::get_inliers_stereo(const double threshold){
 std::vector<int> CeresBA::get_inliers(const double threshold){
     std::vector<int> inliers;
     vector<Point2f> reproj_feats = reproject_features(1);
-    for(int i=0;i<num_observations();i+=2){
+    for(int i=0;i<num_observations()-1;i+=2){
         double residual[2], error=0;
         ReprojectionError rep1(observations_[2*i+0],observations_[2*i+1]);
         ReprojectionError rep2(observations_[2*i+2],observations_[2*i+3]);
