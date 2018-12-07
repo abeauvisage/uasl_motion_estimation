@@ -18,7 +18,7 @@ struct OptimisationParams{
     bool minim;
 
 //    OptimisationParams(it=500,v_=2,t=1e-3,m=1e-20,e1=1e-6,e2=1e-6,e3=1-6,e4=1e-6,a=1.0,type_=LM): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_){}
-    OptimisationParams(OptimType type_=OptimType::LM,bool min=true, int it=20,double v_=2,double t=1e-3,double m=1e-20,double e1=1e-4,double e2=1e-4,double e3=1e-3, double e4=1e-6,double a=2.0): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_),minim(min){}
+    OptimisationParams(OptimType type_=OptimType::LM,bool min=true, int it=20,double v_=2,double t=1e-3,double m=1e-20,double e1=1e-4,double e2=1e-4,double e3=1e-3, double e4=1e-4,double a=10.0): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_),minim(min){}
 };
 
 struct OptimState{
