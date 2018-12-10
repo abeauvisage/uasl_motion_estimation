@@ -30,8 +30,6 @@ void StereoVisualOdometry::project3D(const vector<StereoOdoMatchesf>& features){
     m_pts3D.clear();
     m_disparities.clear();
 
-    cout << "params " << m_param.fu1 << m_param.fv1 << " " << m_param.cu1 << " " << m_param.cv1 << endl;
-
     for(unsigned int i=0;i<features.size();i++){
         double d = (features[i].f1.x-m_param.cu1) - (features[i].f2.x-m_param.cu2);
         ptH3D pt3D((features[i].f1.x-m_param.cu1)*m_param.baseline,(features[i].f1.y-m_param.cv1)*m_param.baseline,m_param.fu1*m_param.baseline, d > 0 ? d : 0.00001);
@@ -87,7 +85,8 @@ bool StereoVisualOdometry::process (const vector<StereoOdoMatchesf>& matches, cv
     m_state = init;
 
     /** final optimization **/
-    cout << "final optim" << endl;
+
+    cout << "[Motion Estimation] " << m_inliers_idx.size() << " inliers" << endl;
 
     if (m_inliers_idx.size()>=6){ // check that more than 6 inliers have been obtained
         if (optimize(m_inliers_idx,false)) // optimize using inliers
