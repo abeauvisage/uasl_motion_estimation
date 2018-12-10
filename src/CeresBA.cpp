@@ -19,7 +19,6 @@ vector<int> selectRandomIndices(int nb_samples, int nb_tot) {
     int i=0;
     while(i<nb_samples){
         int idx = rand()% nb_tot; //select random number between 0 and nb_tot
-
         bool exists = false;
         for(unsigned int j=0;j<samples_idx.size();j++) // ckeck if the index is alredy included
             if(idx == samples_idx[j])
@@ -65,7 +64,7 @@ void CeresBA::fillData(const std::vector<std::vector<Point2f>>& obs, const std::
             observations_[2*(j*num_points_+i)+1] = obs[j][i].y;
         }
     }
-  }
+}
 
 
 void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me::Euld>& ori, const std::vector<Vec3d> pos, int start){
@@ -84,7 +83,6 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
         parameters_[j*6] = ori[j].roll();
         parameters_[j*6+1] = ori[j].pitch();
         parameters_[j*6+2] = ori[j].yaw();
-//        Vec3d new_t = - ori[j].getR3() * pos[j];
         for(uint k=3;k<6;k++){
             parameters_[j*6+k] = pos[j](k-3);
         }
@@ -119,7 +117,6 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf*>& pts, const std::vector<m
 
     for(uint i=0;i<pts.size();i++){
         pt3D pt = to_euclidean(pts[i]->get3DLocation());
-//        cout << pt << endl;
         parameters_[num_cameras_*6+i*3+0] = pt(0);
         parameters_[num_cameras_*6+i*3+1] = pt(1);
         parameters_[num_cameras_*6+i*3+2] = pt(2);
@@ -185,10 +182,6 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
             parameters_[j*6+k] = new_t[k-3];
         }
     }
-
-//    for(int i=0;i<num_parameters_;i++)
-//        cout << parameters_[i] << ", ";
-//    cout << endl;
 
     int nb =0;
     for(int i=0;i<num_points_;i++)
@@ -430,7 +423,6 @@ bool CeresBA::runRansac(int nb_iterations,double inlier_threshold,int fixedFrame
         m_mask = mask;
         std::copy(init_parameters.begin(),init_parameters.end(),parameters_);
 
-
         vector<int> inliers_tmp;
         if(stereo){
             runStereoSolver(fixedFrames);
@@ -462,7 +454,7 @@ bool CeresBA::runRansac(int nb_iterations,double inlier_threshold,int fixedFrame
             runStereoSolver(fixedFrames);
         else
             runSolver(fixedFrames);
-        cout << "end ransac" << endl;
+
         best_poses = getQuatPoses();
         return true;
     }else{
@@ -527,7 +519,6 @@ void CeresBA::runStereoSolver(int fixedFrames){
         rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
         initial_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
     }
-        cout << "inital cost " << initial_cost << endl;
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_SCHUR;
@@ -535,8 +526,7 @@ void CeresBA::runStereoSolver(int fixedFrames){
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
     ceres::Solve(options,problem,&summary);
-//    cout << summary.FullReport() << endl;
-    cout << "finished solving" << endl;
+
     for(int i=0;i<num_observations();++i){
         if(!m_mask.empty() && !m_mask[point_index_[i]])
                 continue;
@@ -545,7 +535,6 @@ void CeresBA::runStereoSolver(int fixedFrames){
         rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
         final_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
     }
-    cout << "final cost " << final_cost << endl;
 }
 
 std::vector<int> CeresBA::get_inliers_stereo(const double threshold){
@@ -637,7 +626,6 @@ std::vector<me::CamPose_qd> CeresBA::getQuatPoses(){
         Mat rot_vec(1,3,CV_64F,cam_ptr),pos_vec(3,1,CV_64F,cam_ptr+3);
         Quatd orientation = exp_map_Quat<double>(rot_vec);
         poses.push_back(CamPose_qd(cam_idx[i],orientation,(Vec3d)pos_vec));
-        cout << "[BA] final pose" << orientation << pos_vec.t() << endl;
         cam_ptr +=6;
     }
     return poses;
@@ -651,7 +639,6 @@ std::vector<me::CamPose_md> CeresBA::getMatPoses(){
         Mat rot_vec(1,3,CV_64F,cam_ptr),pos_vec(3,1,CV_64F,cam_ptr+3);
         Matx33d orientation = exp_map_Mat<double>(rot_vec);
         poses.push_back(CamPose_md(cam_idx[i],orientation,(Vec3d)pos_vec));
-        cout << "[BA] final pose" << orientation << pos_vec.t() << endl;
         cam_ptr +=6;
     }
     return poses;
