@@ -26,8 +26,6 @@ float comparePC(const Mat& PC1, const Mat& PC2){
 
 float computeEntropy(const Mat& img){
 
-    auto t1 = chrono::steady_clock::now();
-
     float range[] = { 0, 256 } ;
     const float* histRange = { range };
     int histSize[] = {20};
@@ -41,8 +39,6 @@ float computeEntropy(const Mat& img){
     for(int i=0;i<hist.rows;i++)
         if(hist.at<float>(i) > 0)
             entropy += hist.at<float>(i)*log2(hist.at<float>(i));
-
-    auto t2 = chrono::steady_clock::now();
 
     return -entropy;
 }

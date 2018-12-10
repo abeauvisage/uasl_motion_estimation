@@ -343,7 +343,7 @@ void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_norm
     JJ = MatrixXd::Zero(m_state.nb_params,m_state.nb_params);
     e = VectorXd::Zero(m_state.nb_params);
 
-    int lframe = m_state.poses.first[0].ID+m_state.poses.first.size()-1;
+    uint lframe = m_state.poses.first[0].ID+m_state.poses.first.size()-1;
     int k=0;
 
     //loop for points extracted from the left camera
@@ -361,8 +361,6 @@ void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_norm
                 ((Mat)R).copyTo(((Mat)Tr)(Range(0,3),Range(0,3)));
                 ((Mat)t).copyTo(((Mat)Tr)(Range(0,3),Range(3,4)));
 
-                //reprojecting X
-                pt3D X = to_euclidean(Tr * pt);
 
                 ptH2D feat = m_state.K.first * Matx34d::eye() * m_state.scale *(Tr * pt);
                 Point2f feat_left(to_euclidean(feat)(0),to_euclidean(feat)(1));
@@ -402,8 +400,6 @@ void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_norm
                 Matx44d Tr = Matx44d::eye();
                 ((Mat)R).copyTo(((Mat)Tr)(Range(0,3),Range(0,3)));
                 ((Mat)t).copyTo(((Mat)Tr)(Range(0,3),Range(3,4)));
-
-                pt3D X = to_euclidean(Tr * pt);
 
                 ptH2D feat = m_state.K.first * Matx34d::eye() * m_state.scale *(Tr * pt);
                 Point2f feat_right(to_euclidean(feat)(0),to_euclidean(feat)(1));
