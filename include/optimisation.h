@@ -17,8 +17,7 @@ struct OptimisationParams{
     OptimType type;
     bool minim;
 
-//    OptimisationParams(it=500,v_=2,t=1e-3,m=1e-20,e1=1e-6,e2=1e-6,e3=1-6,e4=1e-6,a=1.0,type_=LM): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_){}
-    OptimisationParams(OptimType type_=OptimType::LM,bool min=true, int it=20,double v_=2,double t=1e-3,double m=1e-20,double e1=1e-4,double e2=1e-4,double e3=1e-3, double e4=1e-4,double a=10.0): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_),minim(min){}
+    OptimisationParams(OptimType type_=OptimType::LM,bool min=true, int it=20,double v_=2,double t=1e-3,double m=1e-20,double e1=1e-4,double e2=1e-4,double e3=1e-3, double e4=1e-4,double a=11.0): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_),minim(min){}
 };
 
 struct OptimState{
@@ -27,7 +26,6 @@ struct OptimState{
 
     OptimState(int nb_params_):nb_params(nb_params_){}
 
-//    virtual Eigen::MatrixXd compute_residuals() =0;
     virtual void update(const Eigen::MatrixXd& dX) =0;
     virtual std::string show_params() const =0;
 };
@@ -82,8 +80,6 @@ struct ScaleState: OptimState{
     std::string show_params() const override{
      return std::to_string(scale);
     }
-
-//    Eigen::MatrixXd compute_residuals() override {return Eigen::MatrixXd();}
 };
 
 template<class S, class T>
@@ -110,30 +106,6 @@ OptimisationParams m_params;
 StopCondition m_stop;
 
 };
-
-//template<, class T>
-//class Optimiser{
-//
-//public:
-//    Optimiser(S& state, const T& observations, const OptimisationParams& params): m_state(state), m_obs(observations),m_params(params){}
-//
-//    S optimise();
-//
-//private:
-//
-//Eigen::MatrixXd compute_residuals();
-//void compute_jacobian(Eigen::MatrixXd& JJ, Eigen::MatrixXd& e);
-//
-//void update_state(const Eigen::MatrixXd& dX);
-//
-//void run_GN_step(Eigen::MatrixXd& JJ, Eigen::MatrixXd& e, Eigen::MatrixXd dX);
-//void run_LM_step(Eigen::MatrixXd& JJ, Eigen::MatrixXd& e, Eigen::MatrixXd dX);
-//
-//S m_state;
-//T m_obs;
-//OptimisationParams m_params;
-//
-//};
 
 }
 
