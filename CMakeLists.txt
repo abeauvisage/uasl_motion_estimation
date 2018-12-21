@@ -23,8 +23,15 @@ endif(DOXYGEN_FOUND)
 file(GLOB SOURCE_FILES src/*.cpp)
 file(GLOB HEADER_FILES include/*.h)
 
+#library option
+option(DYNAMIC_LIB "Build dynamic lib" OFF)
+
 # library target
+if(DYNAMIC_LIB)
 add_library(MotionEstimation SHARED ${SOURCE_FILES} ${HEADER_FILES})
-install(TARGETS MotionEstimation LIBRARY DESTINATION lib)
+else(DYNAMIC_LIB)
+add_library(MotionEstimation ${SOURCE_FILES} ${HEADER_FILES})
+endif(DYNAMIC_LIB)
+install(TARGETS MotionEstimation LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 target_link_libraries(MotionEstimation ${OpenCV_LIBS})
 include_directories(include ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
