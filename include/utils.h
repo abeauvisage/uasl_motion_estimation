@@ -9,8 +9,10 @@
 namespace me{
 
 const cv::Mat TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0);
-
 enum StopCondition{NO_STOP,SMALL_GRADIENT,SMALL_INCREMENT,MAX_ITERATIONS,SMALL_DECREASE_FUNCTION,SMALL_REPROJ_ERROR,NO_CONVERGENCE};
+
+template <typename T>
+cv::Matx<T,4,3> Gq_v(const cv::Vec<T,3>& v);
 
 //! template class Quat
 /*! represents a quaternion. Must be a float-point type (float or double), results with other data type are not guaranteed */
@@ -107,8 +109,9 @@ public:
     }
 
     // conversions
-    inline cv::Matx<T,4,4> getQ() const;        //!< Q matrix to multiply with another quaternion.
-    inline cv::Matx<T,4,4> getQ_() const;       //!< inverse of Q. Represents the inverse rotation.
+    inline cv::Matx<T,4,4> getQr() const;        //!< Q matrix to multiply with another quaternion.
+    inline cv::Matx<T,4,4> getQl() const;       //!< inverse of Q. Represents the inverse rotation.
+    inline cv::Matx<T,3,4> getH() const;        //!< quaternion derivative wrt rotation vector.
 
 	inline cv::Matx<T,3,3> getR3() const;   //!< returns the 3x3 corresponding rotation matrix.
 	inline cv::Matx<T,4,4> getR4() const;   //!< returns the 4x4 corresponding rotation matrix.
@@ -134,6 +137,7 @@ public:
 	double x() const {return m_x;}
 	double y() const {return m_y;}
 	double z() const {return m_z;}
+	cv::Vec<T,3> vec() const {return cv::Vec<T,3>(m_x,m_y,m_z);}
 };
 
 template<typename T>
@@ -186,15 +190,20 @@ inline cv::Matx<T,3,3> Quat<T>::getR3() const{
 }
 
 template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getQ() const{
+inline cv::Matx<T,4,4> Quat<T>::getQr() const{
     return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,-m_z,m_y,m_y,m_z,m_w,-m_x,m_z,-m_y,m_x,m_w);
 }
 
 template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getQ_() const{
+inline cv::Matx<T,4,4> Quat<T>::getQl() const{
     return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,m_z,-m_y,m_y,-m_z,m_w,m_x,m_z,m_y,-m_x,m_w);
 }
-
+template <typename T>
+inline cv::Matx<T,3,4> Quat<T>::getH() const{
+    double c = 1.0/(1-m_w*m_w);
+    double d = acos(m_w)/sqrt(1-m_w*m_w);
+    return typename cv::Matx<T,3,4>::Matx(2*c*m_x*(d*m_w-1), 2*d, 0, 0, 2*c*m_y*(d*m_w-1), 0, 2*d, 0, 2*c*m_z*(d*m_w-1), 0, 0, 2*d);
+}
 
 template<typename T>
 void convertToOpenCV(Euler<T>& e);

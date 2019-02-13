@@ -306,12 +306,12 @@ Matx<T,3,1> Quat<T>::operator*(const Matx<T,3,1>& v) const{
 
 template <typename T>
 Matx<T,4,1> Quat<T>::operator*(const Matx<T,4,1>& v) const{
-    return getQ_().t() * getQ() * v;
+    return getQl().t() * getQr() * v;
 }
 
 template <typename T>
 Vec<T,4> Quat<T>::operator*(const Vec<T,4>& v) const{
-    return getQ_().t() * getQ() * v;
+    return getQl().t() * getQr() * v;
 }
 
 template class Euler<float>;
@@ -354,6 +354,23 @@ template<typename T>
 void convertToXYZ(Vec<T,3>& vec){
     vec = ((Matx<T,3,3>)(TRef)).t() * vec;
 }
+
+template <typename T>
+cv::Matx<T,4,3> Gq_v(const Vec<T,3>& rot_vec){
+
+    double snorm = rot_vec[0]*rot_vec[0]+rot_vec[1]*rot_vec[1]+rot_vec[2]*rot_vec[2]; //squared norm
+    double norm = sqrt(snorm);
+    double a =cos(0.5*norm)*norm-2*sin(0.5*norm);
+
+    return 1/(2*pow(norm,3)) * cv::Matx<T,4,3>( -rot_vec[0]*snorm*sin(0.5*norm),                -rot_vec[1]*snorm*sin(0.5*norm),                -rot_vec[2]*snorm*sin(0.5*norm),
+                                                2*snorm*sin(0.5*norm)+rot_vec[0]*rot_vec[0]*a,  rot_vec[0]*rot_vec[1]*a,                        rot_vec[0]*rot_vec[2]*a,
+                                                rot_vec[0]*rot_vec[1]*a,                        2*snorm*sin(0.5*norm)+rot_vec[1]*rot_vec[1]*a,  rot_vec[1]*rot_vec[2]*a,
+                                                rot_vec[0]*rot_vec[2]*a,                        rot_vec[1]*rot_vec[2]*a,                        2*snorm*sin(0.5*norm)+rot_vec[2]*rot_vec[2]*a);
+}
+
+
+template cv::Matx43d Gq_v(const Vec3d& v);
+template cv::Matx43f Gq_v(const Vec3f& v);
 
 template void convertToOpenCV(Euler<double>& e);
 template void convertToXYZ(Euler<double>& e);
