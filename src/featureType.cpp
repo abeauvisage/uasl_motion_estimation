@@ -49,22 +49,22 @@ cv::Matx44f CamPose_mf::TrMat() const {
 }
 
 template<>
-CamPose_qd CamPose_qd::inv(){
+CamPose_qd CamPose_qd::inv() const{
     return CamPose_qd(ID,orientation.conj(),-(orientation.conj()*position));
 }
 
 template<>
-CamPose_qf CamPose_qf::inv(){
+CamPose_qf CamPose_qf::inv() const{
     return CamPose_qf(ID,orientation.conj(),-(orientation.conj()*position));
 }
 
 template<>
-CamPose_md CamPose_md::inv(){
+CamPose_md CamPose_md::inv() const{
     return CamPose_md(ID,orientation.t(),-orientation.t()*position);
 }
 
 template<>
-CamPose_mf CamPose_mf::inv(){
+CamPose_mf CamPose_mf::inv() const{
     return CamPose_mf(ID,orientation.t(),-orientation.t()*position);
 }
 

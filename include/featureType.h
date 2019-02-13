@@ -285,7 +285,6 @@ static int latestID;
 public:
 WBA_Point(const T match, const int frame_nb, const int cam_number=0, const cv::Matx22d& cov_=cv::Matx22d::zeros(), const ptH3D pt_=ptH3D(0,0,0,1)): count(1), ID(latestID++), cam_num(cam_number){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);pt=pt_;}
 WBA_Point(const WBA_Point& point): count(point.count), ID(point.ID), cam_num(point.cam_num){features=point.features;indices=point.indices;cov=point.cov;pt=point.pt;}
-WBA_Point(WBA_Point& point): count(point.count), ID(point.ID),cam_num(point.cam_num){features=point.features;indices=point.indices;cov=point.cov;pt=point.pt;}
 void addMatch(const T match, const int frame_nb, const cv::Matx22d& cov_=cv::Matx22d::zeros()){features.push_back(match);indices.push_back(frame_nb);cov.push_back(cov_);count++;assert(indices.size() == features.size()); if(indices.size() != getLastFrameIdx()-getFirstFrameIdx()+1) std::cout << indices.size() << " [] " << getLastFrameIdx() << " " << getFirstFrameIdx() << std::endl;assert(indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1); assert(cov.size() == indices.size());}
 void pop(){features.pop_front();indices.pop_front();cov.pop_front();assert(indices.size() == features.size() && indices.size() == cov.size() && (indices.size() == 0 || indices.size() == getLastFrameIdx()-getFirstFrameIdx()+1));}
 bool isValid() const {return !features.empty();}
@@ -348,14 +347,14 @@ class CamPose{
     cv::Matx<T,4,4> TrMat() const;
     CamPose<O,T>(int id=0, O e=O(), cv::Vec<T,3> v=cv::Vec<T,3>()):orientation(e),position(v),ID(id){}
 
-    CamPose<O,T> operator*(const CamPose<O,T>& pose){
-        CamPose<O,T> new_pose(pose);
+    CamPose<O,T> operator*(const CamPose<O,T>& pose) const{
+        CamPose<O,T> new_pose(*this);
         new_pose.orientation = orientation * pose.orientation;
         new_pose.position = orientation * pose.position + position;
         return new_pose;
     }
 
-    CamPose<O,T> inv();
+    CamPose<O,T> inv() const;
 
     friend std::ostream& operator<<(std::ostream& os, const CamPose& pose){
     os << "ID: " << pose.ID << std::endl << "orientation: " << pose.orientation << std::endl << "position: " << pose.position << std::endl;
