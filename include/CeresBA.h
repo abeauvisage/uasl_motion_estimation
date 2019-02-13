@@ -158,7 +158,8 @@ struct StereoReprojectionError {
   std::vector<me::CamPose_md> getMatPoses();
   std::vector<int> get_inliers(const double threshold);
   std::vector<int> get_inliers_stereo(const double threshold);
-  bool getCovariance(std::vector<cv::Matx66d>& poseCov, std::vector<cv::Matx33d>& pointCov);
+  bool getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx33d>& pointCov);
+  bool getCovarianceQuat(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx33d>& pointCov);
 
   void runSolver(int fixedFrames=0);
   void runStereoSolver(int fixedFrames=0);

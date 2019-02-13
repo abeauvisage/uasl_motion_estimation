@@ -3,6 +3,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/eigen.hpp>
 
 using namespace cv;
 using namespace std;
@@ -582,7 +583,95 @@ std::vector<me::pt3D> CeresBA::get3DPoints(){
     return pts;
 }
 
-bool CeresBA::getCovariance(std::vector<cv::Matx66d>& poseCov, std::vector<cv::Matx33d>& pointCov){
+bool CeresBA::getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx33d>& pointCov){
+
+    if(!problem)
+        return false;
+
+    poseCov.clear();pointCov.clear();
+    std::vector<std::pair<const double*,const double*>> cov_blocks;
+    std::vector<double*> param_blocks;
+    //retrieving param blocks
+    problem->GetParameterBlocks(&param_blocks);
+    assert((int)param_blocks.size() == num_cameras_+num_points_);
+
+    for(uint i=0;i<param_blocks.size();i++)
+        cov_blocks.push_back(make_pair(param_blocks[i],param_blocks[i]));
+    //creating Covariance structure
+    ceres::Covariance::Options cov_opts;
+    ceres::Covariance covariance(cov_opts);
+
+    //computing covariance
+    if(!covariance.Compute(cov_blocks, problem))
+        return false;
+    else{
+        double cov_pose[6*6];double cov_point[3*3];double * cam_ptr = mutable_cameras();
+        for(int i=0;i<num_cameras_;i++){
+            covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose);
+            Mat originalCov(6,6,CV_64F,cov_pose);
+            Mat newCov(6,6,CV_64F);
+            Vec3d rot_vec(cam_ptr);
+            Vec3d pos_vec(cam_ptr+3);
+            /* invert so newCov = [ pp pe
+                                    ep ee] */
+            originalCov(Range(0,3),Range(0,3)).copyTo(newCov(Range(3,6),Range(3,6)));
+            originalCov(Range(3,6),Range(3,6)).copyTo(newCov(Range(0,3),Range(0,3)));
+            originalCov(Range(0,3),Range(3,6)).copyTo(newCov(Range(3,6),Range(0,3)));
+            originalCov(Range(3,6),Range(0,3)).copyTo(newCov(Range(0,3),Range(3,6)));
+
+            Mat T = Mat::eye(6,6,CV_64F); // TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0)
+            ((Mat)TRef.t()).copyTo(T(Range(0,3),Range(0,3)));
+            ((Mat)TRef.t()).copyTo(T(Range(3,6),Range(3,6)));
+
+            newCov = T * newCov * T.t();
+            rot_vec = -((Matx33d)TRef).t() * rot_vec; pos_vec = ((Matx33f)TRef).t() * pos_vec;
+
+            cout << "vecs " << rot_vec << endl << pos_vec << endl;
+
+
+
+
+            Mat Jacobian = Mat::eye(6,6,CV_64F);
+
+            Quatd quat = exp_map_Quat(rot_vec);
+            Vec3d q_vec = quat.vec();
+
+            auto skew = [](const cv::Vec3d& mat){return Matx33d(0, -mat(2), mat(1), mat(2), 0, -mat(0), -mat(1), mat(0), 0);};
+            Mat dqxdq(3,4,CV_64F);
+            Mat qv = (Mat)( 2 * (q_vec.t()*pos_vec)[0] * Matx33d::eye()+2*q_vec*pos_vec.t()-2*pos_vec*q_vec.t()-2 * quat.w() * skew(pos_vec));
+            Mat qw = (Mat)( 2 * quat.w() * (Mat)pos_vec + 2 * skew(q_vec) * pos_vec);
+            qv.copyTo(dqxdq(Range(0,3),Range(0,3)));
+            qw.copyTo(dqxdq.colRange(3,4));
+
+            double snorm = rot_vec[0]*rot_vec[0]+rot_vec[1]*rot_vec[1]+rot_vec[2]*rot_vec[2]; //squared norm
+            double norm = sqrt(snorm);
+            double a =cos(0.5*norm)*norm-2*sin(0.5*norm);
+            Mat dqde_ = 1/(2*pow(norm,3)) * (Mat_<double>(4,3)<< 2*snorm*sin(0.5*norm)+rot_vec[0]*rot_vec[0]*a,  rot_vec[0]*rot_vec[1]*a,                        rot_vec[0]*rot_vec[2]*a,
+                                                                rot_vec[0]*rot_vec[1]*a,                        2*snorm*sin(0.5*norm)+rot_vec[1]*rot_vec[1]*a,  rot_vec[1]*rot_vec[2]*a,
+                                                                rot_vec[0]*rot_vec[2]*a,                        rot_vec[1]*rot_vec[2]*a,                        2*snorm*sin(0.5*norm)+rot_vec[2]*rot_vec[2]*a,
+                                                                -rot_vec[0]*snorm*sin(0.5*norm),                -rot_vec[1]*snorm*sin(0.5*norm),                -rot_vec[2]*snorm*sin(0.5*norm));
+
+            ((Mat)-quat.getR3()).copyTo(Jacobian(Range(0,3),Range(0,3)));
+            ((Mat)(-dqxdq*dqde_)).copyTo(Jacobian(Range(0,3),Range(3,6)));
+            Jacobian(Range(3,6),Range(3,6)) = - Mat::eye(3,3,CV_64F);
+
+//            cout << "comparison " << quat.getR3()*skew(pos_vec) << endl <<  << endl;
+            cout << "new mat " << endl << Jacobian*newCov*Jacobian.t() << endl;
+
+
+            poseCov.push_back(Jacobian*newCov*Jacobian.t());
+            cam_ptr += 6;
+
+        }
+        for(int i=num_cameras_;i<num_cameras_+num_points_;i++){
+            covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_point);
+            pointCov.push_back(Mat(3,3,CV_64F,cov_point));
+        }
+    }
+    return true;
+}
+
+bool CeresBA::getCovarianceQuat(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx33d>& pointCov){
 
     if(!problem)
         return false;
@@ -599,16 +688,98 @@ bool CeresBA::getCovariance(std::vector<cv::Matx66d>& poseCov, std::vector<cv::M
     }
     //creating Covariance structure
     ceres::Covariance::Options cov_opts;
+//    cov_opts.algorithm_type = ceres::CovarianceAlgorithmType::DENSE_SVD;
     ceres::Covariance covariance(cov_opts);
 
     //computing covariance
     if(!covariance.Compute(cov_blocks, problem))
         return false;
     else{
-        double cov_pose[6*6];double cov_point[3*3];
-        for(int i=0;i<num_cameras_;i++){
+        double cov_pose[6*6];double cov_point[3*3];double * cam_ptr = mutable_cameras();
+        for(int i=0;i<num_cameras_;i++){ // for each camera
+            //retrieving and converting covariance
             covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose);
-            poseCov.push_back(Mat(6,6,CV_64F,cov_pose));
+            Mat originalCov(6,6,CV_64F,cov_pose);
+            cout << "orig_cov " << originalCov << endl;
+            /*original originalCov = [  ee ep
+                                pe pp] where ee is covariance of angle-axis orientation pp is covariance of position */
+            Mat newCov(6,6,CV_64F);
+            /* invert so newCov = [ pp pe
+                                    ep ee] */
+            originalCov(Range(0,3),Range(0,3)).copyTo(newCov(Range(3,6),Range(3,6)));
+            originalCov(Range(3,6),Range(3,6)).copyTo(newCov(Range(0,3),Range(0,3)));
+            originalCov(Range(0,3),Range(3,6)).copyTo(newCov(Range(3,6),Range(0,3)));
+            originalCov(Range(3,6),Range(0,3)).copyTo(newCov(Range(0,3),Range(3,6)));
+
+            //changing cov to imu coordinate system
+            Mat T = Mat::eye(6,6,CV_64F); // TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0)
+            ((Mat)TRef.t()).copyTo(T(Range(0,3),Range(0,3)));
+            ((Mat)TRef.t()).copyTo(T(Range(3,6),Range(3,6)));
+
+            newCov = T * newCov * T.t();
+
+            cout << "new_cov " << newCov << endl;
+
+            //retrieving cam poses e=rot_vec = [e1,e2,e3] p=pos_vec=[p1,p2,p3]
+            Vec3d rot_vec(cam_ptr);
+//            Mat pos_vec(3,1,CV_64F,cam_ptr+3);
+            Vec3d pos_vec(cam_ptr+3);
+            rot_vec = -((Matx33d)TRef).t() * rot_vec; pos_vec = ((Matx33f)TRef).t() * pos_vec;// changing to imu coordinate system
+
+            cout << "pos_vec " << pos_vec  << "," << rot_vec << endl;
+
+            Quatd quat = exp_map_Quat(rot_vec);
+            cout << quat << endl;
+//            Mat q_vec = (Mat) quat.vec();
+            Vec3d q_vec = quat.vec();
+            Mat dqxdq(3,4,CV_64F);
+
+            auto skew = [](const cv::Vec3d& mat){return Matx33d(0, -mat(2), mat(1), mat(2), 0, -mat(0), -mat(1), mat(0), 0);};
+
+            Mat qv = (Mat)( 2 * (q_vec.t()*pos_vec)[0] * Matx33d::eye()+2*q_vec*pos_vec.t()-2*pos_vec*q_vec.t()-2 * quat.w() * skew(pos_vec));
+            Mat qw = (Mat)( 2 * quat.w() * (Mat)pos_vec + 2 * skew(q_vec) * pos_vec);
+
+            cout << "qv " << qv << endl;
+            cout << "qw " << qw << endl;
+
+            qv.copyTo(dqxdq(Range(0,3),Range(0,3)));
+            qw.copyTo(dqxdq.colRange(3,4));
+            cout << "dqx " << dqxdq << endl;
+
+            //Jacobian for quaternion
+            double snorm = rot_vec[0]*rot_vec[0]+rot_vec[1]*rot_vec[1]+rot_vec[2]*rot_vec[2]; //squared norm
+            double norm = sqrt(snorm); // norm
+            // d[u,alpha]/de
+            Mat dude = (Mat_<double>(4,3)<<         (norm-rot_vec[0]*rot_vec[0]/norm)/snorm,    (-rot_vec[0]*rot_vec[1]/norm)/snorm,        (-rot_vec[0]*rot_vec[2]/norm)/snorm,
+                                                    (-rot_vec[1]*rot_vec[0]/norm)/snorm,        (norm-rot_vec[1]*rot_vec[1]/norm)/snorm,    (-rot_vec[1]*rot_vec[2]/norm)/snorm,
+                                                    (-rot_vec[2]*rot_vec[0]/norm)/snorm,        (-rot_vec[2]*rot_vec[1]/norm)/snorm,        (norm-rot_vec[2]*rot_vec[2]/norm)/snorm,
+                                                    rot_vec[0]/norm,                            rot_vec[1]/norm,                            rot_vec[2]/norm);
+
+            //dq/d[u,alpha]
+            Mat dqdu = (Mat_<double>(4,4)<<    sin(0.5*norm),   0,              0,              0.5*rot_vec[0]/norm*cos(0.5*norm),
+                                                0,              sin(0.5*norm),  0,              0.5*rot_vec[1]/norm*cos(0.5*norm),
+                                                0,              0,              sin(0.5*norm),  0.5*rot_vec[2]/norm*cos(0.5*norm),
+                                                0,              0,              0,              -0.5*sin(0.5*norm));
+
+            double a =cos(0.5*norm)*norm-2*sin(0.5*norm);
+            Mat dqde_ = 1/(2*pow(norm,3)) * (Mat_<double>(4,3)<< 2*snorm*sin(0.5*norm)+rot_vec[0]*rot_vec[0]*a,  rot_vec[0]*rot_vec[1]*a,                        rot_vec[0]*rot_vec[2]*a,
+                                                                rot_vec[0]*rot_vec[1]*a,                        2*snorm*sin(0.5*norm)+rot_vec[1]*rot_vec[1]*a,  rot_vec[1]*rot_vec[2]*a,
+                                                                rot_vec[0]*rot_vec[2]*a,                        rot_vec[1]*rot_vec[2]*a,                        2*snorm*sin(0.5*norm)+rot_vec[2]*rot_vec[2]*a,
+                                                                -rot_vec[0]*snorm*sin(0.5*norm),                -rot_vec[1]*snorm*sin(0.5*norm),                -rot_vec[2]*snorm*sin(0.5*norm));
+
+            //dq/de
+            Mat dqde = dqdu*dude;
+
+            cout << "dqde " << endl << dqde << endl << endl << dqde_ << endl;
+            Mat Jacobian = Mat::eye(7,6,CV_64F);
+            /* J = [I_3x3   0_3x3
+                    0_4x3       dqde] */
+            ((Mat)-exp_map_Mat(rot_vec)).copyTo(Jacobian(Range(0,3),Range(0,3)));
+            ((Mat)(-dqxdq*dqde_)).copyTo(Jacobian(Range(0,3),Range(3,6)));
+            dqde_.copyTo(Jacobian(Range(3,7),Range(3,6)));
+            cout << "final cov " << Jacobian*newCov*Jacobian.t() << endl;
+            poseCov.push_back(Jacobian*newCov*Jacobian.t());
+            cam_ptr +=6; //moving pointer to next camera pose
         }
         for(int i=num_cameras_;i<num_cameras_+num_points_;i++){
             covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_point);
@@ -623,9 +794,8 @@ std::vector<me::CamPose_qd> CeresBA::getQuatPoses(){
     vector<me::CamPose_qd> poses;
     double * cam_ptr = mutable_cameras();
     for(int i=0;i<num_cameras_;i++){
-        Mat rot_vec(1,3,CV_64F,cam_ptr),pos_vec(3,1,CV_64F,cam_ptr+3);
-        Quatd orientation = exp_map_Quat<double>(rot_vec);
-        poses.push_back(CamPose_qd(cam_idx[i],orientation,(Vec3d)pos_vec));
+        poses.push_back(CamPose_qd(cam_idx[i],exp_map_Quat<double>(Vec3d(cam_ptr)),Vec3d(cam_ptr+3)));
+        cout << poses[poses.size()-1];
         cam_ptr +=6;
     }
     return poses;
@@ -636,9 +806,7 @@ std::vector<me::CamPose_md> CeresBA::getMatPoses(){
     vector<me::CamPose_md> poses;
     double * cam_ptr = mutable_cameras();
     for(int i=0;i<num_cameras_;i++){
-        Mat rot_vec(1,3,CV_64F,cam_ptr),pos_vec(3,1,CV_64F,cam_ptr+3);
-        Matx33d orientation = exp_map_Mat<double>(rot_vec);
-        poses.push_back(CamPose_md(cam_idx[i],orientation,(Vec3d)pos_vec));
+        poses.push_back(CamPose_md(cam_idx[i],exp_map_Mat<double>(Vec3d(cam_ptr)),Vec3d(cam_ptr+3)));
         cam_ptr +=6;
     }
     return poses;
