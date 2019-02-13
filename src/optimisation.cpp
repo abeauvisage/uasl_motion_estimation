@@ -13,6 +13,9 @@ using namespace Eigen;
 using namespace cv;
 using namespace std;
 
+ofstream log_mi;
+ofstream log_scale;
+
 namespace me{
 
 template<class S, class T>
@@ -21,6 +24,18 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
     m_state = state;
     m_mask = mask;
     m_stop = StopCondition::NO_STOP;
+    if(test){
+        m_params.type = GN;
+        m_params.MAX_NB_ITER = 300;
+        m_params.abs_tol = 1e-30;
+        m_params.incr_tol = 1e-30;
+        m_params.grad_tol = 1e-30;
+        m_params.rel_tol = 1e-30;
+       log_mi.open("log/log_mi_test.csv", ofstream::out | ofstream::app);
+       cout << boolalpha << "log mi" << log_mi.is_open() << endl;
+       log_scale.open("log/log_scale_test.csv", ofstream::out | ofstream::app);
+       cout << boolalpha << "log scale " << log_mi.is_open() << endl;
+    }
 
     int k=0;
     do{
@@ -29,6 +44,10 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
         double e1 = (residuals * residuals.transpose()).diagonal().sum();
         double meanReprojError = e1 / (double)(residuals.rows()*residuals.cols());
 
+        if(test){
+            cout << "e " << e1 << endl;
+        }
+
         // absolute tolerance condition
         if(meanReprojError < m_params.abs_tol)
             m_stop = StopCondition::SMALL_REPROJ_ERROR;
@@ -36,7 +55,11 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
         //normal equations
         MatrixXd JJ(1,1);
         VectorXd e(1);
-        compute_normal_equations(residuals,JJ,e);
+        if(test){
+            JJ(0,0) = 100;
+            e(0) = 1;
+        }else
+            compute_normal_equations(residuals,JJ,e);
 
         if(k == 0){
             m_params.mu = JJ.diagonal().maxCoeff();
@@ -65,6 +88,14 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
         MatrixXd tmp_residuals = compute_residuals(m_state);
         double e2 = (tmp_residuals * tmp_residuals.transpose()).diagonal().sum();
 
+        if(test){
+            ScaleState* scalestate = dynamic_cast<ScaleState*>(&m_state);
+            if(scalestate){
+                log_mi << e1 << ",";
+                log_scale << scalestate->scale << ",";
+            }
+        }
+
         //relative tolerance
         if(m_params.type==GN && pow(e2-e1,2) < m_params.rel_tol)
             m_stop = StopCondition::SMALL_DECREASE_FUNCTION;
@@ -89,6 +120,13 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
             std::cout << "stop: NO_CONVERGENCE" << std::endl;break;
         default:
             std::cout << "stop: DID NOT STOP" << std::endl;break;
+    }
+
+    if(test){
+        log_mi << endl;
+        log_scale << endl;
+        log_mi.close();
+        log_scale.close();
     }
 
     state = m_state;
@@ -166,6 +204,56 @@ MatrixXd Optimiser<ScaleState, std::vector<std::pair<cv::Mat,cv::Mat>> >::comput
     }
 
     return res;
+}
+
+double ScaleState::compute_residuals(std::vector<std::pair<cv::Mat,cv::Mat>>& m_obs){
+
+    Rect bb(window_size,window_size,m_obs[0].first.cols-2*window_size,m_obs[1].first.rows-2*window_size);
+
+    std::vector<std::pair<cv::Mat,cv::Mat>> imgs;
+
+    int tot_nb_elements;
+    tot_nb_elements = pts.first.size()+pts.second.size();
+    MatrixXd res = MatrixXd::Zero(tot_nb_elements,1);
+
+    //features are reprojected in the last frame only
+    uint lframe = poses.first[0].ID + poses.first.size()-1;
+
+    int k=0;
+    //for all features extracted from the left camera
+    for(uint i=0;i<pts.first.size();i++){
+        if(pts.first[i].isTriangulated()){
+            ptH3D pt = pts.first[i].get3DLocation();
+            if(pts.first[i].getLastFrameIdx() == lframe){ // if has been observed in the last keyframe
+                int f_idx = poses.first.size()-1;
+                Mat Tr = (Mat) poses.first[f_idx].orientation.getR4();
+                ((Mat)poses.first[f_idx].position).copyTo(Tr(Range(0,3),Range(3,4)));
+                Matx44d Tr_ = Tr;
+                ptH2D feat = K.first * Matx34d::eye() * scale *(Tr_ * pt);
+                Point2f feat_left(to_euclidean(feat)(0),to_euclidean(feat)(1)); // reprojection in the left image
+                ptH2D feat_ =  (K.second * Matx34d::eye()) * (scale * (Tr_ * pt) - Matx41d(baseline,0,0,0));
+                Point2f feat_right(to_euclidean(feat_)(0),to_euclidean(feat_)(1)); // reprojection in the right image
+                if(bb.contains(feat_left) && bb.contains(feat_right)){
+                    Mat ROI_left = m_obs[f_idx].first(Rect(feat_left.x-window_size,feat_left.y-window_size,window_size*2,window_size*2));
+                    Mat ROI_right = m_obs[f_idx].second(Rect(feat_right.x-window_size,feat_right.y-window_size,window_size*2,window_size*2));
+                    ROI_left.convertTo(ROI_left,CV_32F);
+                    ROI_right.convertTo(ROI_right,CV_32F);
+
+                    imgs.push_back(make_pair(ROI_left,ROI_right));
+                }
+            }k++;
+        }
+    }
+
+    cv::Mat left_img(imgs.size()*window_size,window_size,CV_32F);
+    cv::Mat right_img(imgs.size()*window_size,window_size,CV_32F);
+
+    for(uint i=0;i<imgs.size();i++){
+        left_img(Range(i*window_size,(i+1)*window_size),Range(0,window_size)) = imgs[i].first;
+        right_img(Range(i*window_size,(i+1)*window_size),Range(0,window_size)) = imgs[i].second;
+    }
+
+    return computeMutualInformation(left_img,right_img);
 }
 
 template<>
@@ -365,7 +453,7 @@ void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_norm
                 ptH2D feat = m_state.K.first * Matx34d::eye() * m_state.scale *(Tr * pt);
                 Point2f feat_left(to_euclidean(feat)(0),to_euclidean(feat)(1));
                 //gradient estimation by differenciation
-                ptH2D feat_ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale-ds) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
+                ptH2D feat_ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
                 Point2f feat_right_minus(to_euclidean(feat_)(0),to_euclidean(feat_)(1));
                 ptH2D feat__ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale+ds) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
                 Point2f feat_right_plus(to_euclidean(feat__)(0),to_euclidean(feat__)(1));
@@ -378,7 +466,7 @@ void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_norm
                     ROIx1.convertTo(ROIx1,CV_32F);
                     ROIx2.convertTo(ROIx2,CV_32F);
 
-                    double J = computeMutualInformation(ROIx2,ROIx0)-computeMutualInformation(ROIx1,ROIx0);
+                    double J = (computeMutualInformation(ROIx2,ROIx0)-computeMutualInformation(ROIx1,ROIx0))/ds;
                     JJ(0,0) += pow(J,2);
                     e(0) += J * residuals(k,0);
                 }
@@ -422,6 +510,63 @@ void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_norm
             }k++;
         }
     }
+}
+
+template<>
+MatrixXd Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_jacobian(){
+
+    double ds =0.3;
+    Rect bb(2*m_state.window_size,2*m_state.window_size,m_obs[0].first.cols-4*m_state.window_size-2,m_obs[1].first.rows-4*m_state.window_size-2);
+
+    MatrixXd JJ = MatrixXd::Zero(1,1);
+
+    uint lframe = m_state.poses.first[0].ID+m_state.poses.first.size()-1;
+    int k=0;
+
+    //loop for points extracted from the left camera
+    for(uint i=0;i<m_state.pts.first.size();i++){ // for each point
+        if(!m_mask.size() == 0 && !m_mask(i)) // if is an inlier
+            continue;
+        if(m_state.pts.first[i].isTriangulated()){ // if it has been triangulated
+            ptH3D pt = m_state.pts.first[i].get3DLocation();
+            if(m_state.pts.first[i].getLastFrameIdx() == lframe){ // has been observed in the last keyframe
+                uint f_idx = m_state.poses.first.size()-1;
+                //camera pose
+                Matx33d R = m_state.poses.first[f_idx].orientation.getR3();
+                Matx31d t = m_state.poses.first[f_idx].position;
+                Matx44d Tr = Matx44d::eye();
+                ((Mat)R).copyTo(((Mat)Tr)(Range(0,3),Range(0,3)));
+                ((Mat)t).copyTo(((Mat)Tr)(Range(0,3),Range(3,4)));
+
+
+                ptH2D feat = m_state.K.first * Matx34d::eye() * m_state.scale *(Tr * pt);
+                Point2f feat_left(to_euclidean(feat)(0),to_euclidean(feat)(1));
+                //gradient estimation by differenciation
+                ptH2D feat_ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
+                Point2f feat_right_minus(to_euclidean(feat_)(0),to_euclidean(feat_)(1));
+                ptH2D feat__ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale+ds) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
+                Point2f feat_right_plus(to_euclidean(feat__)(0),to_euclidean(feat__)(1));
+
+                if(bb.contains(feat_left) && bb.contains(feat_right_minus) && bb.contains(feat_right_plus)){ //feature is reprojected in the image and MI can be computed
+                    Mat ROIx0 = m_obs[f_idx].first(Rect(feat_left.x-m_state.window_size,feat_left.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2));
+                    Mat ROIx1 = m_obs[f_idx].second(Rect(feat_right_minus.x-m_state.window_size,feat_right_minus.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2));
+                    Mat ROIx2 = m_obs[f_idx].second(Rect(feat_right_plus.x-m_state.window_size,feat_right_plus.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2));
+                    ROIx0.convertTo(ROIx0,CV_32F);
+                    ROIx1.convertTo(ROIx1,CV_32F);
+                    ROIx2.convertTo(ROIx2,CV_32F);
+
+                    double J = (computeMutualInformation(ROIx2,ROIx0) - computeMutualInformation(ROIx1,ROIx0))/ds;
+                    JJ(0,0) += pow(J,2);
+                }
+            }k++;
+        }
+    }
+    return  JJ;
+}
+
+template<class S, class T>
+MatrixXd Optimiser<S,T>::compute_jacobian(){
+     return MatrixXd::Zero(1,1);
 }
 
 template<>

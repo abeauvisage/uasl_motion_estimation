@@ -17,7 +17,7 @@ struct OptimisationParams{
     OptimType type;
     bool minim;
 
-    OptimisationParams(OptimType type_=OptimType::LM,bool min=true, int it=20,double v_=2,double t=1e-3,double m=1e-20,double e1=1e-4,double e2=1e-4,double e3=1e-3, double e4=1e-4,double a=11.0): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_),minim(min){}
+    OptimisationParams(OptimType type_=OptimType::LM,bool min=true, int it=20,double v_=2,double t=1e-3,double m=1e-20,double e1=1e-4,double e2=1e-4,double e3=1e-3, double e4=1e-4,double a=1.0): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_),minim(min){}
 };
 
 struct OptimState{
@@ -72,6 +72,10 @@ struct ScaleState: OptimState{
 
     ScaleState(): OptimState(1){}
 
+    double compute_residuals(std::vector<std::pair<cv::Mat,cv::Mat>>& obs);
+    double compute_residuals(std::vector<std::vector<cv::Mat>>& obs){return 0;}
+    double compute_residuals(std::vector<StereoOdoMatchesf>& obs){return 0;}
+
     void update(const Eigen::MatrixXd& dX) override{
         assert(dX.rows() == 1 && dX.cols() == 1);
         scale += dX(0);
@@ -90,11 +94,13 @@ public:
 
     StopCondition optimise(S& state, const bool test=false, const Eigen::VectorXi& mask=Eigen::VectorXi());
     std::vector<int> compute_inliers(const double threshold);
+    Eigen::MatrixXd getJacobian(){return compute_jacobian();}
 
 private:
 
 Eigen::MatrixXd compute_residuals(const S& state);
 void compute_normal_equations(const Eigen::MatrixXd& residuals, Eigen::MatrixXd& JJ, Eigen::VectorXd& e);
+Eigen::MatrixXd compute_jacobian();
 
 void run_GN_step(Eigen::MatrixXd& JJ, Eigen::VectorXd& e, Eigen::VectorXd& dX);
 void run_LM_step(Eigen::MatrixXd& JJ, Eigen::VectorXd& e, Eigen::VectorXd& dX, const double e1);
