@@ -13,6 +13,8 @@
 
 namespace me{
 
+enum PoseType{ABSOLUTE,RELATIVE};
+
 enum SetupType{stereo,mono}; //!< Type of setup: stereo or monocular
 //!< Type of filter if a filter if used.
 /*! the filter can be:
@@ -40,6 +42,7 @@ struct TrackingInfo{
     int nb_feats=500;
     int window_size=5;
     double parallax=10.0;
+    double feat_cov = 0.25;
 };
 
 //! structure containing various information about the dataset to use
@@ -48,6 +51,7 @@ struct DatasetInfo{
     double gps_orientation = 0;
     SetupType type=SetupType::mono;
     bool scaled_traj=false;
+    PoseType poses = ABSOLUTE;
     int cam_ID=0;
 };
 

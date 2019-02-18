@@ -29,15 +29,10 @@ bool loadYML(string filename){
     FileNode dataset = configFile["dataset"];
     dataset["gps"] >> dataset_info.gps_orientation;
     dataset["dir"] >> dataset_info.dir;
-    std::string type;
-    dataset["type"] >> type;
-    dataset["scaled"] >> dataset_info.scaled_traj;
+    dataset_info.type = dataset["type"]=="stereo"?stereo:mono;
+    dataset_info.scaled_traj = dataset["scaled"]=="true"?true:false;
     dataset["camID"] >> dataset_info.cam_ID;
-
-    if(type=="stereo")
-        dataset_info.type = stereo;
-    else
-        dataset_info.type = mono;
+    dataset_info.poses = dataset["poses"]=="absolute"?PoseType::ABSOLUTE:PoseType::RELATIVE;
 
     // defining frame informations
     FileNode frames = configFile["frames"];
@@ -73,15 +68,9 @@ bool loadYML(string filename){
         if(param_stereo.cv2 == 0)
             calib["cv2"] >> param_stereo.cv2;
         calib["baseline"] >> param_stereo.baseline;
-        if(calib["ransac"] == "true")
-            param_stereo.ransac=true;
-        else
-            param_stereo.ransac=false;
+        param_stereo.ransac = calib["ransac"] == "true"?true:false;
         calib["threshold"] >> param_stereo.inlier_threshold;
-        if(calib["method"] == "GN")
-            param_stereo.method = StereoVisualOdometry::GN;
-        else
-            param_stereo.method = StereoVisualOdometry::LM;
+        param_stereo.method = calib["method"] == "GN"?StereoVisualOdometry::GN:StereoVisualOdometry::LM;
     }else{
         calib["fu"] >> param_mono.fu;
         calib["fv"] >> param_mono.fv;
@@ -100,6 +89,9 @@ bool loadYML(string filename){
     tracking["feats"] >> tracking_info.nb_feats;
     tracking["window"] >> tracking_info.window_size;
     tracking["parallax"] >> tracking_info.parallax;
+    tracking["feat_cov"] >> tracking_info.feat_cov;
+    if(tracking_info.feat_cov ==0)
+        tracking_info.feat_cov = 1.0;
 
     configFile["appendix"] >> appendix;
 
