@@ -45,7 +45,10 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
         double meanReprojError = e1 / (double)(residuals.rows()*residuals.cols());
 
         if(test){
-            cout << "e " << e1 << endl;
+            ScaleState* scalestate = dynamic_cast<ScaleState*>(&m_state);
+            if(scalestate){
+                cout << "s " << scalestate->scale << " e " << e1 << endl;
+            }
         }
 
         // absolute tolerance condition
@@ -58,8 +61,10 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
         if(test){
             JJ(0,0) = 100;
             e(0) = 1;
-        }else
+        }else{
             compute_normal_equations(residuals,JJ,e);
+            cout << "JJ" << JJ  << " " << e << endl;
+        }
 
         if(k == 0){
             m_params.mu = JJ.diagonal().maxCoeff();
@@ -425,7 +430,8 @@ void Optimiser<S,T>::compute_normal_equations(const Eigen::MatrixXd& residuals, 
 template<>
 void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_normal_equations(const Eigen::MatrixXd& residuals, Eigen::MatrixXd& JJ, Eigen::VectorXd& e){
 
-    double ds =0.3;
+//    double ds =0.1;
+    double dp = 1;
     Rect bb(2*m_state.window_size,2*m_state.window_size,m_obs[0].first.cols-4*m_state.window_size-2,m_obs[1].first.rows-4*m_state.window_size-2);
 
     JJ = MatrixXd::Zero(m_state.nb_params,m_state.nb_params);
@@ -449,14 +455,18 @@ void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_norm
                 ((Mat)R).copyTo(((Mat)Tr)(Range(0,3),Range(0,3)));
                 ((Mat)t).copyTo(((Mat)Tr)(Range(0,3),Range(3,4)));
 
+                double duds = m_state.K.second(0,0)*m_state.baseline/(m_state.scale*m_state.scale*(R*to_euclidean(pt)+t)(2));
 
                 ptH2D feat = m_state.K.first * Matx34d::eye() * m_state.scale *(Tr * pt);
                 Point2f feat_left(to_euclidean(feat)(0),to_euclidean(feat)(1));
-                //gradient estimation by differenciation
+
                 ptH2D feat_ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
-                Point2f feat_right_minus(to_euclidean(feat_)(0),to_euclidean(feat_)(1));
-                ptH2D feat__ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale+ds) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
-                Point2f feat_right_plus(to_euclidean(feat__)(0),to_euclidean(feat__)(1));
+                //gradient estimation by differenciation
+//                Point2f feat_right_minus(to_euclidean(feat_)(0),to_euclidean(feat_)(1));
+//                ptH2D feat__ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale+ds) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
+//                Point2f feat_right_plus(to_euclidean(feat__)(0),to_euclidean(feat__)(1));
+                Point2f feat_right_minus(to_euclidean(feat_)(0)-dp,to_euclidean(feat_)(1));
+                Point2f feat_right_plus(to_euclidean(feat_)(0)+dp,to_euclidean(feat_)(1)+dp);
 
                 if(bb.contains(feat_left) && bb.contains(feat_right_minus) && bb.contains(feat_right_plus)){ //feature is reprojected in the image and MI can be computed
                     Mat ROIx0 = m_obs[f_idx].first(Rect(feat_left.x-m_state.window_size,feat_left.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2));
@@ -466,56 +476,60 @@ void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_norm
                     ROIx1.convertTo(ROIx1,CV_32F);
                     ROIx2.convertTo(ROIx2,CV_32F);
 
-                    double J = (computeMutualInformation(ROIx2,ROIx0)-computeMutualInformation(ROIx1,ROIx0))/ds;
+//                    cout << "dmidu " <<(computeMutualInformation(ROIx2,ROIx0)-computeMutualInformation(ROIx1,ROIx0))/dp << " duds " << duds << endl;
+
+//                    double J = (computeMutualInformation(ROIx2,ROIx0)-computeMutualInformation(ROIx1,ROIx0))/ds;
+                    double J = (computeMutualInformation(ROIx2,ROIx0)-computeMutualInformation(ROIx1,ROIx0))/dp * duds;
+//                    cout << "J " << J << endl;
                     JJ(0,0) += pow(J,2);
                     e(0) += J * residuals(k,0);
                 }
             }k++;
         }
     }
-
-    //loop for points extracted from the right camera
-    for(uint i=0;i<m_state.pts.second.size();i++){
-        if(!m_mask.size() == 0 && !m_mask(m_state.pts.first.size()+i))
-            continue;
-        if(m_state.pts.second[i].isTriangulated()){
-            ptH3D pt = m_state.pts.second[i].get3DLocation();
-            if(m_state.pts.second[i].getLastFrameIdx() == lframe){
-                uint f_idx = m_state.poses.second.size()-1;
-                Matx33d R = m_state.poses.second[f_idx].orientation.getR3();
-                pt3D base(m_state.baseline,0,0);
-                Matx31d t = m_state.poses.second[f_idx].position + R * base;
-                Matx44d Tr = Matx44d::eye();
-                ((Mat)R).copyTo(((Mat)Tr)(Range(0,3),Range(0,3)));
-                ((Mat)t).copyTo(((Mat)Tr)(Range(0,3),Range(3,4)));
-
-                ptH2D feat = m_state.K.first * Matx34d::eye() * m_state.scale *(Tr * pt);
-                Point2f feat_right(to_euclidean(feat)(0),to_euclidean(feat)(1));
-                ptH2D feat_ =  (m_state.K.first * Matx34d::eye()) * ((m_state.scale-ds) * (Tr * pt) + Matx41d(m_state.baseline,0,0,0));
-                Point2f feat_left_minus(to_euclidean(feat_)(0),to_euclidean(feat_)(1));
-                ptH2D feat__ =  (m_state.K.first * Matx34d::eye()) * ((m_state.scale+ds) * (Tr * pt) + Matx41d(m_state.baseline,0,0,0));
-                Point2f feat_left_plus(to_euclidean(feat_)(0),to_euclidean(feat__)(1));
-                if(bb.contains(feat_right) && bb.contains(feat_left_minus) && bb.contains(feat_left_plus)){
-                    Mat ROIx0 = m_obs[f_idx].second(Rect(feat_right.x-m_state.window_size,feat_right.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2))*255;
-                    Mat ROIx1 = m_obs[f_idx].first(Rect(feat_left_minus.x-m_state.window_size,feat_left_minus.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2))*255;
-                    Mat ROIx2 = m_obs[f_idx].first(Rect(feat_left_plus.x-m_state.window_size,feat_left_plus.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2))*255;
-                    ROIx0.convertTo(ROIx0,CV_32F);
-                    ROIx1.convertTo(ROIx1,CV_32F);
-                    ROIx2.convertTo(ROIx2,CV_32F);
-
-                    double J = computeMutualInformation(ROIx2,ROIx0)-computeMutualInformation(ROIx1,ROIx0);
-                    JJ(0,0) += pow(J,2);
-                    e(0) += J * residuals(k,0);
-                }
-            }k++;
-        }
-    }
+//
+//    //loop for points extracted from the right camera
+//    for(uint i=0;i<m_state.pts.second.size();i++){
+//        if(!m_mask.size() == 0 && !m_mask(m_state.pts.first.size()+i))
+//            continue;
+//        if(m_state.pts.second[i].isTriangulated()){
+//            ptH3D pt = m_state.pts.second[i].get3DLocation();
+//            if(m_state.pts.second[i].getLastFrameIdx() == lframe){
+//                uint f_idx = m_state.poses.second.size()-1;
+//                Matx33d R = m_state.poses.second[f_idx].orientation.getR3();
+//                pt3D base(m_state.baseline,0,0);
+//                Matx31d t = m_state.poses.second[f_idx].position + R * base;
+//                Matx44d Tr = Matx44d::eye();
+//                ((Mat)R).copyTo(((Mat)Tr)(Range(0,3),Range(0,3)));
+//                ((Mat)t).copyTo(((Mat)Tr)(Range(0,3),Range(3,4)));
+//
+//                ptH2D feat = m_state.K.first * Matx34d::eye() * m_state.scale *(Tr * pt);
+//                Point2f feat_right(to_euclidean(feat)(0),to_euclidean(feat)(1));
+//                ptH2D feat_ =  (m_state.K.first * Matx34d::eye()) * ((m_state.scale-ds) * (Tr * pt) + Matx41d(m_state.baseline,0,0,0));
+//                Point2f feat_left_minus(to_euclidean(feat_)(0),to_euclidean(feat_)(1));
+//                ptH2D feat__ =  (m_state.K.first * Matx34d::eye()) * ((m_state.scale+ds) * (Tr * pt) + Matx41d(m_state.baseline,0,0,0));
+//                Point2f feat_left_plus(to_euclidean(feat_)(0),to_euclidean(feat__)(1));
+//                if(bb.contains(feat_right) && bb.contains(feat_left_minus) && bb.contains(feat_left_plus)){
+//                    Mat ROIx0 = m_obs[f_idx].second(Rect(feat_right.x-m_state.window_size,feat_right.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2))*255;
+//                    Mat ROIx1 = m_obs[f_idx].first(Rect(feat_left_minus.x-m_state.window_size,feat_left_minus.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2))*255;
+//                    Mat ROIx2 = m_obs[f_idx].first(Rect(feat_left_plus.x-m_state.window_size,feat_left_plus.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2))*255;
+//                    ROIx0.convertTo(ROIx0,CV_32F);
+//                    ROIx1.convertTo(ROIx1,CV_32F);
+//                    ROIx2.convertTo(ROIx2,CV_32F);
+//
+//                    double J = computeMutualInformation(ROIx2,ROIx0)-computeMutualInformation(ROIx1,ROIx0);
+//                    JJ(0,0) += pow(J,2);
+//                    e(0) += J * residuals(k,0);
+//                }
+//            }k++;
+//        }
+//    }
 }
 
 template<>
 MatrixXd Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_jacobian(){
 
-    double ds =0.3;
+    double dp = 5;
     Rect bb(2*m_state.window_size,2*m_state.window_size,m_obs[0].first.cols-4*m_state.window_size-2,m_obs[1].first.rows-4*m_state.window_size-2);
 
     MatrixXd JJ = MatrixXd::Zero(1,1);
@@ -538,14 +552,18 @@ MatrixXd Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_
                 ((Mat)R).copyTo(((Mat)Tr)(Range(0,3),Range(0,3)));
                 ((Mat)t).copyTo(((Mat)Tr)(Range(0,3),Range(3,4)));
 
+                double duds = m_state.K.second(0,0)*m_state.baseline/(m_state.scale*m_state.scale*(R*to_euclidean(pt)+t)(2));
+
 
                 ptH2D feat = m_state.K.first * Matx34d::eye() * m_state.scale *(Tr * pt);
                 Point2f feat_left(to_euclidean(feat)(0),to_euclidean(feat)(1));
                 //gradient estimation by differenciation
                 ptH2D feat_ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
-                Point2f feat_right_minus(to_euclidean(feat_)(0),to_euclidean(feat_)(1));
-                ptH2D feat__ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale+ds) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
-                Point2f feat_right_plus(to_euclidean(feat__)(0),to_euclidean(feat__)(1));
+//                Point2f feat_right_minus(to_euclidean(feat_)(0),to_euclidean(feat_)(1));
+//                ptH2D feat__ =  (m_state.K.second * Matx34d::eye()) * ((m_state.scale+ds) * (Tr * pt) - Matx41d(m_state.baseline,0,0,0));
+//                Point2f feat_right_plus(to_euclidean(feat__)(0),to_euclidean(feat__)(1));
+                Point2f feat_right_minus(to_euclidean(feat_)(0)-dp,to_euclidean(feat_)(1));
+                Point2f feat_right_plus(to_euclidean(feat_)(0)+dp,to_euclidean(feat_)(1)+dp);
 
                 if(bb.contains(feat_left) && bb.contains(feat_right_minus) && bb.contains(feat_right_plus)){ //feature is reprojected in the image and MI can be computed
                     Mat ROIx0 = m_obs[f_idx].first(Rect(feat_left.x-m_state.window_size,feat_left.y-m_state.window_size,m_state.window_size*2,m_state.window_size*2));
@@ -555,7 +573,8 @@ MatrixXd Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_
                     ROIx1.convertTo(ROIx1,CV_32F);
                     ROIx2.convertTo(ROIx2,CV_32F);
 
-                    double J = (computeMutualInformation(ROIx2,ROIx0) - computeMutualInformation(ROIx1,ROIx0))/ds;
+//                    double J = (computeMutualInformation(ROIx2,ROIx0) - computeMutualInformation(ROIx1,ROIx0))/ds;
+                    double J = (computeMutualInformation(ROIx2,ROIx0)-computeMutualInformation(ROIx1,ROIx0))/dp * duds;
                     JJ(0,0) += pow(J,2);
                 }
             }k++;
