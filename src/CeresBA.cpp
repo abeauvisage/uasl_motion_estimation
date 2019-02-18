@@ -33,7 +33,7 @@ vector<int> selectRandomIndices(int nb_samples, int nb_tot) {
   return samples_idx;
 }
 
-CeresBA::CeresBA(int nb_view, int nb_pts, const cv::Matx33d& K, double baseline):num_cameras_(nb_view),num_points_(nb_pts),num_observations_(nb_view*nb_pts){
+CeresBA::CeresBA(int nb_view, int nb_pts, const cv::Matx33d& K, double feat_noise, double baseline):num_cameras_(nb_view),num_points_(nb_pts),num_observations_(nb_view*nb_pts),feat_noise_(feat_noise){
         num_parameters_ = 6 * num_cameras_ + 3 * num_points_;
         parameters_ = new double[num_parameters_];
         K_=K;
@@ -81,12 +81,11 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
     }
 
     for(uint j=0;j<ori.size();j++){
-        parameters_[j*6] = ori[j].roll();
-        parameters_[j*6+1] = ori[j].pitch();
-        parameters_[j*6+2] = ori[j].yaw();
-        for(uint k=3;k<6;k++){
-            parameters_[j*6+k] = pos[j](k-3);
-        }
+        for(uint k=0;k<3;k++)
+            parameters_[j*6+k] = pos[j](k);
+        parameters_[j*6+3] = ori[j].roll();
+        parameters_[j*6+4] = ori[j].pitch();
+        parameters_[j*6+5] = ori[j].yaw();
     }
 
     int nb =0;
@@ -126,14 +125,13 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf*>& pts, const std::vector<m
     cam_idx = new int[poses.size()];
     for(uint j=0;j<poses.size();j++){
         cam_idx[j] = poses[j].ID;
-        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
-        parameters_[j*6] = rot_vec[0];
-        parameters_[j*6+1] = rot_vec[1];
-        parameters_[j*6+2] = rot_vec[2];
         Vec3d new_t = poses[j].position;
-        for(uint k=3;k<6;k++){
-            parameters_[j*6+k] = new_t[k-3];
-        }
+        for(uint k=0;k<3;k++)
+            parameters_[j*6+k] = new_t[k];
+        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
+        parameters_[j*6+3] = rot_vec[0];
+        parameters_[j*6+4] = rot_vec[1];
+        parameters_[j*6+5] = rot_vec[2];
     }
 
     int nb =0;
@@ -174,14 +172,13 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
     cam_idx = new int[poses.size()];
     for(uint j=0;j<poses.size();j++){
         cam_idx[j] = poses[j].ID;
-        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
-        parameters_[j*6] = rot_vec[0];
-        parameters_[j*6+1] = rot_vec[1];
-        parameters_[j*6+2] = rot_vec[2];
         Vec3d new_t = poses[j].position;
-        for(uint k=3;k<6;k++){
-            parameters_[j*6+k] = new_t[k-3];
-        }
+        for(uint k=0;k<3;k++)
+            parameters_[j*6+k] = new_t[k];
+        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
+        parameters_[j*6+3] = rot_vec[0];
+        parameters_[j*6+4] = rot_vec[1];
+        parameters_[j*6+5] = rot_vec[2];
     }
 
     int nb =0;
@@ -222,14 +219,13 @@ void CeresBA::fillStereoData(const std::vector<me::WBA_stereo_Ptf>& pts, const s
     cam_idx = new int[poses.size()];
     for(uint j=0;j<poses.size();j++){
         cam_idx[j] = poses[j].ID;
-        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
-        parameters_[j*6] = rot_vec[0];
-        parameters_[j*6+1] = rot_vec[1];
-        parameters_[j*6+2] = rot_vec[2];
         Vec3d new_t = poses[j].position;
-        for(uint k=3;k<6;k++){
-            parameters_[j*6+k] = new_t[k-3];
-        }
+        for(uint k=0;k<3;k++)
+            parameters_[j*6+k] = new_t[k];
+        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
+        parameters_[j*6+3] = rot_vec[0];
+        parameters_[j*6+4] = rot_vec[1];
+        parameters_[j*6+5] = rot_vec[2];
     }
 
     int nb =0;
@@ -281,14 +277,13 @@ void CeresBA::fillStereoData(const std::pair<std::vector<me::WBA_Ptf>,std::vecto
     cam_idx = new int[poses.size()];
     for(uint j=0;j<poses.size();j++){
         cam_idx[j] = poses[j].ID;
-        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
-        parameters_[j*6] = rot_vec[0];
-        parameters_[j*6+1] = rot_vec[1];
-        parameters_[j*6+2] = rot_vec[2];
         Vec3d new_t = poses[j].position;
-        for(uint k=3;k<6;k++){
-            parameters_[j*6+k] = new_t[k-3];
-        }
+        for(uint k=0;k<3;k++)
+            parameters_[j*6+k] = new_t[k];
+        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
+        parameters_[j*6+3] = rot_vec[0];
+        parameters_[j*6+4] = rot_vec[1];
+        parameters_[j*6+5] = rot_vec[2];
     }
 
     int nb =0;
@@ -348,14 +343,13 @@ void CeresBA::fillCameras(const std::vector<me::CamPose_md>& poses){
         cam_idx[j] = poses[j].ID;
         //orientation
         Vec3d rot_vec = log_map_Mat<double>(poses[j].orientation);
-        parameters_[j*6] = rot_vec[0];
-        parameters_[j*6+1] = rot_vec[1];
-        parameters_[j*6+2] = rot_vec[2];
         // position
         Vec3d new_t = poses[j].position;
-        for(uint k=3;k<6;k++){
-            parameters_[j*6+k] = new_t[k-3];
-        }
+        for(uint k=0;k<3;k++)
+            parameters_[j*6+k] = new_t[k];
+        parameters_[j*6+3] = rot_vec[0];
+        parameters_[j*6+4] = rot_vec[1];
+        parameters_[j*6+5] = rot_vec[2];
     }
 }
 
@@ -365,16 +359,15 @@ void CeresBA::fillCameras(const std::vector<me::CamPose_qd>& poses){
     cam_idx = new int[poses.size()];
     for(uint j=0;j<poses.size();j++){
         cam_idx[j] = poses[j].ID;
-        //orientation
-        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
-        parameters_[j*6] = rot_vec[0];
-        parameters_[j*6+1] = rot_vec[1];
-        parameters_[j*6+2] = rot_vec[2];
         // position
         Vec3d new_t = poses[j].position;
-        for(uint k=3;k<6;k++){
-            parameters_[j*6+k] = new_t[k-3];
-        }
+        for(uint k=0;k<3;k++)
+            parameters_[j*6+k] = new_t[k];
+        //orientation
+        Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
+        parameters_[j*6+3] = rot_vec[0];
+        parameters_[j*6+4] = rot_vec[1];
+        parameters_[j*6+5] = rot_vec[2];
     }
 }
 
@@ -477,9 +470,9 @@ void CeresBA::runSolver(int fixedFrames){
 
        ceres::CostFunction* cstFunc;
        if(camera_nbs.empty() || camera_nbs[point_index_[i]] == 0 )
-            cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1]);
+            cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
         else
-            cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1]);
+            cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
 
         ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
         problem->AddResidualBlock(cstFunc,lossFunc,mutable_camera_for_observation(i),mutable_point_for_observation(i));
@@ -508,7 +501,7 @@ void CeresBA::runStereoSolver(int fixedFrames){
         if(!m_mask.empty() && !m_mask[point_index_[i]])
                 continue;
 
-        ceres::CostFunction* cstFunc = CeresBA::StereoReprojectionError::Create(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
+        ceres::CostFunction* cstFunc = CeresBA::StereoReprojectionError::Create(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3],feat_noise_);
     //        ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
         problem->AddResidualBlock(cstFunc,nullptr,mutable_camera_for_observation(i),mutable_point_for_observation(i));
         problem->SetParameterBlockConstant(mutable_point_for_observation(i));
@@ -516,7 +509,7 @@ void CeresBA::runStereoSolver(int fixedFrames){
             problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
 
         double residual[4];
-        StereoReprojectionError rep(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
+        StereoReprojectionError rep(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3],feat_noise_);
         rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
         initial_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
     }
@@ -532,7 +525,7 @@ void CeresBA::runStereoSolver(int fixedFrames){
         if(!m_mask.empty() && !m_mask[point_index_[i]])
                 continue;
         double residual[4];
-        StereoReprojectionError rep(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3]);
+        StereoReprojectionError rep(obs[4*i+0],obs[4*i+1],obs[4*i+2],obs[4*i+3],feat_noise_);
         rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
         final_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
     }
@@ -542,8 +535,8 @@ std::vector<int> CeresBA::get_inliers_stereo(const double threshold){
     std::vector<int> inliers;
     for(int i=0;i<num_observations()-1;i+=4){
         double residual[4], error=0;
-        StereoReprojectionError rep1(observations_[4*i+0],observations_[4*i+1],observations_[4*i+2],observations_[4*i+3]);
-        StereoReprojectionError rep2(observations_[4*i+4],observations_[4*i+5],observations_[4*i+6],observations_[4*i+7]);
+        StereoReprojectionError rep1(observations_[4*i+0],observations_[4*i+1],observations_[4*i+2],observations_[4*i+3],feat_noise_);
+        StereoReprojectionError rep2(observations_[4*i+4],observations_[4*i+5],observations_[4*i+6],observations_[4*i+7],feat_noise_);
         rep1(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
         error += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
         rep2(mutable_camera_for_observation(i+1),mutable_point_for_observation(i+1),residual);
@@ -560,8 +553,8 @@ std::vector<int> CeresBA::get_inliers(const double threshold){
     vector<Point2f> reproj_feats = reproject_features(1);
     for(int i=0;i<num_observations()-1;i+=2){
         double residual[2], error=0;
-        ReprojectionError rep1(observations_[2*i+0],observations_[2*i+1]);
-        ReprojectionError rep2(observations_[2*i+2],observations_[2*i+3]);
+        ReprojectionError rep1(observations_[2*i+0],observations_[2*i+1],feat_noise_);
+        ReprojectionError rep2(observations_[2*i+2],observations_[2*i+3],feat_noise_);
         rep1(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
         error += sqrt(residual[0]*residual[0]+residual[1]*residual[1]);
         rep2(mutable_camera_for_observation(i+1),mutable_point_for_observation(i+1),residual);
@@ -609,57 +602,55 @@ bool CeresBA::getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx3
         for(int i=0;i<num_cameras_;i++){
             covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose);
             Mat originalCov(6,6,CV_64F,cov_pose);
-            Mat newCov(6,6,CV_64F);
-            Vec3d rot_vec(cam_ptr);
-            Vec3d pos_vec(cam_ptr+3);
-            /* invert so newCov = [ pp pe
-                                    ep ee] */
-            originalCov(Range(0,3),Range(0,3)).copyTo(newCov(Range(3,6),Range(3,6)));
-            originalCov(Range(3,6),Range(3,6)).copyTo(newCov(Range(0,3),Range(0,3)));
-            originalCov(Range(0,3),Range(3,6)).copyTo(newCov(Range(3,6),Range(0,3)));
-            originalCov(Range(3,6),Range(0,3)).copyTo(newCov(Range(0,3),Range(3,6)));
 
-            Mat T = Mat::eye(6,6,CV_64F); // TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0)
-            ((Mat)TRef.t()).copyTo(T(Range(0,3),Range(0,3)));
-            ((Mat)TRef.t()).copyTo(T(Range(3,6),Range(3,6)));
+            cout << "original cov " << endl << originalCov << endl;
+//
+//            Mat newCov(6,6,CV_64F);
+//            Vec3d pos_vec(cam_ptr);
+//            Vec3d rot_vec(cam_ptr+3);
 
-            newCov = T * newCov * T.t();
-            rot_vec = -((Matx33d)TRef).t() * rot_vec; pos_vec = ((Matx33f)TRef).t() * pos_vec;
 
-            cout << "vecs " << rot_vec << endl << pos_vec << endl;
+//            Mat T = Mat::eye(6,6,CV_64F); // TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0)
+//            ((Mat)TRef.t()).copyTo(T(Range(0,3),Range(0,3)));
+//            ((Mat)TRef.t()).copyTo(T(Range(3,6),Range(3,6)));
+//
+//            newCov = T * originalCov * T.t();
+//            rot_vec = -((Matx33d)TRef).t() * rot_vec; pos_vec = ((Matx33f)TRef).t() * pos_vec;
+
+//            cout << "vecs " << rot_vec << endl << pos_vec << endl;
 
 
 
 
-            Mat Jacobian = Mat::eye(6,6,CV_64F);
+//            Mat Jacobian = Mat::eye(6,6,CV_64F);
+//
+//            Quatd quat = exp_map_Quat(rot_vec);
+//            Vec3d q_vec = quat.vec();
+//
+//            auto skew = [](const cv::Vec3d& mat){return Matx33d(0, -mat(2), mat(1), mat(2), 0, -mat(0), -mat(1), mat(0), 0);};
+//            Mat dqxdq(3,4,CV_64F);
+//            Mat qv = (Mat)( 2 * (q_vec.t()*pos_vec)[0] * Matx33d::eye()+2*q_vec*pos_vec.t()-2*pos_vec*q_vec.t()-2 * quat.w() * skew(pos_vec));
+//            Mat qw = (Mat)( 2 * quat.w() * (Mat)pos_vec + 2 * skew(q_vec) * pos_vec);
+//            qv.copyTo(dqxdq(Range(0,3),Range(0,3)));
+//            qw.copyTo(dqxdq.colRange(3,4));
+//
+//            double snorm = rot_vec[0]*rot_vec[0]+rot_vec[1]*rot_vec[1]+rot_vec[2]*rot_vec[2]; //squared norm
+//            double norm = sqrt(snorm);
+//            double a =cos(0.5*norm)*norm-2*sin(0.5*norm);
+//            Mat dqde_ = 1/(2*pow(norm,3)) * (Mat_<double>(4,3)<< 2*snorm*sin(0.5*norm)+rot_vec[0]*rot_vec[0]*a,  rot_vec[0]*rot_vec[1]*a,                        rot_vec[0]*rot_vec[2]*a,
+//                                                                rot_vec[0]*rot_vec[1]*a,                        2*snorm*sin(0.5*norm)+rot_vec[1]*rot_vec[1]*a,  rot_vec[1]*rot_vec[2]*a,
+//                                                                rot_vec[0]*rot_vec[2]*a,                        rot_vec[1]*rot_vec[2]*a,                        2*snorm*sin(0.5*norm)+rot_vec[2]*rot_vec[2]*a,
+//                                                                -rot_vec[0]*snorm*sin(0.5*norm),                -rot_vec[1]*snorm*sin(0.5*norm),                -rot_vec[2]*snorm*sin(0.5*norm));
+//
+//            ((Mat)-quat.getR3()).copyTo(Jacobian(Range(0,3),Range(0,3)));
+//            ((Mat)(-dqxdq*dqde_)).copyTo(Jacobian(Range(0,3),Range(3,6)));
+//            Jacobian(Range(3,6),Range(3,6)) = - Mat::eye(3,3,CV_64F);
+//
+////            cout << "comparison " << quat.getR3()*skew(pos_vec) << endl <<  << endl;
+//            cout << "new mat " << endl << Jacobian*newCov*Jacobian.t() << endl;
 
-            Quatd quat = exp_map_Quat(rot_vec);
-            Vec3d q_vec = quat.vec();
 
-            auto skew = [](const cv::Vec3d& mat){return Matx33d(0, -mat(2), mat(1), mat(2), 0, -mat(0), -mat(1), mat(0), 0);};
-            Mat dqxdq(3,4,CV_64F);
-            Mat qv = (Mat)( 2 * (q_vec.t()*pos_vec)[0] * Matx33d::eye()+2*q_vec*pos_vec.t()-2*pos_vec*q_vec.t()-2 * quat.w() * skew(pos_vec));
-            Mat qw = (Mat)( 2 * quat.w() * (Mat)pos_vec + 2 * skew(q_vec) * pos_vec);
-            qv.copyTo(dqxdq(Range(0,3),Range(0,3)));
-            qw.copyTo(dqxdq.colRange(3,4));
-
-            double snorm = rot_vec[0]*rot_vec[0]+rot_vec[1]*rot_vec[1]+rot_vec[2]*rot_vec[2]; //squared norm
-            double norm = sqrt(snorm);
-            double a =cos(0.5*norm)*norm-2*sin(0.5*norm);
-            Mat dqde_ = 1/(2*pow(norm,3)) * (Mat_<double>(4,3)<< 2*snorm*sin(0.5*norm)+rot_vec[0]*rot_vec[0]*a,  rot_vec[0]*rot_vec[1]*a,                        rot_vec[0]*rot_vec[2]*a,
-                                                                rot_vec[0]*rot_vec[1]*a,                        2*snorm*sin(0.5*norm)+rot_vec[1]*rot_vec[1]*a,  rot_vec[1]*rot_vec[2]*a,
-                                                                rot_vec[0]*rot_vec[2]*a,                        rot_vec[1]*rot_vec[2]*a,                        2*snorm*sin(0.5*norm)+rot_vec[2]*rot_vec[2]*a,
-                                                                -rot_vec[0]*snorm*sin(0.5*norm),                -rot_vec[1]*snorm*sin(0.5*norm),                -rot_vec[2]*snorm*sin(0.5*norm));
-
-            ((Mat)-quat.getR3()).copyTo(Jacobian(Range(0,3),Range(0,3)));
-            ((Mat)(-dqxdq*dqde_)).copyTo(Jacobian(Range(0,3),Range(3,6)));
-            Jacobian(Range(3,6),Range(3,6)) = - Mat::eye(3,3,CV_64F);
-
-//            cout << "comparison " << quat.getR3()*skew(pos_vec) << endl <<  << endl;
-            cout << "new mat " << endl << Jacobian*newCov*Jacobian.t() << endl;
-
-
-            poseCov.push_back(Jacobian*newCov*Jacobian.t());
+            poseCov.push_back(originalCov);
             cam_ptr += 6;
 
         }
@@ -704,26 +695,19 @@ bool CeresBA::getCovarianceQuat(std::vector<cv::Mat>& poseCov, std::vector<cv::M
             /*original originalCov = [  ee ep
                                 pe pp] where ee is covariance of angle-axis orientation pp is covariance of position */
             Mat newCov(6,6,CV_64F);
-            /* invert so newCov = [ pp pe
-                                    ep ee] */
-            originalCov(Range(0,3),Range(0,3)).copyTo(newCov(Range(3,6),Range(3,6)));
-            originalCov(Range(3,6),Range(3,6)).copyTo(newCov(Range(0,3),Range(0,3)));
-            originalCov(Range(0,3),Range(3,6)).copyTo(newCov(Range(3,6),Range(0,3)));
-            originalCov(Range(3,6),Range(0,3)).copyTo(newCov(Range(0,3),Range(3,6)));
 
             //changing cov to imu coordinate system
             Mat T = Mat::eye(6,6,CV_64F); // TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0)
             ((Mat)TRef.t()).copyTo(T(Range(0,3),Range(0,3)));
             ((Mat)TRef.t()).copyTo(T(Range(3,6),Range(3,6)));
 
-            newCov = T * newCov * T.t();
+            newCov = T * originalCov * T.t();
 
             cout << "new_cov " << newCov << endl;
 
             //retrieving cam poses e=rot_vec = [e1,e2,e3] p=pos_vec=[p1,p2,p3]
-            Vec3d rot_vec(cam_ptr);
-//            Mat pos_vec(3,1,CV_64F,cam_ptr+3);
-            Vec3d pos_vec(cam_ptr+3);
+            Vec3d pos_vec(cam_ptr);
+            Vec3d rot_vec(cam_ptr+3);
             rot_vec = -((Matx33d)TRef).t() * rot_vec; pos_vec = ((Matx33f)TRef).t() * pos_vec;// changing to imu coordinate system
 
             cout << "pos_vec " << pos_vec  << "," << rot_vec << endl;
@@ -794,7 +778,7 @@ std::vector<me::CamPose_qd> CeresBA::getQuatPoses(){
     vector<me::CamPose_qd> poses;
     double * cam_ptr = mutable_cameras();
     for(int i=0;i<num_cameras_;i++){
-        poses.push_back(CamPose_qd(cam_idx[i],exp_map_Quat<double>(Vec3d(cam_ptr)),Vec3d(cam_ptr+3)));
+        poses.push_back(CamPose_qd(cam_idx[i],exp_map_Quat<double>(Vec3d(cam_ptr+3)),Vec3d(cam_ptr)));
         cout << poses[poses.size()-1];
         cam_ptr +=6;
     }
@@ -806,7 +790,7 @@ std::vector<me::CamPose_md> CeresBA::getMatPoses(){
     vector<me::CamPose_md> poses;
     double * cam_ptr = mutable_cameras();
     for(int i=0;i<num_cameras_;i++){
-        poses.push_back(CamPose_md(cam_idx[i],exp_map_Mat<double>(Vec3d(cam_ptr)),Vec3d(cam_ptr+3)));
+        poses.push_back(CamPose_md(cam_idx[i],exp_map_Mat<double>(Vec3d(cam_ptr+3)),Vec3d(cam_ptr)));
         cam_ptr +=6;
     }
     return poses;

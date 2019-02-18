@@ -16,17 +16,17 @@ class CeresBA {
 public:
 
 struct ReprojectionError {
-  ReprojectionError(double observed_x, double observed_y) : observed_x(observed_x), observed_y(observed_y) {}
+  ReprojectionError(const double observed_x, const double observed_y, const double sigma2) : observed_x(observed_x), observed_y(observed_y),sigma2_inv(1.0/sigma2){}
 
   template <typename T>
   bool operator()(const T* const camera, const T* const point, T* residuals) const {
 
     T p[3];
-    ceres::AngleAxisRotatePoint(camera, point, p);
+    ceres::AngleAxisRotatePoint(camera+3, point, p);
 
-    p[0] += camera[3];
-    p[1] += camera[4];
-    p[2] += camera[5];
+    p[0] += camera[0];
+    p[1] += camera[1];
+    p[2] += camera[2];
 
     T xp =  p[0] / p[2];
     T yp =  p[1] / p[2];
@@ -34,30 +34,33 @@ struct ReprojectionError {
     T predicted_x = (double)(K_(0,0)) * xp + (double)(K_(0,2));
     T predicted_y = K_(1,1) * yp + K_(1,2);
 
-    residuals[0] = predicted_x - observed_x;
-    residuals[1] = predicted_y - observed_y;
+    residuals[0] = sigma2_inv*(predicted_x - observed_x);
+    residuals[1] = sigma2_inv*(predicted_y - observed_y);
     return true;
   }
 
-  static ceres::CostFunction* Create(const double observed_x,const double observed_y) {
-    return (new ceres::AutoDiffCostFunction<ReprojectionError, 2, 6, 3>(new ReprojectionError(observed_x, observed_y)));
+  static ceres::CostFunction* Create(const double observed_x,const double observed_y, const double sigma2) {
+    return (new ceres::AutoDiffCostFunction<ReprojectionError, 2, 6, 3>(new ReprojectionError(observed_x, observed_y,sigma2)));
   }
   double observed_x;
   double observed_y;
+  double sigma2_inv;
 };
 
 struct ReprojectionErrorMonoRight {
-  ReprojectionErrorMonoRight(double observed_x, double observed_y) : observed_x(observed_x), observed_y(observed_y) {}
+  ReprojectionErrorMonoRight(double observed_x, double observed_y, const double sigma2) : observed_x(observed_x), observed_y(observed_y),sigma2_inv(1.0/sigma2) {}
 
   template <typename T>
   bool operator()(const T* const camera,const T* const point,T* residuals) const {
 
+//      std::cout << "Mono" << std::endl;
+
     T p[3];//,base[3],Rb[3],point_[3],p_[3];base[0]=baseline_;base[1]=0;base[2]=0;
-    ceres::AngleAxisRotatePoint(camera, point, p);
+    ceres::AngleAxisRotatePoint(camera+3, point, p);
     // camera[3,4,5] are the translation.
-    p[0] += camera[3]-baseline_;
-    p[1] += camera[4];
-    p[2] += camera[5];
+    p[0] += camera[0]-baseline_;
+    p[1] += camera[1];
+    p[2] += camera[2];
 
     T xp =  p[0] / p[2];
     T yp =  p[1] / p[2];
@@ -65,30 +68,30 @@ struct ReprojectionErrorMonoRight {
     T predicted_x = (double)(K_(0,0)) * xp + (double)(K_(0,2));
     T predicted_y = K_(1,1) * yp + K_(1,2);
     // The error is the difference between the predicted and observed position.
-    residuals[0] = predicted_x - observed_x;
-    residuals[1] = predicted_y - observed_y;
+    residuals[0] = sigma2_inv*(predicted_x - observed_x);
+    residuals[1] = sigma2_inv*(predicted_y - observed_y);
     return true;
   }
 
-  static ceres::CostFunction* Create(const double observed_x,const double observed_y) {
-    return (new ceres::AutoDiffCostFunction<ReprojectionErrorMonoRight, 2, 6, 3>(new ReprojectionErrorMonoRight(observed_x, observed_y)));
+  static ceres::CostFunction* Create(const double observed_x,const double observed_y, const double sigma2) {
+    return (new ceres::AutoDiffCostFunction<ReprojectionErrorMonoRight, 2, 6, 3>(new ReprojectionErrorMonoRight(observed_x, observed_y,sigma2)));
   }
   double observed_x;
   double observed_y;
+  double sigma2_inv;
 };
 
 struct StereoReprojectionError {
-  StereoReprojectionError(double x1, double y1, double x2, double y2) : x1(x1), y1(y1), x2(x2), y2(y2) {}
+  StereoReprojectionError(double x1, double y1, double x2, double y2,const double sigma2) : x1(x1), y1(y1), x2(x2), y2(y2), sigma2_inv(1.0/sigma2){}
 
   template <typename T>
   bool operator()(const T* const camera, const T* const point, T* residuals) const {
 
     T p[3];
-    ceres::AngleAxisRotatePoint(camera, point, p);
-
-    p[0] += camera[3];
-    p[1] += camera[4];
-    p[2] += camera[5];
+    ceres::AngleAxisRotatePoint(camera+3, point, p);
+    p[0] += camera[0];
+    p[1] += camera[1];
+    p[2] += camera[2];
 
     T xp1 =  p[0] / p[2];
     T xp2 =  (p[0]-baseline_)  / p[2];
@@ -98,23 +101,24 @@ struct StereoReprojectionError {
     T predicted_x2 = (double)(K_(0,0)) * xp2 + (double)(K_(0,2));
     T predicted_y = K_(1,1) * yp + K_(1,2);
 
-    residuals[0] = predicted_x1 - x1;
-    residuals[1] = predicted_y - y1;
-    residuals[2] = predicted_x2 - x2;
-    residuals[3] = predicted_y - y2;
+    residuals[0] = sigma2_inv*(predicted_x1 - x1);
+    residuals[1] = sigma2_inv*(predicted_y - y1);
+    residuals[2] = sigma2_inv*(predicted_x2 - x2);
+    residuals[3] = sigma2_inv*(predicted_y - y2);
     return true;
   }
 
-  static ceres::CostFunction* Create(const double x1, const double y1, const double x2, const double y2) {
-    return (new ceres::AutoDiffCostFunction<StereoReprojectionError, 4, 6, 3>(new StereoReprojectionError(x1,y1,x2,y2)));
+  static ceres::CostFunction* Create(const double x1, const double y1, const double x2, const double y2, double sigma2) {
+    return (new ceres::AutoDiffCostFunction<StereoReprojectionError, 4, 6, 3>(new StereoReprojectionError(x1,y1,x2,y2,sigma2)));
   }
   double x1,y1,x2,y2;
+  double sigma2_inv;
 };
 
   static cv::Matx33d K_;
   static double baseline_;
 
-    CeresBA(int nb_view, int nb_pts, const cv::Matx33d& K, double baseline=0);
+    CeresBA(int nb_view, int nb_pts, const cv::Matx33d& K, double feat_noise=1.0, double baseline=0);
   ~CeresBA() {
     if(problem)
         delete problem;
@@ -172,10 +176,10 @@ struct StereoReprojectionError {
         double* point = parameters_ + num_cameras_*6+i*3;
         double* camera = parameters_ + j_view*6;
         double p[3];
-        ceres::AngleAxisRotatePoint(camera, point, p);
-        p[0] += camera[3];
-        p[1] += camera[4];
-        p[2] += camera[5];
+        ceres::AngleAxisRotatePoint(camera+3, point, p);
+        p[0] += camera[0];
+        p[1] += camera[1];
+        p[2] += camera[2];
         double xp =  p[0] / p[2];
         double yp =  p[1] / p[2];
 
@@ -199,6 +203,7 @@ struct StereoReprojectionError {
   int* point_index_;
   int* camera_index_;
   int* cam_idx;
+  double feat_noise_;
 
   std::vector<int>  camera_nbs;
 
