@@ -47,6 +47,7 @@ struct DatasetInfo{
     std::string dir="";
     double gps_orientation = 0;
     SetupType type=SetupType::mono;
+    bool scaled_traj=false;
     int cam_ID=0;
 };
 
@@ -80,7 +81,7 @@ static std::ifstream gpsfile;
 static std::ofstream logFile;
 
 //! parse cofiguration file
-int loadYML(std::string filename);
+bool loadYML(std::string filename);
 //! returns the image(s) corresponding to the frame number
 /*! if monocular, the second image of the pair is empty. */
 std::pair<cv::Mat,cv::Mat> loadImages(const std::string& dir, int nb);

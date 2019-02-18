@@ -17,12 +17,12 @@ StereoVisualOdometry::parameters param_stereo;
 std::string appendix;
 
 
-int loadYML(string filename){
+bool loadYML(string filename){
 
     FileStorage configFile(filename, FileStorage::READ);
     if(!configFile.isOpened()){
         cerr << "YML file could not be opened!" << endl;
-        return 0;
+        return false;
     }
 
     //defining dataset information
@@ -31,6 +31,7 @@ int loadYML(string filename){
     dataset["dir"] >> dataset_info.dir;
     std::string type;
     dataset["type"] >> type;
+    dataset["scaled"] >> dataset_info.scaled_traj;
     dataset["camID"] >> dataset_info.cam_ID;
 
     if(type=="stereo")
@@ -102,7 +103,7 @@ int loadYML(string filename){
 
     configFile["appendix"] >> appendix;
 
-    return 1;
+    return true;
 }
 
 int IOFile::openFile(std::string filename){
