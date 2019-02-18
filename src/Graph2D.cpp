@@ -22,9 +22,6 @@ Graph2D::Graph2D(string name, const int nb, bool orth, Type t, cv::Size s): m_na
         m_colours.push_back(randomColor(rng));
         m_legend.push_back("");
     }
-
-    namedWindow(m_name,CV_WINDOW_NORMAL);
-    plot_background();
 }
 
 void Graph2D::clearGraph(){
@@ -40,6 +37,9 @@ void Graph2D::clearGraph(){
 
 void Graph2D::refresh(){
 
+    if(m_image.empty())
+        namedWindow(m_name,CV_WINDOW_NORMAL);
+
     float dx=0,dy=0;
     if(m_min_x < 0)
         dx = abs(m_min_x)*(width-2*m_margin)/(m_max_x-m_min_x);
@@ -49,7 +49,7 @@ void Graph2D::refresh(){
     plot_axis(m_image,(int)dx,(int)dy);
     for(int k=0;k<m_nb_curves;k++){
         Point2f prev;
-        float pitch = trunc(m_values.size()/m_max_pts)+1;
+        int pitch = (m_values[k].size()/m_max_pts)+1;
         for(unsigned int i=0;i< m_values[k].size();i+=pitch){
             Point2f p(round(m_margin+(m_values[k][i].x-m_min_x)*(width-m_margin-m_margin)/(m_max_x-m_min_x)),round(height-m_margin-(m_values[k][i].y-m_min_y)*(height-m_margin-m_margin)/(m_max_y-m_min_y)));
             if(m_type != LINE)
@@ -61,7 +61,39 @@ void Graph2D::refresh(){
     }
     plot_legend();
     imshow(m_name,m_image);
-    waitKey(10);
+    waitKey(2);
+}
+
+void Graph2D::addValue(const cv::Vec3d& v, int idx){
+
+    if(idx < 1)
+        idx =1;
+    for(int i=0;i<3;i++){
+        int value_idx = m_values[idx+i-1].size();
+        m_values[idx+i-1].push_back(Point2f(value_idx,v[i]));
+
+        if(value_idx < m_min_x)
+            m_min_x = value_idx;
+        if(v[i] < m_min_y)
+            m_min_y = v[i];
+        if(value_idx > m_max_x)
+            m_max_x = value_idx;
+        if(v[i] > m_max_y)
+            m_max_y = v[i];
+
+        if(m_orthogonal){
+            if(m_max_x > m_max_y)
+                m_max_y = m_max_x;
+            else
+                m_max_x = m_max_y;
+            if(m_min_x < m_min_y)
+                m_min_y = m_min_x;
+            else
+                m_min_x = m_min_y;
+        }
+    }
+
+    refresh();
 }
 
 void Graph2D::addValue(const cv::Point2f& v, int idx){

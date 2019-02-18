@@ -34,6 +34,7 @@ class Graph2D
         void addValue(const cv::Point2f& v, int i=1);
 	/*!< add a double point to the ith curve. This Function is called for 2D graph. */
         void addValue(const cv::Point2d& v, int i=1){cv::Point2f pf(v.x,v.y);addValue(pf,i);}
+        void addValue(const cv::Vec3d& v, int idx);
 	/*!< add a double value to the ith curve. This Function is called for 1D graph. */
         void addValue(double v, int i=1){if(m_values[i-1].empty()){cv::Point2f pt(0,0);addValue(pt,i);}cv::Point2f p(m_values[i-1].size(),v);addValue(p,i);}
         void addLegend(std::string s, int i=1){m_legend[i-1]=s;} //!< store the legend for the ith curve.
@@ -60,7 +61,7 @@ class Graph2D
     int height;
 
     int m_margin = 60;
-    float m_max_pts = 50; //!< maximum number of point displayed per curve (slow down the program if too many).
+    int m_max_pts = 100; //!< maximum number of point displayed per curve (slow down the program if too many).
     int count=0; //!< store the number of values if 1D graph.
     float m_min_x;
     float m_min_y;
