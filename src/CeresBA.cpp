@@ -603,7 +603,6 @@ bool CeresBA::getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx3
             covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose);
             Mat originalCov(6,6,CV_64F,cov_pose);
 
-            cout << "original cov " << endl << originalCov << endl;
 //
 //            Mat newCov(6,6,CV_64F);
 //            Vec3d pos_vec(cam_ptr);
@@ -650,7 +649,7 @@ bool CeresBA::getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx3
 //            cout << "new mat " << endl << Jacobian*newCov*Jacobian.t() << endl;
 
 
-            poseCov.push_back(originalCov);
+            poseCov.push_back(originalCov.clone());
             cam_ptr += 6;
 
         }
