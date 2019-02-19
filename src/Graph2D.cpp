@@ -154,7 +154,8 @@ void Graph2D::plot_axis(cv::Mat& bg, const int dx, const int dy){
 }
 
 Graph2D::~Graph2D(){
-    destroyWindow(m_name);
+	if(!m_image.empty())
+	    destroyWindow(m_name);
 }
 
 }
