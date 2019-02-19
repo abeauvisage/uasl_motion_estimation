@@ -39,6 +39,8 @@ bool loadYML(string filename){
     frame_info.fframe = frames["start"];
     frame_info.lframe = frames["stop"];
     frame_info.skip = frames["rate"];
+    if(!frame_info.skip)
+    	frame_info.skip = 1;
     frame_info.bias_frame = frames["bias"];
     frame_info.init = frames["init"];
 
@@ -49,23 +51,23 @@ bool loadYML(string filename){
         calib["f2"] >> param_stereo.fu2;
         calib["f1"] >> param_stereo.fv1;
         calib["f2"] >> param_stereo.fv2;
-        if(param_stereo.fu1 == 0){
+        if(!param_stereo.fu1){
             calib["fu1"] >> param_stereo.fu1;
             calib["fu2"] >> param_stereo.fu2;
             calib["fv1"] >> param_stereo.fv1;
             calib["fv2"] >> param_stereo.fv2;
         }
         calib["cu"] >> param_stereo.cu1;
-        if(param_stereo.cu1 == 0)
+        if(!param_stereo.cu1)
             calib["cu1"] >> param_stereo.cu1;
         calib["cu"] >> param_stereo.cu2;
-        if(param_stereo.cu2 == 0)
+        if(!param_stereo.cu2)
             calib["cu2"] >> param_stereo.cu2;
         calib["cv"] >> param_stereo.cv1;
-        if(param_stereo.cv1 == 0)
+        if(!param_stereo.cv1)
             calib["cv1"] >> param_stereo.cv1;
         calib["cv"] >> param_stereo.cv2;
-        if(param_stereo.cv2 == 0)
+        if(!param_stereo.cv2)
             calib["cv2"] >> param_stereo.cv2;
         calib["baseline"] >> param_stereo.baseline;
         param_stereo.ransac = calib["ransac"] == "true"?true:false;
@@ -74,7 +76,7 @@ bool loadYML(string filename){
     }else{
         calib["fu"] >> param_mono.fu;
         calib["fv"] >> param_mono.fv;
-        if(param_mono.fu == 0){
+        if(!param_mono.fu){
             calib["f"] >> param_mono.fu;
             calib["f"] >> param_mono.fv;
         }
@@ -90,7 +92,7 @@ bool loadYML(string filename){
     tracking["window"] >> tracking_info.window_size;
     tracking["parallax"] >> tracking_info.parallax;
     tracking["feat_cov"] >> tracking_info.feat_cov;
-    if(tracking_info.feat_cov ==0)
+    if(!tracking_info.feat_cov)
         tracking_info.feat_cov = 1.0;
 
     configFile["appendix"] >> appendix;
