@@ -50,22 +50,86 @@ cv::Matx44f CamPose_mf::TrMat() const {
 
 template<>
 CamPose_qd CamPose_qd::inv() const{
-    return CamPose_qd(ID,orientation.conj(),-(orientation.conj()*position));
+    return CamPose_qd(ID,orientation.conj(),-(orientation.conj()*position),Cov);
 }
 
 template<>
 CamPose_qf CamPose_qf::inv() const{
-    return CamPose_qf(ID,orientation.conj(),-(orientation.conj()*position));
+    return CamPose_qf(ID,orientation.conj(),-(orientation.conj()*position),Cov);
 }
 
 template<>
 CamPose_md CamPose_md::inv() const{
-    return CamPose_md(ID,orientation.t(),-orientation.t()*position);
+    return CamPose_md(ID,orientation.t(),-orientation.t()*position,Cov);
 }
 
 template<>
 CamPose_mf CamPose_mf::inv() const{
-    return CamPose_mf(ID,orientation.t(),-orientation.t()*position);
+    return CamPose_mf(ID,orientation.t(),-orientation.t()*position,Cov);
+}
+
+template <>
+cv::Mat CamPose_qd::JacobianMult(const CamPose_qd& old_pose) const{
+    CamPose_qd new_pose = (*this) * old_pose;
+    cv::Mat J_mul = cv::Mat::zeros(6,12,CV_64F);
+    ((cv::Mat) orientation.getR3()).copyTo(J_mul(cv::Range(0,3),cv::Range(0,3)));
+    J_mul(cv::Range(0,3),cv::Range(6,9)) = cv::Mat::eye(3,3,CV_64F);
+    ((cv::Mat) orientation.getH_qvec(old_pose.position)).copyTo(J_mul(cv::Range(0,3),cv::Range(9,12)));
+    ((cv::Mat) (new_pose.orientation.getH() * orientation.getQl() * old_pose.orientation.getG())).copyTo(J_mul(cv::Range(3,6),cv::Range(3,6)));
+    ((cv::Mat) (new_pose.orientation.getH() * old_pose.orientation.getQr() * orientation.getG())).copyTo(J_mul(cv::Range(3,6),cv::Range(9,12)));
+
+    return J_mul;
+}
+
+template <>
+cv::Mat CamPose_qf::JacobianMult(const CamPose_qf& old_pose) const{
+    CamPose_qf new_pose = (*this) * old_pose;
+    cv::Mat J_mul = cv::Mat::zeros(6,12,CV_32F);
+    ((cv::Mat) orientation.getR3()).copyTo(J_mul(cv::Range(0,3),cv::Range(0,3)));
+    J_mul(cv::Range(0,3),cv::Range(6,9)) = cv::Mat::eye(3,3,CV_32F);
+    ((cv::Mat) orientation.getH_qvec(old_pose.position)).copyTo(J_mul(cv::Range(0,3),cv::Range(9,12)));
+    ((cv::Mat) (new_pose.orientation.getH() * orientation.getQl() * old_pose.orientation.getG())).copyTo(J_mul(cv::Range(3,6),cv::Range(3,6)));
+    ((cv::Mat) (new_pose.orientation.getH() * old_pose.orientation.getQr() * orientation.getG())).copyTo(J_mul(cv::Range(3,6),cv::Range(9,12)));
+
+    return J_mul;
+}
+
+template <>
+cv::Mat CamPose_qd::JacobianInv() const{
+    cv::Mat J_inv = cv::Mat::zeros(6,6,CV_64F);
+    ((cv::Mat) -orientation.conj().getR3()).copyTo(J_inv(cv::Range(0,3),cv::Range(0,3)));
+    ((cv::Mat) -orientation.conj().getH_qvec(position)).copyTo(J_inv(cv::Range(0,3),cv::Range(3,6)));
+    J_inv(cv::Range(3,6),cv::Range(3,6)) = -cv::Mat::eye(3,3,CV_64F);
+
+    return J_inv;
+}
+
+template <>
+cv::Mat CamPose_qf::JacobianInv() const{
+    cv::Mat J_inv = cv::Mat::zeros(6,6,CV_32F);
+    ((cv::Mat) -orientation.conj().getR3()).copyTo(J_inv(cv::Range(0,3),cv::Range(0,3)));
+    ((cv::Mat) -orientation.conj().getH_qvec(position)).copyTo(J_inv(cv::Range(0,3),cv::Range(3,6)));
+    J_inv(cv::Range(3,6),cv::Range(3,6)) = -cv::Mat::eye(3,3,CV_32F);
+
+    return J_inv;
+}
+
+template <>
+cv::Mat CamPose_qd::JacobianScale(double scale) const{
+    cv::Mat J_scale = cv::Mat::eye(6,7,CV_64F);
+    J_scale(cv::Range(0,3),cv::Range(0,3)) *= scale;
+    ((cv::Mat)position).copyTo(J_scale(cv::Range(0,3),cv::Range(6,7)));
+
+    return J_scale;
+}
+
+template <>
+cv::Mat CamPose_qf::JacobianScale(float scale) const{
+    cv::Mat J_scale = cv::Mat::eye(6,7,CV_32F);
+    J_scale(cv::Range(0,3),cv::Range(0,3)) *= scale;
+    ((cv::Mat)position).copyTo(J_scale(cv::Range(0,3),cv::Range(6,7)));
+
+    return J_scale;
 }
 
 std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output)

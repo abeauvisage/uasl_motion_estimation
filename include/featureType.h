@@ -341,12 +341,15 @@ int WBA_Point<T>::latestID=0;
 template<typename O, typename T>
 class CamPose{
     public:
+    //params
     O orientation;
     cv::Vec<T,3> position;
+    cv::Mat Cov;
     int ID;
-    cv::Matx<T,4,4> TrMat() const;
-    CamPose<O,T>(int id=0, O e=O(), cv::Vec<T,3> v=cv::Vec<T,3>()):orientation(e),position(v),ID(id){}
+    //constructors
+    CamPose<O,T>(int id=0, const O& e=O(), const cv::Vec<T,3>& v=cv::Vec<T,3>(), const cv::Mat& c=cv::Mat()):orientation(e),position(v),Cov(c),ID(id){}
 
+    //member functions
     CamPose<O,T> operator*(const CamPose<O,T>& pose) const{
         CamPose<O,T> new_pose(*this);
         new_pose.orientation = orientation * pose.orientation;
@@ -354,7 +357,13 @@ class CamPose{
         return new_pose;
     }
 
+    cv::Mat JacobianMult(const CamPose<O,T>& pose) const;
+    cv::Mat JacobianInv() const;
+    cv::Mat JacobianScale(T scale) const;
+
+    cv::Matx<T,4,4> TrMat() const;
     CamPose<O,T> inv() const;
+    void copyPoseOnly(const CamPose<O,T>& pose){orientation=pose.orientation;position=pose.position;}
 
     friend std::ostream& operator<<(std::ostream& os, const CamPose& pose){
     os << "ID: " << pose.ID << std::endl << "orientation: " << pose.orientation << std::endl << "position: " << pose.position << std::endl;

@@ -359,7 +359,7 @@ template <typename T>
 cv::Matx<T,4,3> Gq_v(const Vec<T,3>& rot_vec){
 
     double snorm = rot_vec[0]*rot_vec[0]+rot_vec[1]*rot_vec[1]+rot_vec[2]*rot_vec[2]; //squared norm
-    double norm = sqrt(snorm);
+    double norm = sqrt(snorm)+1e-20;
     double a =cos(0.5*norm)*norm-2*sin(0.5*norm);
 
     return 1/(2*pow(norm,3)) * cv::Matx<T,4,3>( -rot_vec[0]*snorm*sin(0.5*norm),                -rot_vec[1]*snorm*sin(0.5*norm),                -rot_vec[2]*snorm*sin(0.5*norm),
@@ -367,7 +367,6 @@ cv::Matx<T,4,3> Gq_v(const Vec<T,3>& rot_vec){
                                                 rot_vec[0]*rot_vec[1]*a,                        2*snorm*sin(0.5*norm)+rot_vec[1]*rot_vec[1]*a,  rot_vec[1]*rot_vec[2]*a,
                                                 rot_vec[0]*rot_vec[2]*a,                        rot_vec[1]*rot_vec[2]*a,                        2*snorm*sin(0.5*norm)+rot_vec[2]*rot_vec[2]*a);
 }
-
 
 template cv::Matx43d Gq_v(const Vec3d& v);
 template cv::Matx43f Gq_v(const Vec3f& v);
