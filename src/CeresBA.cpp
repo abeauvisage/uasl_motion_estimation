@@ -602,53 +602,6 @@ bool CeresBA::getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx3
         for(int i=0;i<num_cameras_;i++){
             covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose);
             Mat originalCov(6,6,CV_64F,cov_pose);
-
-//
-//            Mat newCov(6,6,CV_64F);
-//            Vec3d pos_vec(cam_ptr);
-//            Vec3d rot_vec(cam_ptr+3);
-
-
-//            Mat T = Mat::eye(6,6,CV_64F); // TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0)
-//            ((Mat)TRef.t()).copyTo(T(Range(0,3),Range(0,3)));
-//            ((Mat)TRef.t()).copyTo(T(Range(3,6),Range(3,6)));
-//
-//            newCov = T * originalCov * T.t();
-//            rot_vec = -((Matx33d)TRef).t() * rot_vec; pos_vec = ((Matx33f)TRef).t() * pos_vec;
-
-//            cout << "vecs " << rot_vec << endl << pos_vec << endl;
-
-
-
-
-//            Mat Jacobian = Mat::eye(6,6,CV_64F);
-//
-//            Quatd quat = exp_map_Quat(rot_vec);
-//            Vec3d q_vec = quat.vec();
-//
-//            auto skew = [](const cv::Vec3d& mat){return Matx33d(0, -mat(2), mat(1), mat(2), 0, -mat(0), -mat(1), mat(0), 0);};
-//            Mat dqxdq(3,4,CV_64F);
-//            Mat qv = (Mat)( 2 * (q_vec.t()*pos_vec)[0] * Matx33d::eye()+2*q_vec*pos_vec.t()-2*pos_vec*q_vec.t()-2 * quat.w() * skew(pos_vec));
-//            Mat qw = (Mat)( 2 * quat.w() * (Mat)pos_vec + 2 * skew(q_vec) * pos_vec);
-//            qv.copyTo(dqxdq(Range(0,3),Range(0,3)));
-//            qw.copyTo(dqxdq.colRange(3,4));
-//
-//            double snorm = rot_vec[0]*rot_vec[0]+rot_vec[1]*rot_vec[1]+rot_vec[2]*rot_vec[2]; //squared norm
-//            double norm = sqrt(snorm);
-//            double a =cos(0.5*norm)*norm-2*sin(0.5*norm);
-//            Mat dqde_ = 1/(2*pow(norm,3)) * (Mat_<double>(4,3)<< 2*snorm*sin(0.5*norm)+rot_vec[0]*rot_vec[0]*a,  rot_vec[0]*rot_vec[1]*a,                        rot_vec[0]*rot_vec[2]*a,
-//                                                                rot_vec[0]*rot_vec[1]*a,                        2*snorm*sin(0.5*norm)+rot_vec[1]*rot_vec[1]*a,  rot_vec[1]*rot_vec[2]*a,
-//                                                                rot_vec[0]*rot_vec[2]*a,                        rot_vec[1]*rot_vec[2]*a,                        2*snorm*sin(0.5*norm)+rot_vec[2]*rot_vec[2]*a,
-//                                                                -rot_vec[0]*snorm*sin(0.5*norm),                -rot_vec[1]*snorm*sin(0.5*norm),                -rot_vec[2]*snorm*sin(0.5*norm));
-//
-//            ((Mat)-quat.getR3()).copyTo(Jacobian(Range(0,3),Range(0,3)));
-//            ((Mat)(-dqxdq*dqde_)).copyTo(Jacobian(Range(0,3),Range(3,6)));
-//            Jacobian(Range(3,6),Range(3,6)) = - Mat::eye(3,3,CV_64F);
-//
-////            cout << "comparison " << quat.getR3()*skew(pos_vec) << endl <<  << endl;
-//            cout << "new mat " << endl << Jacobian*newCov*Jacobian.t() << endl;
-
-
             poseCov.push_back(originalCov.clone());
             cam_ptr += 6;
 
@@ -778,7 +731,6 @@ std::vector<me::CamPose_qd> CeresBA::getQuatPoses(){
     double * cam_ptr = mutable_cameras();
     for(int i=0;i<num_cameras_;i++){
         poses.push_back(CamPose_qd(cam_idx[i],exp_map_Quat<double>(Vec3d(cam_ptr+3)),Vec3d(cam_ptr)));
-        cout << poses[poses.size()-1];
         cam_ptr +=6;
     }
     return poses;
