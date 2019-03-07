@@ -173,12 +173,22 @@ void Euler<T>::operator+=(const Euler& e){
 }
 
 template <typename T>
-cv::Vec<T,3> Euler<T>::operator*(const cv::Vec<T,3>& v){
+cv::Vec<T,3> Euler<T>::operator*(const cv::Vec<T,3>& v) const{
     return getR3() * v;
 }
 
 template <typename T>
-cv::Vec<T,4> Euler<T>::operator*(const cv::Vec<T,4>& v){
+cv::Matx<T,3,1> Euler<T>::operator*(const cv::Matx<T,3,1>& v) const{
+    return getR3() * v;
+}
+
+template <typename T>
+cv::Vec<T,4> Euler<T>::operator*(const cv::Vec<T,4>& v) const{
+    return getR4() * v;
+}
+
+template <typename T>
+cv::Matx<T,4,1> Euler<T>::operator*(const cv::Matx<T,4,1>& v) const{
     return getR4() * v;
 }
 

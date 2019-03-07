@@ -71,12 +71,18 @@ public:
 	void fromMat(const cv::Mat& R);     //!< compute Euler angles from a rotation matrix R.
     Quat<T> getQuat() const;            //!< convert Euler angles to a Quaternion of the same type.
     cv::Vec<T,3> getVector() const;         //!< returns a 3-axis vector contains the different angles.
-    Euler inverse() const {return Euler(-roll(),-pitch(),-yaw());}
+    Euler inv() const {return Euler(-roll(),-pitch(),-yaw());}
 
     //operator
     void operator+=(const Euler& e); //!< concatenate with another Euler object.
-    cv::Vec<T,3> operator*(const cv::Vec<T,3>& v); //!< rotate a 3-vector with the rotation described by the object.
-	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v); //!< rotate a 4-vector with the rotation described by the object.
+    cv::Vec<T,3> operator*(const cv::Vec<T,3>& v) const; //!< rotate a 3-vector with the rotation described by the object.
+	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v) const; //!< rotate a 4-vector with the rotation described by the object.
+	cv::Matx<T,3,1> operator*(const cv::Matx<T,3,1>& v) const;
+	cv::Matx<T,4,1> operator*(const cv::Matx<T,4,1>& v) const;
+	void operator*=(const Euler& e){}
+	void operator*=(const double& d){}
+	Euler operator*(const Euler& e) const{return Euler();}
+	Euler operator*(const double d) const{return Euler();}
 
     //access
     T roll() const {return m_roll;}
@@ -105,6 +111,7 @@ public:
 
 	void normalize(); //!< normalize the object
 	Quat conj() const {return Quat(m_w,-m_x,-m_y,-m_z);} //!< returns the conjugate of the object.
+	Quat inv() const {return conj();} //!< returns the conjugate of the object.
 
 	friend std::ostream& operator<<(std::ostream& os, const Quat<T>& q){
         os << "[" << q.m_w << "|" << q.m_x << "," << q.m_y << "," << q.m_z << "] angle: " << 2*acos(q.m_w);

@@ -338,7 +338,7 @@ typedef WBA_Point<std::pair<cv::Point2f,cv::Point2f>> WBA_stereo_Ptf;
 template<typename T>
 int WBA_Point<T>::latestID=0;
 
-template<typename O, typename T>
+template<class O, class T>
 class CamPose{
     public:
     //params
