@@ -475,13 +475,13 @@ void CeresBA::runSolver(int fixedFrames){
             cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
 
         ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
-        problem->AddResidualBlock(cstFunc,lossFunc,mutable_camera_for_observation(i),mutable_point_for_observation(i));
+        problem->AddResidualBlock(cstFunc,nullptr,mutable_camera_for_observation(i),mutable_point_for_observation(i));
         if(camera_index_[i] < fixedFrames)
             problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
     }
 
     ceres::Solver::Options options;
-    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.linear_solver_type = ceres::SPARSE_SCHUR;
     options.function_tolerance = 1e-6;
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
@@ -515,7 +515,7 @@ void CeresBA::runStereoSolver(int fixedFrames){
     }
 
     ceres::Solver::Options options;
-    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.linear_solver_type = ceres::SPARSE_SCHUR;
     options.function_tolerance = 1e-6;
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
