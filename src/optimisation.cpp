@@ -529,7 +529,7 @@ void Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_norm
 template<>
 MatrixXd Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>::compute_jacobian(){
 
-    double dp = 5;
+    double dp = 1;
     Rect bb(2*m_state.window_size,2*m_state.window_size,m_obs[0].first.cols-4*m_state.window_size-2,m_obs[1].first.rows-4*m_state.window_size-2);
 
     MatrixXd JJ = MatrixXd::Zero(1,1);
