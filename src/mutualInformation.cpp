@@ -79,7 +79,7 @@ float computeMutualInformation(const Mat& imgL, const Mat& imgR){
     for(int i=0;i<histJoint.rows;i++)
         for(int j=0;j<histJoint.cols;j++)
             if(histJoint.at<float>(i,j) > 0 && histL.at<float>(i) > 0 && histR.at<float>(j) > 0)
-                MI += histJoint.at<float>(i,j)*log(histJoint.at<float>(i,j)/(histL.at<float>(i)*histR.at<float>(j)));
+                MI += histJoint.at<float>(i,j)*log2(histJoint.at<float>(i,j)/(histL.at<float>(i)*histR.at<float>(j)));
 
     return MI;
 }
