@@ -1,5 +1,9 @@
 #include "Graph2D.h"
 
+#include <sstream>
+#include <iomanip>
+#include <iostream>
+
 using namespace cv;
 using namespace std;
 
@@ -147,10 +151,17 @@ void Graph2D::plot_axis(cv::Mat& bg, const int dx, const int dy){
     bg.setTo(Scalar(255,255,255));
     line(bg,Point(m_margin+dx,m_margin),Point(m_margin+dx,height-m_margin),Scalar(0,0,0));
     line(bg,Point(width-m_margin,height-m_margin-dy),Point(m_margin,height-m_margin-dy),Scalar(0,0,0));
-    putText(bg,to_string(m_min_x).substr(0,to_string(m_min_x).rfind(".")+3),Point(5,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
-    putText(bg,to_string(m_max_x).substr(0,to_string(m_max_x).rfind(".")+3),Point(width-m_margin+5,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
-    putText(bg,to_string(m_max_y).substr(0,to_string(m_max_y).rfind(".")+3),Point(m_margin/2+dx,m_margin-5), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
-    putText(bg,to_string(m_min_y).substr(0,to_string(m_min_y).rfind(".")+3),Point(m_margin/2+dx,height-m_margin/2), FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0));
+    std::ostringstream os;
+    std::cout << m_min_x << std::endl;
+    std::cout << boolalpha <<  ((fabs(m_min_x) < 1000 && fabs(m_min_x) > 0.001) || m_min_x == 0 ) << std::endl;
+    os << (((fabs(m_min_x) < 1000 && fabs(m_min_x) > 0.001) || m_min_x == 0 )?std::fixed:std::scientific) << std::setprecision(2) << m_min_x;
+    putText(bg,os.str(),Point(5,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.3,Scalar(0,0,0));
+    os = std::ostringstream();os << (((fabs(m_max_x) < 1000 && fabs(m_max_x) > 0.001) || m_max_x == 0 )?std::fixed:std::scientific) << std::setprecision(2) << m_max_x;
+    putText(bg,os.str(),Point(width-m_margin+5,height-m_margin-dy), FONT_HERSHEY_SIMPLEX,0.3,Scalar(0,0,0));
+    os = std::ostringstream();os << (((fabs(m_max_y) < 1000 && fabs(m_max_y) > 0.001) || m_max_y == 0 )?std::fixed:std::scientific) << std::setprecision(2) << m_max_y;
+    putText(bg,os.str(),Point(m_margin/2+dx,m_margin-5), FONT_HERSHEY_SIMPLEX,0.3,Scalar(0,0,0));
+    os = std::ostringstream();os.width(3);os << (((fabs(m_min_y) < 1000 && fabs(m_min_y) > 0.001) || m_min_y == 0 )?std::fixed:std::scientific) << std::setprecision(2) << m_min_y;
+    putText(bg,os.str(),Point(m_margin/2+dx,height-m_margin/2), FONT_HERSHEY_SIMPLEX,0.3,Scalar(0,0,0));
 }
 
 Graph2D::~Graph2D(){
