@@ -29,10 +29,15 @@ bool loadYML(string filename){
     FileNode dataset = configFile["dataset"];
     dataset["gps"] >> dataset_info.gps_orientation;
     dataset["dir"] >> dataset_info.dir;
-    dataset_info.type = dataset["type"]=="stereo"?stereo:mono;
+    dataset_info.type = dataset["type"]=="stereo"?SetupType::stereo:SetupType::mono;
     dataset_info.scaled_traj = dataset["scaled"]=="true"?true:false;
     dataset["camID"] >> dataset_info.cam_ID;
     dataset_info.poses = dataset["poses"]=="absolute"?PoseType::ABSOLUTE:PoseType::RELATIVE;
+    cv::Vec4d quat_coeffs;
+    dataset["init_orientation"] >> quat_coeffs;
+    if(norm(quat_coeffs)>0)
+        dataset_info.q_init = Quatd(quat_coeffs(0),quat_coeffs(1),quat_coeffs(2),quat_coeffs(3));
+    dataset["init_position"] >> dataset_info.p_init;
 
     // defining frame informations
     FileNode frames = configFile["frames"];
@@ -46,7 +51,7 @@ bool loadYML(string filename){
 
     //defining calibration parameters
     FileNode calib = configFile["calib"];
-    if(dataset_info.type == stereo){
+    if(dataset_info.type == SetupType::stereo){
         calib["f1"] >> param_stereo.fu1;
         calib["f2"] >> param_stereo.fu2;
         calib["f1"] >> param_stereo.fv1;
@@ -72,7 +77,7 @@ bool loadYML(string filename){
         calib["baseline"] >> param_stereo.baseline;
         param_stereo.ransac = calib["ransac"] == "true"?true:false;
         calib["threshold"] >> param_stereo.inlier_threshold;
-        param_stereo.method = calib["method"] == "GN"?StereoVisualOdometry::GN:StereoVisualOdometry::LM;
+        param_stereo.method = calib["method"] == "GN"?StereoVisualOdometry::Method::GN:StereoVisualOdometry::Method::LM;
     }else{
         calib["fu"] >> param_mono.fu;
         calib["fv"] >> param_mono.fv;
@@ -303,7 +308,7 @@ pair<Mat,Mat> loadImages(const std::string& dir, int nb){
     imgs.first = imread(dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
-    if(dataset_info.type == stereo){
+    if(dataset_info.type == SetupType::stereo){
         imgs.second = imread(dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
@@ -319,7 +324,7 @@ void loadImagesKitti(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>&
     imgs.first = imread(dir+"/L_"+num.str()+".png",0).rowRange(Range(0,374));
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
-    if(dataset_info.type == stereo){
+    if(dataset_info.type == SetupType::stereo){
         imgs.second = imread(dir+"/R_"+num.str()+".png",0).rowRange(Range(0,374));
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
@@ -342,7 +347,7 @@ void loadImages(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs
     imgs.first = imread(dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
-    if(dataset_info.type == stereo){
+    if(dataset_info.type == SetupType::stereo){
         imgs.second = imread(dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;

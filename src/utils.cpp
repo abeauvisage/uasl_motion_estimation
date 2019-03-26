@@ -1,9 +1,5 @@
 #include "utils.h"
 
-#include <iostream>
-#include <opencv2/calib3d/calib3d.hpp>
-
-
 using namespace cv;
 using namespace std;
 
@@ -246,17 +242,17 @@ Euler<T> Quat<T>::getEuler(){
 template <typename T>
 void Quat<T>::operator*=(const Quat& q){
     m_w = m_w*q.w()-(m_x*q.x()+m_y*q.y()+m_z*q.z());
-    m_x = m_x*q.w()+m_w*q.x()-m_z*q.y()+m_y*q.z();
-    m_y = m_y*q.w()+m_z*q.x()+m_w*q.y()-m_x*q.z();
-    m_z = m_z*q.w()-m_y*q.x()+m_x*q.y()+m_w*q.z();
+    m_x = m_w*q.x()+m_x*q.w()+m_y*q.z()-m_z*q.y();
+    m_y = m_w*q.y()-m_x*q.z()+m_y*q.w()+m_z*q.x();
+    m_z = m_w*q.z()+m_x*q.y()-m_y*q.x()+m_z*q.w();
 }
 
 template <typename T>
 Quat<T> Quat<T>::operator*(const Quat& q) const{
     return Quat(m_w*q.w()-(m_x*q.x()+m_y*q.y()+m_z*q.z()),
-                m_x*q.w()+m_w*q.x()-m_z*q.y()+m_y*q.z(),
-                m_y*q.w()+m_z*q.x()+m_w*q.y()-m_x*q.z(),
-                m_z*q.w()-m_y*q.x()+m_x*q.y()+m_w*q.z());
+                m_w*q.x()+m_x*q.w()+m_y*q.z()-m_z*q.y(),
+                m_w*q.y()-m_x*q.z()+m_y*q.w()+m_z*q.x(),
+                m_w*q.z()+m_x*q.y()-m_y*q.x()+m_z*q.w());
 }
 
 template <typename T>
