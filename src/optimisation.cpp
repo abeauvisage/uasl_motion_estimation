@@ -25,7 +25,7 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
     m_mask = mask;
     m_stop = StopCondition::NO_STOP;
     if(test){
-        m_params.type = GN;
+        m_params.type = OptimType::GN;
         m_params.MAX_NB_ITER = 300;
         m_params.abs_tol = 1e-30;
         m_params.incr_tol = 1e-30;
@@ -102,7 +102,7 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
         }
 
         //relative tolerance
-        if(m_params.type==GN && pow(e2-e1,2) < m_params.rel_tol)
+        if(m_params.type==OptimType::GN && pow(e2-e1,2) < m_params.rel_tol)
             m_stop = StopCondition::SMALL_DECREASE_FUNCTION;
 
     }while(!m_stop && k++ < m_params.MAX_NB_ITER);

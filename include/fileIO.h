@@ -13,9 +13,9 @@
 
 namespace me{
 
-enum PoseType{ABSOLUTE,RELATIVE};
+enum class PoseType{ABSOLUTE,RELATIVE};
 
-enum SetupType{stereo,mono}; //!< Type of setup: stereo or monocular
+enum class SetupType{stereo,mono}; //!< Type of setup: stereo or monocular
 //!< Type of filter if a filter if used.
 /*! the filter can be:
     - EKF: an Extended Kalman Filter (Quaternion)
@@ -23,7 +23,7 @@ enum SetupType{stereo,mono}; //!< Type of setup: stereo or monocular
     - MREKF: Multi-rate Kalman Filter (Euler angles)
     - RCEKF: an Extended Kalman Filter with robocentric coordinate frame (Quaternion)
     - Linear: a linear Kalman Filter */
-enum FilterType{EKF,EKFE,MREKF,RCEKF,Linear,None};
+enum class FilterType{EKF,EKFE,MREKF,RCEKF,Linear,None};
 
 //! structure describing the number of frame and frequency
 /*! - fframe: number of the first frame
@@ -51,8 +51,10 @@ struct DatasetInfo{
     double gps_orientation = 0;
     SetupType type=SetupType::mono;
     bool scaled_traj=false;
-    PoseType poses = ABSOLUTE;
+    PoseType poses = PoseType::ABSOLUTE;
     int cam_ID=0;
+    Quatd q_init;
+    cv::Vec3d p_init = cv::Vec3d(0,0,0);
 };
 
 struct cv_sig_handler{

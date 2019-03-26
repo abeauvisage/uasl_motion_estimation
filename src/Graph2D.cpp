@@ -9,7 +9,7 @@ using namespace std;
 
 namespace me{
 
-Graph2D::Graph2D(string name, const int nb, bool orth, Type t, cv::Size s): m_name(name), m_nb_curves(nb), m_orthogonal(orth),width(s.width),height(s.height), m_type(t)
+Graph2D::Graph2D(string name, const int nb, bool orth, LineType t, cv::Size s): m_name(name), m_nb_curves(nb), m_orthogonal(orth),width(s.width),height(s.height), m_type(t)
 {
     m_min_x=0.0;
     m_min_y=0.0;
@@ -56,9 +56,9 @@ void Graph2D::refresh(){
         int pitch = (m_values[k].size()/m_max_pts)+1;
         for(unsigned int i=0;i< m_values[k].size();i+=pitch){
             Point2f p(round(m_margin+(m_values[k][i].x-m_min_x)*(width-m_margin-m_margin)/(m_max_x-m_min_x)),round(height-m_margin-(m_values[k][i].y-m_min_y)*(height-m_margin-m_margin)/(m_max_y-m_min_y)));
-            if(m_type != LINE)
+            if(m_type != LineType::LINE)
                 circle(m_image, p ,1,m_colours[k], 2);
-            if(m_type != DOT && i>0)
+            if(m_type != LineType::DOT && i>0)
                 line(m_image,prev,p,m_colours[k],1);
             prev=p;
         }

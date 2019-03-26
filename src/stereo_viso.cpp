@@ -212,7 +212,7 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
             stop =StopCondition::SMALL_GRADIENT;
 
         //if LM initialize mu
-        if(m_param.method == LM && k==0){
+        if(m_param.method == Method::LM && k==0){
             double min_,max_;
             cv::minMaxLoc(A.diag(),&min_,&max_);
             mu = max(mu,max_);
@@ -221,7 +221,7 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
 
         for(;;){
 
-            if(m_param.method == LM)
+            if(m_param.method == Method::LM)
                 A += mu * Mat::eye(A.size(),A.type());
 
             //solve A X = B (X = inv(J^2) * J * residual, for GN with step = 1)
@@ -235,7 +235,7 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
 
                 // magnitude of X small enough, solution found
 
-                if(m_param.method == GN){
+                if(m_param.method == Method::GN){
                     // Gauss-Newton
                     m_state += (Matx61d)(X);
                     break;

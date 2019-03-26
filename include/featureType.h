@@ -1,9 +1,9 @@
 #ifndef FEATURETYPE_H
 #define FEATURETYPE_H
 
-#include <cstddef>
-#include <cstdlib>
-#include <cstdint>
+//#include <cstddef>
+//#include <cstdlib>
+//#include <cstdint>
 #include <iostream>
 #include <cstring>
 #include <assert.h>

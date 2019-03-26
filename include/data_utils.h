@@ -8,7 +8,7 @@
 namespace me{
 
 //! enumerate representing unit in which timestamps are expressed
-enum TimeUnit{SEC,MILLI,MICRO,NANO};
+enum class TimeUnit{SEC,MILLI,MICRO,NANO};
 
 struct Data{
 

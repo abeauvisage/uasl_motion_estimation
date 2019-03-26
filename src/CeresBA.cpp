@@ -475,7 +475,7 @@ void CeresBA::runSolver(int fixedFrames){
             cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
 
         ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
-        problem->AddResidualBlock(cstFunc,nullptr,mutable_camera_for_observation(i),mutable_point_for_observation(i));
+        problem->AddResidualBlock(cstFunc,lossFunc,mutable_camera_for_observation(i),mutable_point_for_observation(i));
         if(camera_index_[i] < fixedFrames)
             problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
     }

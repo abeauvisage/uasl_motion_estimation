@@ -7,7 +7,7 @@
 #include "utils.h"
 
 namespace me{
-enum OptimType{GN,LM};
+enum class OptimType{GN,LM};
 
 struct OptimisationParams{
     int MAX_NB_ITER;

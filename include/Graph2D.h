@@ -20,7 +20,7 @@ class Graph2D
 
     public:
 	//! Type of lines (with dots for values or not)
-        enum Type{DOT,LINE,DOTTEDLINE};
+        enum class LineType{DOT,LINE,DOTTEDLINE};
 
 	/*! Default constructor. Takes as input:
             - name of the window created
@@ -28,7 +28,7 @@ class Graph2D
             - boolean to display an orthogonal graph or not
             - size of the window
          */
-        Graph2D(std::string name, const int nb=1, bool orth=false, Type t=DOTTEDLINE, cv::Size s=cv::Size(640,480));
+        Graph2D(std::string name, const int nb=1, bool orth=false, LineType t=LineType::DOTTEDLINE, cv::Size s=cv::Size(640,480));
         void refresh();
 	/*!< add a float point to the ith curve. This Function is called for 2D graphs. */
         void addValue(const cv::Point2f& v, int i=1);
@@ -68,7 +68,7 @@ class Graph2D
     float m_max_x;
     float m_max_y;
 
-    Type m_type;
+    LineType m_type;
 
 
     //! create a random Scalar(color) when a new curve is created.

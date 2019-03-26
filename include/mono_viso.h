@@ -29,16 +29,16 @@ public:
         parameters () : ransac(true),prob(0.99),inlier_threshold(1.0),fu(1.0),fv(1.0),cu(0.0),cv(0.0){}
     };
         /*! Main constructor. Takes a set of stereo parameters as input. */
-        MonoVisualOdometry(parameters param=parameters());
+        MonoVisualOdometry(const parameters& param=parameters()):m_param(param),m_K((cv::Mat_<double>(3,3)<< param.fu,0,param.cu,0,param.fv,param.cv,0,0,1)),m_Rt(cv::Mat::eye(4,4,CV_64FC1)),m_E(cv::Mat::eye(4,4,CV_64FC1)){}
 
         /*! Function processing a set of matches. Estimate the Essential matrix and extract R and t.
             Returns true if a motion is successfuly computed, false otherwise. */
         bool process(const std::vector<StereoMatch<cv::Point2f>>& matches);
-        virtual cv::Mat getMotion(){return m_Rt;} //!< Returns the Transformation matrix.
-        std::vector<int> getInliersIdx(){return m_inliers;} //!< Returns the set of inlier indices.
-        std::vector<int> getOutliersIdx(){return m_outliers;} //!< Returns the set of outlier indices.
-        std::vector<ptH3D> get3Dpts(){return m_pts;} //!< Returns thet set of 3D features.
-        cv::Mat getEssentialMat(){return m_E;} //!< Returns the Essential matrix.
+        virtual cv::Mat getMotion() const {return m_Rt;} //!< Returns the Transformation matrix.
+        std::vector<int> getInliersIdx() const {return m_inliers;} //!< Returns the set of inlier indices.
+        std::vector<int> getOutliersIdx() const {return m_outliers;} //!< Returns the set of outlier indices.
+        std::vector<ptH3D> get3Dpts() const {return m_pts;} //!< Returns thet set of 3D features.
+        cv::Mat getEssentialMat() const {return m_E;} //!< Returns the Essential matrix.
 
     private:
         parameters m_param;         //!< Mono parameters.
