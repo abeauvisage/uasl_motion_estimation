@@ -321,11 +321,15 @@ pair<Mat,Mat> loadImages(const std::string& dir, int nb){
 void loadImagesKitti(const std::string& dir, int nb, std::pair<cv::Mat,cv::Mat>& imgs, const int padding){
 
     stringstream num;num <<  std::setfill('0') << std::setw(padding) << nb;
-    imgs.first = imread(dir+"/L_"+num.str()+".png",0).rowRange(Range(0,374));
+    try{
+        imgs.first = imread(dir+"/L_"+num.str()+".png",0).rowRange(Range(0,374));
+    }catch(cv::Exception& e){}
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
     if(dataset_info.type == SetupType::stereo){
-        imgs.second = imread(dir+"/R_"+num.str()+".png",0).rowRange(Range(0,374));
+        try{
+            imgs.second = imread(dir+"/R_"+num.str()+".png",0).rowRange(Range(0,374));
+        }catch(cv::Exception& e){}
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/R_"+num.str()+".png" << endl;
     }
@@ -335,7 +339,9 @@ cv::Mat loadImageKitti(const std::string& dir, int cam_nb, int img_nb, const int
 
     Mat img;
     stringstream num;num <<  std::setfill('0') << std::setw(padding) << img_nb;
-    img= imread(dir+"/L_"+num.str()+".png",0).rowRange(Range(0,374));
+    try{
+        img= imread(dir+"/L_"+num.str()+".png",0).rowRange(Range(0,374));
+    }catch(cv::Exception& e){}
     if(img.empty())
         cerr << "cannot read " << dir+"/L_"+num.str()+".png" << endl;
     return img;
