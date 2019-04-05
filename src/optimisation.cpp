@@ -3,7 +3,6 @@
 #include "utils.h"
 
 #include <Eigen/Cholesky>
-#include <opencv2/opencv.hpp>
 
 #include <fstream>
 #include <iomanip>
@@ -63,7 +62,6 @@ StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::V
             e(0) = 1;
         }else{
             compute_normal_equations(residuals,JJ,e);
-            cout << "JJ" << JJ  << " " << e << endl;
         }
 
         if(k == 0){
@@ -293,7 +291,6 @@ MatrixXd Optimiser<ScaleState, std::vector<std::vector<cv::Mat>> >::compute_resi
             ptH3D pt = state.pts.first[i].get3DLocation();
             for(uint j=0;j<state.pts.first[i].getNbFeatures();j++){
                 int f_idx = state.pts.first[i].getFrameIdx(j);
-                cout << f_idx << " ";
                 Mat Tr = (Mat) state.poses.first[f_idx].orientation.getR4();
                 ((Mat)state.poses.first[f_idx].position).copyTo(Tr(Range(0,3),Range(3,4)));
                 Matx44d Tr_ = Tr;
@@ -391,7 +388,6 @@ MatrixXd Optimiser<ScaleState, std::vector<std::vector<cv::Mat>> >::compute_resi
         }
     }
 
-    cout << "non reproj feats: " << sum_errs << endl;
     #ifdef SHOW
     for(uint j=0;j<m_obs.size();j++){
             imshow("img "+to_string(j),images_[j].first);

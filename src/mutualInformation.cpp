@@ -1,7 +1,5 @@
 #include "mutualInformation.h"
 
-#include <chrono>
-
 using namespace std;
 using namespace cv;
 using namespace me;

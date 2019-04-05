@@ -3,11 +3,7 @@
 #include "fileIO.h"
 #include "utils.h"
 
-#include <math.h>
-#include <cstdlib>
-#include <iostream>
 #include <numeric>
-#include <algorithm>
 
 using namespace std;
 using namespace cv;
