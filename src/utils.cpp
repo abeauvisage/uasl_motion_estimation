@@ -220,6 +220,7 @@ void Quat<T>::normalize(){
 template <typename T>
 void Quat<T>::fromMat(const cv::Mat& M){
 
+    assert(M.rows==3 && M.cols==3);
     Vec3d vec;
     cv::Rodrigues(M,vec);
 
@@ -294,30 +295,12 @@ void Quat<T>::operator/=(double nb){
 
 template <typename T>
 Vec<T,3> Quat<T>::operator*(const Vec<T,3>& v) const{
-
-    Vec<T,4> vq(0,v[0],v[1],v[2]);
-    Vec<T,4> v_r = (*this) * vq;
-    return Vec<T,3>(v_r(1),v_r(2),v_r(3));
-
+    return getR3()*v;
 }
 
 template <typename T>
 Matx<T,3,1> Quat<T>::operator*(const Matx<T,3,1>& v) const{
-
-    Matx41d vq(0,v(0),v(1),v(2));
-    Matx41d v_r = (*this) * vq;
-    return Matx<T,3,1>(v_r(1),v_r(2),v_r(3));
-
-}
-
-template <typename T>
-Matx<T,4,1> Quat<T>::operator*(const Matx<T,4,1>& v) const{
-    return getQl().t() * getQr() * v;
-}
-
-template <typename T>
-Vec<T,4> Quat<T>::operator*(const Vec<T,4>& v) const{
-    return getQl().t() * getQr() * v;
+    return getR3()*v;
 }
 
 template class Euler<float>;
@@ -372,6 +355,7 @@ cv::Matx<T,4,3> Gq_v(const Vec<T,3>& rot_vec){
                                                 2*snorm*sin(0.5*norm)+rot_vec[0]*rot_vec[0]*a,  rot_vec[0]*rot_vec[1]*a,                        rot_vec[0]*rot_vec[2]*a,
                                                 rot_vec[0]*rot_vec[1]*a,                        2*snorm*sin(0.5*norm)+rot_vec[1]*rot_vec[1]*a,  rot_vec[1]*rot_vec[2]*a,
                                                 rot_vec[0]*rot_vec[2]*a,                        rot_vec[1]*rot_vec[2]*a,                        2*snorm*sin(0.5*norm)+rot_vec[2]*rot_vec[2]*a);
+
 }
 
 template cv::Matx43d Gq_v(const Vec3d& v);

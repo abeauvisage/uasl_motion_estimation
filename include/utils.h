@@ -90,6 +90,18 @@ public:
     T yaw() const {return m_yaw;}
 };
 
+template<typename T>
+Quat<T> exp_map_Quat(const cv::Vec<T,3>& vec);
+
+template<typename T>
+cv::Vec<T,3> log_map_Quat(const Quat<T>& quat);
+
+template<typename T>
+cv::Matx<T,3,3> exp_map_Mat(const cv::Vec<T,3>& vec);
+
+template<typename T>
+cv::Vec<T,3> log_map_Mat(const cv::Matx<T,3,3>& mat);
+
 template <typename T>
 class Quat {
 
@@ -104,8 +116,19 @@ public:
 
     /*! Main constructor. Default values are 1 for the real part and 0 for the axis components. */
 	Quat(T w=1, T x=0, T y=0, T z=0): m_w(w), m_x(x), m_y(y), m_z(z){normalize();}
-	/*! Create a Quat object from a rotation matrix and normalize it. */
-	Quat(const cv::Mat& M){fromMat(M);normalize();}
+	/*! Create a Quat object from a rotation matrix or vector(quaternion/rot vector) and normalize it. */
+	Quat(const cv::Mat& M){
+	    if(M.cols == 1){ // if M is a vector
+            if(M.rows == 4){ // with 4 quaternion components
+                const T* ptr = M.ptr<T>();
+                m_w = ptr[0];m_x = ptr[1];m_y = ptr[2];m_z = ptr[3];
+            }else if(M.rows == 3) // or 3 rotation vector components
+                *this = exp_map_Quat<T>(M);
+	    }
+        else
+            fromMat(M);
+        normalize();
+    }
 	/*! copy constructor. */
 	Quat(const Quat& q): m_w(q.w()), m_x(q.x()), m_y(q.y()), m_z(q.z()){normalize();}
 
@@ -125,6 +148,7 @@ public:
     inline cv::Matx<T,3,3> getH_qvec(const cv::Vec<T,3> x) const; //!< quaternion-vector multiplication derivative wrt rotation vector.
     inline cv::Matx<T,4,3> getG() const;        //!< quaternion derivative wrt rotation vector.
 
+    inline cv::Vec<T,4> getCoeffs() const {return cv::Vec<T,4>(m_w,m_x,m_y,m_z);} //! return the vector of coefficients [q_w, q_x, q_y, q_z]
 	inline cv::Matx<T,3,3> getR3() const;   //!< returns the 3x3 corresponding rotation matrix.
 	inline cv::Matx<T,4,4> getR4() const;   //!< returns the 4x4 corresponding rotation matrix.
 	void fromMat(const cv::Mat& M);         //!< update thet object from a rotation matrix.
@@ -136,13 +160,12 @@ public:
 	Quat operator*(const Quat& q) const;
 	Quat operator*(const double d) const;
 	cv::Vec<T,3> operator*(const cv::Vec<T,3>& v) const;
-	cv::Vec<T,4> operator*(const cv::Vec<T,4>& v) const;
 	cv::Matx<T,3,1> operator*(const cv::Matx<T,3,1>& v) const;
-	cv::Matx<T,4,1> operator*(const cv::Matx<T,4,1>& v) const;
 	Quat operator+(const Quat& q) const;
 	void operator+=(const Quat& q);
 	void operator-=(const Quat& q);
 	void operator/=(double nb);
+	Quat<T>& operator=(const Quat<T>& q){m_w = q.w();m_x = q.x();m_y = q.y();m_z = q.z();return *this;}
 
 	//access
 	double w() const {return m_w;}
@@ -202,12 +225,12 @@ inline cv::Matx<T,3,3> Quat<T>::getR3() const{
 }
 
 template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getQr() const{
+inline cv::Matx<T,4,4> Quat<T>::getQl() const{
     return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,-m_z,m_y,m_y,m_z,m_w,-m_x,m_z,-m_y,m_x,m_w);
 }
 
 template <typename T>
-inline cv::Matx<T,4,4> Quat<T>::getQl() const{
+inline cv::Matx<T,4,4> Quat<T>::getQr() const{
     return typename cv::Matx<T,4,4>::Matx(m_w,-m_x,-m_y,-m_z,m_x,m_w,m_z,-m_y,m_y,-m_z,m_w,m_x,m_z,m_y,-m_x,m_w);
 }
 
@@ -227,8 +250,8 @@ template <typename T>
 inline cv::Matx<T,3,3> Quat<T>::getH_qvec(const cv::Vec<T,3> x) const{
     cv::Vec<T,3> q_vec = vec();
     cv::Mat dqxdq(3,4,CV_64F);
-    ((cv::Mat)( 2 * (q_vec.t()*x)[0] * cv::Matx<T,3,3>::eye()+2*q_vec*x.t()-2*x*q_vec.t()-2 * m_w * skew(x))).copyTo(dqxdq(cv::Range(0,3),cv::Range(0,3)));
-    ((cv::Mat)( 2 * m_w * x + 2 * skew(q_vec) * x)).copyTo(dqxdq.colRange(3,4));
+    ((cv::Mat)( 2 * m_w * x + 2 * skew(q_vec) * x)).copyTo(dqxdq.colRange(0,1));
+    ((cv::Mat)( 2 * (q_vec.t()*x)[0] * cv::Matx<T,3,3>::eye()+2*q_vec*x.t()-2*x*q_vec.t()-2 * m_w * skew(x))).copyTo(dqxdq.colRange(1,4));
     return (cv::Matx<T,3,4>) dqxdq * Gq_v(log_map_Quat(*this));
 }
 
