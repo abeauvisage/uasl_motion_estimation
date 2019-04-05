@@ -1,15 +1,9 @@
 #ifndef FEATURETYPE_H
 #define FEATURETYPE_H
 
-//#include <cstddef>
-//#include <cstdlib>
-//#include <cstdint>
 #include <iostream>
-#include <cstring>
 #include <assert.h>
 #include <deque>
-
-#include <opencv2/core.hpp>
 
 #include "utils.h"
 
@@ -358,6 +352,7 @@ class CamPose{
     }
 
     cv::Mat JacobianMult(const CamPose<O,T>& pose) const;
+    cv::Mat JacobianMultReverse(const CamPose<O,T>& pose) const;
     cv::Mat JacobianInv() const;
     cv::Mat JacobianScale(T scale) const;
 
