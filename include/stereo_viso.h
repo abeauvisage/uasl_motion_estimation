@@ -18,27 +18,18 @@ namespace me{
 class StereoVisualOdometry: public VisualOdometry {
 
 public:
-    //! Method used for optimization. Either Gauss-Newton or Levenberg-Maquart.
-    enum class Method {GN, LM};
 
     //! Stereo parameters
     /*! contains calibration parameters and info about the method used. */
-    struct parameters  {
+    struct parameters : public VisualOdometry::parameters {
         double  baseline;           //!< distance between cameras.
-        Method method;              //!< optimization method used.
-        int n_ransac;               //!< nb of iterations used for the RANSAC process.
-        bool ransac;                //!< use of not if RANSAC.
-        double  inlier_threshold;   //!< error threshold for a match to be considered inlier.
         bool    reweighting;        //!< use weight deping on feature distance (deprecated).
         double fu1,fv1,fu2,fv2;     //!< focal length of each camera.
         double cu1,cu2;             //!< principal point in u (horizontal).
         double cv1,cv2;             //!< principal point in v (vertical).
-        double step_size;           //!< step size for optimization (TO BE USED).
-        double eps,e1,e2,e3,e4;     //!< optimization thresholds.
-        int max_iter;               //!< max_iteration for optim algo to converge.
-        parameters (): baseline(1.0),method(Method::GN),n_ransac(200),ransac(true),inlier_threshold(2.0),reweighting(true),
-                        fu1(1.0),fv1(1.0),fu2(1.0),fv2(1.0),cu1(0.0),cu2(0.0),cv1(0.0),cv2(0.0),step_size(1.0),
-                        eps(1e-9),e1(1e-3),e2(1e-12),e3(1e-12),e4(1e-15),max_iter(100){}
+
+        //! default constructor
+        parameters(): baseline(1.0),reweighting(true),fu1(1.0),fv1(1.0),fu2(1.0),fv2(1.0),cu1(0.0),cu2(0.0),cv1(0.0),cv2(0.0){}
     };
 
     /*! Main constructor. Takes a set of stereo parameters as input. */

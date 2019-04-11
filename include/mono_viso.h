@@ -18,15 +18,11 @@ class MonoVisualOdometry : public VisualOdometry
 public:
     //! Mono parameters
     /*! contains calibration parameters and info about the method used. */
-    struct parameters  {
-        bool ransac;                //! use of RANSAC or not.
+    struct parameters : public VisualOdometry::parameters {
         double prob;                //! level of confidence for the estimation (probability).
-        double  inlier_threshold;   //! inlier threshold for RANSAC.
-        double fu;                   //! focal length of the camera.
-        double fv;                   //! focal length of the camera.
-        double cu;                  //! principal point.
-        double cv;                  //! principal point.
-        parameters () : ransac(true),prob(0.99),inlier_threshold(1.0),fu(1.0),fv(1.0),cu(0.0),cv(0.0){}
+        double fu,fv;                   //! focal length of the camera.
+        double cu,cv;                  //! principal point.
+        parameters () : prob(0.99),fu(1.0),fv(1.0),cu(0.0),cv(0.0){}
     };
         /*! Main constructor. Takes a set of stereo parameters as input. */
         MonoVisualOdometry(const parameters& param=parameters()):m_param(param),m_K((cv::Mat_<double>(3,3)<< param.fu,0,param.cu,0,param.fv,param.cv,0,0,1)),m_Rt(cv::Mat::eye(4,4,CV_64FC1)),m_E(cv::Mat::eye(4,4,CV_64FC1)){}

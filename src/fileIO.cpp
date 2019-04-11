@@ -77,7 +77,8 @@ bool loadYML(string filename){
         calib["baseline"] >> param_stereo.baseline;
         param_stereo.ransac = calib["ransac"] == "true"?true:false;
         calib["threshold"] >> param_stereo.inlier_threshold;
-        param_stereo.method = calib["method"] == "GN"?StereoVisualOdometry::Method::GN:StereoVisualOdometry::Method::LM;
+        param_stereo.method = calib["method"] == "GN"?VisualOdometry::Method::GN:VisualOdometry::Method::LM;
+        calib["fixed_frames"] >> param_stereo.nb_fixed_frames;
     }else{
         calib["fu"] >> param_mono.fu;
         calib["fv"] >> param_mono.fv;
@@ -89,6 +90,7 @@ bool loadYML(string filename){
         calib["cv"] >> param_mono.cv;
         calib["ransac"] >> param_mono.ransac;
         calib["threshold"] >> param_mono.inlier_threshold;
+        calib["fixed_frames"] >> param_mono.nb_fixed_frames;
     }
 
     //defining tracking parameters
