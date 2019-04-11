@@ -161,6 +161,7 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
     assert(num_cameras_ == (int) poses.size() && num_points_ == (int) pts.size());
     int start = poses[0].ID;
     camera_nbs.clear();
+
     for(uint i=0;i<pts.size();i++){
         pt3D pt = to_euclidean(pts[i].get3DLocation());
         parameters_[num_cameras_*6+i*3+0] = pt(0);
@@ -462,27 +463,26 @@ void CeresBA::runSolver(int fixedFrames){
     problem = new ceres::Problem();
 
     const double* obs = observations();
-    cout << "[BA] " << num_cameras_ << " cams | " << num_points_ << " points | " << num_observations() << " observations" << endl;
+    cout << "[BA] " << num_cameras_ << " cams | " << num_points_ << " points | " << num_observations() << " observations" << " (noise: " << feat_noise_ << " )" << endl;
 
 	assert((int) camera_nbs.size() == num_points_);
 
     for(int i=0;i<num_observations();++i){
 
-       ceres::CostFunction* cstFunc;
-       if(camera_nbs.empty() || camera_nbs[point_index_[i]] == 0 )
-            cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
-        else
-            cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
-
+        ceres::CostFunction* cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1],sqrt(feat_noise_)); //error so should use feat. standard deviation
         ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
+
         problem->AddResidualBlock(cstFunc,lossFunc,mutable_camera_for_observation(i),mutable_point_for_observation(i));
         if(camera_index_[i] < fixedFrames)
             problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
+        problem->SetParameterUpperBound(mutable_point_for_observation(i),0,1000);
+        problem->SetParameterUpperBound(mutable_point_for_observation(i),1,1000);
+        problem->SetParameterUpperBound(mutable_point_for_observation(i),2,1000);
     }
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::SPARSE_SCHUR;
-    options.function_tolerance = 1e-6;
+    options.function_tolerance = 1e-3;
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
     ceres::Solve(options,problem,&summary);

@@ -11,12 +11,14 @@
 #include <utils.h>
 #include <opencv2/core/core.hpp>
 
+#include <iostream>
+
 class CeresBA {
 
 public:
 
 struct ReprojectionError {
-  ReprojectionError(const double observed_x, const double observed_y, const double sigma2) : observed_x(observed_x), observed_y(observed_y),sigma2_inv(1.0/sigma2){}
+  ReprojectionError(const double observed_x, const double observed_y, const double sigma) : observed_x(observed_x), observed_y(observed_y),sigma_inv(1.0/sigma){}
 
   template <typename T>
   bool operator()(const T* const camera, const T* const point, T* residuals) const {
@@ -34,8 +36,8 @@ struct ReprojectionError {
     T predicted_x = (double)(K_(0,0)) * xp + (double)(K_(0,2));
     T predicted_y = K_(1,1) * yp + K_(1,2);
 
-    residuals[0] = sigma2_inv*(predicted_x - observed_x);
-    residuals[1] = sigma2_inv*(predicted_y - observed_y);
+    residuals[0] = sigma_inv*(predicted_x - observed_x);
+    residuals[1] = sigma_inv*(predicted_y - observed_y);
     return true;
   }
 
@@ -44,7 +46,7 @@ struct ReprojectionError {
   }
   double observed_x;
   double observed_y;
-  double sigma2_inv;
+  double sigma_inv;
 };
 
 struct ReprojectionErrorMonoRight {
