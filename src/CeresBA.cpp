@@ -463,7 +463,7 @@ void CeresBA::runSolver(int fixedFrames){
     problem = new ceres::Problem();
 
     const double* obs = observations();
-    cout << "[BA] " << num_cameras_ << " cams | " << num_points_ << " points | " << num_observations() << " observations" << " (noise: " << feat_noise_ << " )" << endl;
+    cout << "[BA] " << num_cameras_ << " cams (" << fixedFrames << " fixed) | " << num_points_ << " points | " << num_observations() << " observations" << " (noise: " << feat_noise_ << " )" << endl;
 
 	assert((int) camera_nbs.size() == num_points_);
 
@@ -472,12 +472,20 @@ void CeresBA::runSolver(int fixedFrames){
         ceres::CostFunction* cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1],sqrt(feat_noise_)); //error so should use feat. standard deviation
         ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
 
+        if(camera_nbs.empty() || camera_nbs[point_index_[i]] == 0)
+            cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
+        else
+            cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
+
         problem->AddResidualBlock(cstFunc,lossFunc,mutable_camera_for_observation(i),mutable_point_for_observation(i));
         if(camera_index_[i] < fixedFrames)
             problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
-        problem->SetParameterUpperBound(mutable_point_for_observation(i),0,1000);
-        problem->SetParameterUpperBound(mutable_point_for_observation(i),1,1000);
-        problem->SetParameterUpperBound(mutable_point_for_observation(i),2,1000);
+        problem->SetParameterUpperBound(mutable_point_for_observation(i),0,5000);
+        problem->SetParameterUpperBound(mutable_point_for_observation(i),1,5000);
+        problem->SetParameterUpperBound(mutable_point_for_observation(i),2,5000);
+        problem->SetParameterLowerBound(mutable_point_for_observation(i),0,-5000);
+        problem->SetParameterLowerBound(mutable_point_for_observation(i),1,-5000);
+        problem->SetParameterLowerBound(mutable_point_for_observation(i),2,-5000);
     }
 
     ceres::Solver::Options options;

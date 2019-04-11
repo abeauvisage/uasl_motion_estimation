@@ -4,8 +4,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/calib3d.hpp>
 
-#include <iostream>
-
 #define PI 3.14156592
 
 namespace me{
