@@ -279,7 +279,6 @@ MatrixXd Optimiser<ScaleState, std::vector<std::vector<cv::Mat>> >::compute_resi
     #endif
 
     std::vector<double> errors;
-    double sum_errs=0;
 
     for(uint i=0;i<state.pts.first.size();i++){
         if(state.pts.first[i].isTriangulated()){

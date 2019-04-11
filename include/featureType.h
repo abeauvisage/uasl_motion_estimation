@@ -342,15 +342,23 @@ class CamPose{
     int ID;
     //constructors
     CamPose<O,T>(int id=0, const O& e=O(), const cv::Vec<T,3>& v=cv::Vec<T,3>(), const cv::Mat& c=cv::Mat()):orientation(e),position(v),Cov(c),ID(id){}
+    CamPose<O,T>(const CamPose<O,T>& cp):orientation(cp.orientation),position(cp.position),Cov(6,6,CV_64F),ID(cp.ID){cp.Cov.copyTo(Cov);}
 
     //member functions
+    CamPose<O,T>& operator=(const CamPose<O,T>& cp){
+        orientation = cp.orientation;
+        position = cp.position;
+        ID=cp.ID;
+        Cov = cv::Mat::zeros(6,6,CV_64F);
+        cp.Cov.copyTo(Cov);
+        return *this;
+    }
     CamPose<O,T> operator*(const CamPose<O,T>& pose) const{
         CamPose<O,T> new_pose(*this);
         new_pose.orientation = orientation * pose.orientation;
         new_pose.position = orientation * pose.position + position;
         return new_pose;
     }
-
     cv::Mat JacobianMult(const CamPose<O,T>& pose) const;
     cv::Mat JacobianMultReverse(const CamPose<O,T>& pose) const;
     cv::Mat JacobianInv() const;
@@ -365,6 +373,15 @@ class CamPose{
     return os;
 }
 };
+
+template<class O, class T>
+CamPose<O,T> poseMultiplicationWithCovariance(const CamPose<O,T>& p1, const CamPose<O,T>& p2, int ID);
+template<class O, class T>
+CamPose<O,T> poseMultiplicationWithCovarianceReverse(const CamPose<O,T>& p1, const CamPose<O,T>& p2, int ID);
+template<class O, class T>
+void invertPoseWithCovariance(CamPose<O,T>& p);
+template<class O, class T>
+void ScalePoseWithCovariance(CamPose<O,T>& p, const std::pair<double,double>& scale);
 
 typedef CamPose<Euld,double> CamPose_ed;
 typedef CamPose<Eulf,float> CamPose_ef;

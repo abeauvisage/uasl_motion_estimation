@@ -4,6 +4,8 @@
 #include <opencv2/core.hpp>
 #include <opencv2/calib3d.hpp>
 
+#include <iostream>
+
 #define PI 3.14156592
 
 namespace me{
@@ -241,8 +243,8 @@ inline cv::Matx<T,4,3> Quat<T>::getG() const{
 
 template <typename T>
 inline cv::Matx<T,3,4> Quat<T>::getH() const{
-    double c = 1.0/(1-m_w*m_w);
-    double d = acos(m_w)/sqrt(1-m_w*m_w);
+    double c = 1.0/(1-m_w*m_w+1e-20);
+    double d = acos(m_w)/sqrt(1-m_w*m_w+1e-20);
     return typename cv::Matx<T,3,4>::Matx(2*c*m_x*(d*m_w-1), 2*d, 0, 0, 2*c*m_y*(d*m_w-1), 0, 2*d, 0, 2*c*m_z*(d*m_w-1), 0, 0, 2*d);
 }
 
@@ -251,7 +253,7 @@ inline cv::Matx<T,3,3> Quat<T>::getH_qvec(const cv::Vec<T,3> x) const{
     cv::Vec<T,3> q_vec = vec();
     cv::Mat dqxdq(3,4,CV_64F);
     ((cv::Mat)( 2 * m_w * x + 2 * skew(q_vec) * x)).copyTo(dqxdq.colRange(0,1));
-    ((cv::Mat)( 2 * (q_vec.t()*x)[0] * cv::Matx<T,3,3>::eye()+2*q_vec*x.t()-2*x*q_vec.t()-2 * m_w * skew(x))).copyTo(dqxdq.colRange(1,4));
+    ((cv::Mat)( 2 * ((q_vec.t()*x)[0] * cv::Matx<T,3,3>::eye()+q_vec*x.t()-x*q_vec.t()-m_w * skew(x)))).copyTo(dqxdq.colRange(1,4));
     return (cv::Matx<T,3,4>) dqxdq * Gq_v(log_map_Quat(*this));
 }
 
