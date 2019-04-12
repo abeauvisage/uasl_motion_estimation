@@ -480,12 +480,12 @@ void CeresBA::runSolver(int fixedFrames){
         problem->AddResidualBlock(cstFunc,lossFunc,mutable_camera_for_observation(i),mutable_point_for_observation(i));
         if(camera_index_[i] < fixedFrames)
             problem->SetParameterBlockConstant(mutable_camera_for_observation(i));
-        problem->SetParameterUpperBound(mutable_point_for_observation(i),0,5000);
-        problem->SetParameterUpperBound(mutable_point_for_observation(i),1,5000);
-        problem->SetParameterUpperBound(mutable_point_for_observation(i),2,5000);
-        problem->SetParameterLowerBound(mutable_point_for_observation(i),0,-5000);
-        problem->SetParameterLowerBound(mutable_point_for_observation(i),1,-5000);
-        problem->SetParameterLowerBound(mutable_point_for_observation(i),2,-5000);
+        problem->SetParameterUpperBound(mutable_point_for_observation(i),0,500);
+        problem->SetParameterUpperBound(mutable_point_for_observation(i),1,500);
+        problem->SetParameterUpperBound(mutable_point_for_observation(i),2,500);
+        problem->SetParameterLowerBound(mutable_point_for_observation(i),0,-500);
+        problem->SetParameterLowerBound(mutable_point_for_observation(i),1,-500);
+        problem->SetParameterLowerBound(mutable_point_for_observation(i),2,0);
     }
 
     ceres::Solver::Options options;
