@@ -161,7 +161,7 @@ cv::Mat CamPose_qf::JacobianScale(float scale) const{
 template<>
 CamPose_qd poseMultiplicationWithCovariance(const CamPose_qd& p1, const CamPose_qd& p2, int ID){
 
-    assert(!p1.Cov.empty() && !p2.Cov.empty());
+    assert(!p1.Cov.empty() && !p2.Cov.empty() && "Poses cannot be mulitplied (empty Cov matrix)");
     // P3 = P1 * P2 = R1 R2 | R1 t2 + t1
     CamPose_qd p3 = p1 * p2;
     cv::Mat augmented_cov = cv::Mat::zeros(12,12,CV_64F);
@@ -185,7 +185,7 @@ CamPose_qd poseMultiplicationWithCovariance(const CamPose_qd& p1, const CamPose_
 template<>
 CamPose_qd poseMultiplicationWithCovarianceReverse(const CamPose_qd& p1, const CamPose_qd& p2, int ID){
 
-    assert(!p1.Cov.empty() && !p2.Cov.empty());
+    assert(!p1.Cov.empty() && !p2.Cov.empty() && "Poses cannot be multiplied (empty Cov matrix)");
     // P3 = P2 * P1 = R2 R1 | R2 t1 + t2
     CamPose_qd p3 = p2 * p1;
     cv::Mat augmented_cov = cv::Mat::zeros(12,12,CV_64F);
@@ -209,6 +209,8 @@ CamPose_qd poseMultiplicationWithCovarianceReverse(const CamPose_qd& p1, const C
 template<>
 void invertPoseWithCovariance(CamPose_qd& p){
 
+    assert(!p.Cov.empty() && "Pose cannot be inverted (empty Cov matrix)");
+
     cv::Mat J = cv::Mat::zeros(6,6,CV_64F);
     //J = [-R^T dR^Tt/dq; 0 -I]
     ((cv::Mat) -p.orientation.conj().getR3()).copyTo(J(cv::Range(0,3),cv::Range(0,3)));
@@ -224,12 +226,14 @@ void invertPoseWithCovariance(CamPose_qd& p){
 template<>
 void ScalePoseWithCovariance(CamPose_qd& p, const std::pair<double,double>& scale){
 
+    assert(!p.Cov.empty() && "Pose cannot be scaled (empty Cov matrix)");
+
     cv::Mat augmentedCov = cv::Mat::zeros(7,7,CV_64F);
     p.Cov.copyTo(augmentedCov(cv::Range(0,6),cv::Range(0,6)));
     augmentedCov.at<double>(6,6) = scale.second;
     cv::Mat J = cv::Mat::zeros(6,7,CV_64F);
     ((cv::Mat)(cv::Mat::eye(3,3,CV_64F) * scale.first)).copyTo(J(cv::Range(0,3),cv::Range(0,3)));
-    ((cv::Mat)(cv::Mat::eye(3,3,CV_64F) * scale.first)).copyTo(J(cv::Range(3,6),cv::Range(3,6)));
+    ((cv::Mat)cv::Mat::eye(3,3,CV_64F)).copyTo(J(cv::Range(3,6),cv::Range(3,6)));
     ((cv::Mat) p.position).copyTo(J(cv::Range(0,3),cv::Range(6,7)));
     cv::Mat new_cov = J * augmentedCov * J.t();
     new_cov.copyTo(p.Cov);
