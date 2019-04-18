@@ -469,13 +469,13 @@ void CeresBA::runSolver(int fixedFrames){
 
     for(int i=0;i<num_observations();++i){
 
-        ceres::CostFunction* cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1],sqrt(feat_noise_)); //error so should use feat. standard deviation
-        ceres::LossFunction* lossFunc = new ceres::CauchyLoss(1.0);
+        ceres::CostFunction* cstFunc;
+        ceres::LossFunction* lossFunc = new ceres::HuberLoss(1.0);//new ceres::CauchyLoss(1.0);
 
         if(camera_nbs.empty() || camera_nbs[point_index_[i]] == 0)
-            cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
+            cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1],sqrt(feat_noise_)); //error is squared so should use feat. standard deviation
         else
-            cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1],feat_noise_);
+            cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1],sqrt(feat_noise_));
 
         problem->AddResidualBlock(cstFunc,lossFunc,mutable_camera_for_observation(i),mutable_point_for_observation(i));
         if(camera_index_[i] < fixedFrames)
@@ -489,6 +489,7 @@ void CeresBA::runSolver(int fixedFrames){
     }
 
     ceres::Solver::Options options;
+    options.max_solver_time_in_seconds = 0.2;
     options.linear_solver_type = ceres::SPARSE_SCHUR;
     options.function_tolerance = 1e-3;
     options.minimizer_progress_to_stdout = false;
