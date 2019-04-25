@@ -37,9 +37,13 @@ class Graph2D
         void addValue(const cv::Vec3d& v, int idx);
 	/*!< add a double value to the ith curve. This Function is called for 1D graph. */
         void addValue(double v, int i=1){if(m_values[i-1].empty()){cv::Point2f pt(0,0);addValue(pt,i);}cv::Point2f p(m_values[i-1].size(),v);addValue(p,i);}
+    /*!< retrieve data ith data point from the jth curve. */
+        cv::Point2f getValue(int i, int j=1){if(m_values.empty() || m_values[j-1].empty()) return cv::Point2f(-1,-1); else return m_values[j-1][i];}
+        cv::Point2f getLastValue(int i){if(m_values.empty() || m_values[i-1].empty()) return cv::Point2f(-1,-1); else return m_values[i-1][m_values[i-1].size()-1];}
         void addLegend(std::string s, int i=1){m_legend[i-1]=s;} //!< store the legend for the ith curve.
         void clearGraph(); //!< remove values stored and refresh the graph.
         void saveGraph(std::string filename){imwrite(filename,m_image);} //!< save the image created in a file.
+        cv::Mat getGraph(){return m_image;} //!< returns the current graph image.
         float getLength(int i=1){return m_length[i-1];} //!< get the length of the ith curve (valid only for 2D graph).
         float getNbValues(int i){return m_values[i-1].size();} //!< Returns the number of values of the ith curve.
         float getNbCurves(){return m_nb_curves;} //!< Returns the total number of curves.
