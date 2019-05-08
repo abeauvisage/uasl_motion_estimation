@@ -174,12 +174,11 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
     for(uint j=0;j<poses.size();j++){
         cam_idx[j] = poses[j].ID;
         Vec3d new_t = poses[j].position;
-        for(uint k=0;k<3;k++)
-            parameters_[j*6+k] = new_t[k];
         Vec3d rot_vec = log_map_Quat<double>(poses[j].orientation);
-        parameters_[j*6+3] = rot_vec[0];
-        parameters_[j*6+4] = rot_vec[1];
-        parameters_[j*6+5] = rot_vec[2];
+        for(uint k=0;k<3;k++){
+            parameters_[j*6+k] = new_t[k];
+            parameters_[j*6+3+k] = rot_vec[k];
+        }
     }
 
     int nb =0;
