@@ -23,13 +23,13 @@ public:
     /*! contains calibration parameters and info about the method used. */
     struct parameters : public VisualOdometry::parameters {
         double  baseline;           //!< distance between cameras.
-        bool    reweighting;        //!< use weight deping on feature distance (deprecated).
+        bool    weighting;        //!< use weights.
         double fu1,fv1,fu2,fv2;     //!< focal length of each camera.
         double cu1,cu2;             //!< principal point in u (horizontal).
         double cv1,cv2;             //!< principal point in v (vertical).
 
         //! default constructor
-        parameters(): baseline(1.0),reweighting(true),fu1(1.0),fv1(1.0),fu2(1.0),fv2(1.0),cu1(0.0),cu2(0.0),cv1(0.0),cv2(0.0){}
+        parameters(): baseline(1.0),weighting(false),fu1(1.0),fv1(1.0),fu2(1.0),fv2(1.0),cu1(0.0),cu2(0.0),cv1(0.0),cv2(0.0){}
     };
 
     /*! Main constructor. Takes a set of stereo parameters as input. */

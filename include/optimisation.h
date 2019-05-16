@@ -16,8 +16,9 @@ struct OptimisationParams{
     double alpha;
     OptimType type;
     bool minim;
+    bool weighting;
 
-    OptimisationParams(OptimType type_=OptimType::LM,bool min=true, int it=20,double v_=2,double t=1e-3,double m=1e-20,double e1=1e-4,double e2=1e-4,double e3=1e-3, double e4=1e-4,double a=1.0): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_),minim(min){}
+    OptimisationParams(OptimType type_=OptimType::LM,bool min=true, int it=20,double v_=2,double t=1e-3,double m=1e-20,double e1=1e-4,double e2=1e-4,double e3=1e-3, double e4=1e-4,double a=1.0): MAX_NB_ITER(it),v(v_),tau(t),mu(m),abs_tol(e1),grad_tol(e2),incr_tol(e3),rel_tol(e4),alpha(a),type(type_),minim(min),weighting(false){}
 };
 
 struct OptimState{
