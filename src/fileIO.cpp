@@ -75,7 +75,8 @@ bool loadYML(string filename){
         if(!param_stereo.cv2)
             calib["cv2"] >> param_stereo.cv2;
         calib["baseline"] >> param_stereo.baseline;
-        param_stereo.ransac = calib["ransac"] == "true"?true:false;
+        param_stereo.ransac = (calib["ransac"] == "true"?true:false);
+        param_stereo.weighting = (calib["weighting"] == "true"?true:false);
         calib["threshold"] >> param_stereo.inlier_threshold;
         param_stereo.method = calib["method"] == "GN"?VisualOdometry::Method::GN:VisualOdometry::Method::LM;
         calib["fixed_frames"] >> param_stereo.nb_fixed_frames;
@@ -311,6 +312,7 @@ pair<Mat,Mat> loadImages(const std::string& dir, int nb){
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
     if(dataset_info.type == SetupType::stereo){
+//        num = stringstream();num <<  std::setfill('0') << std::setw(5) << nb-1;
         imgs.second = imread(dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
@@ -407,5 +409,8 @@ std::vector<cv::Mat> loadPCImage(const std::string& dir, int cam_nb, int img_nb,
     return imgs;
 }
 
+void write(cv::FileStorage& fs, const std::string&, const DatasetInfo& x);
+void write(cv::FileStorage& fs, const std::string&, const FrameInfo& x);
+void write(cv::FileStorage& fs, const std::string&, const TrackingInfo& x);
 
 }

@@ -4,8 +4,8 @@
 #include <string>
 #include <fstream>
 
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "stereo_viso.h"
 #include "mono_viso.h"
@@ -35,6 +35,10 @@ struct FrameInfo{
     int skip = 1;
     int bias_frame = 0;
     int init = 0;
+
+    void write(cv::FileStorage& fs) const{
+        fs << "{" << "start" << fframe << "stop" << lframe << "rate" << skip << "bframe" << bias_frame << "initframe" << init << "}";
+    }
 };
 
 //! structure containing tracking parameters
@@ -43,6 +47,10 @@ struct TrackingInfo{
     int window_size=5;
     double parallax=10.0;
     double feat_cov = 0.25;
+
+    void write(cv::FileStorage& fs) const{
+        fs << "{" << "feats" << nb_feats << "window" << window_size << "parallax" << parallax << "feat_cov" << feat_cov << "}";
+    }
 };
 
 //! structure containing various information about the dataset to use
@@ -55,21 +63,40 @@ struct DatasetInfo{
     int cam_ID=0;
     Quatd q_init;
     cv::Vec3d p_init = cv::Vec3d(0,0,0);
+    void write(cv::FileStorage& fs) const{
+        fs << "{" << "dir" << dir << "gps" << gps_orientation << "type" << (type==SetupType::mono?"mono":"stereo") << "scaled" << (scaled_traj?"true":"false") <<
+        "poses" << (poses==PoseType::ABSOLUTE?"absoulte":"relative") << "camID" << cam_ID << "init_orientation" << q_init.vec() << "init_position" << p_init << "}";
+    }
 };
+
+template<class T>
+void write(cv::FileStorage& fs, const std::string&, const T& x){
+    x.write(fs);
+}
 
 struct cv_sig_handler{
 
     int _break_=0;
     bool _quit_=false;
 
-    void wait(){
-        switch(cv::waitKey(_break_)){
+    void stop(){
+        _break_=0;
+        wait();
+    }
+
+    char wait(){
+        char k = cv::waitKey(_break_);
+        switch(k){
                 case 'p':
-                _break_ = (_break_ == 0 ? 10 : 0);break;
+                    _break_ = 0;break;
+                case 'r':
+                _break_
+                = 10;break;
                 case 'q':
                     _quit_ = true;
 
             }
+            return k;
     }
 };
 
