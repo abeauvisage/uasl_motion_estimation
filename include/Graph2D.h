@@ -65,7 +65,7 @@ class Graph2D
     int height;
 
     int m_margin = 60;
-    int m_max_pts = 100; //!< maximum number of point displayed per curve (slow down the program if too many).
+    int m_max_pts = 500; //!< maximum number of point displayed per curve (slow down the program if too many).
     int count=0; //!< store the number of values if 1D graph.
     float m_min_x;
     float m_min_y;
