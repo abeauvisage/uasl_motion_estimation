@@ -98,6 +98,7 @@ bool loadYML(string filename){
     FileNode tracking = configFile["tracking"];
     tracking["feats"] >> tracking_info.nb_feats;
     tracking["window"] >> tracking_info.window_size;
+    tracking["ba_rate"] >> tracking_info.ba_rate;
     tracking["parallax"] >> tracking_info.parallax;
     tracking["feat_cov"] >> tracking_info.feat_cov;
     if(!tracking_info.feat_cov)
@@ -412,5 +413,7 @@ std::vector<cv::Mat> loadPCImage(const std::string& dir, int cam_nb, int img_nb,
 void write(cv::FileStorage& fs, const std::string&, const DatasetInfo& x);
 void write(cv::FileStorage& fs, const std::string&, const FrameInfo& x);
 void write(cv::FileStorage& fs, const std::string&, const TrackingInfo& x);
-
+void read(cv::FileNode& fs, DatasetInfo& x, const DatasetInfo& x_d);
+void read(cv::FileNode& fs, FrameInfo& x, const FrameInfo& x_d);
+void read(cv::FileNode& fs, TrackingInfo& x, const TrackingInfo& x_d);
 }

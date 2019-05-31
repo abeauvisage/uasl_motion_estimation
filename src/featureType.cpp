@@ -171,7 +171,7 @@ CamPose_qd poseMultiplicationWithCovariance(const CamPose_qd& p1, const CamPose_
     cv::Mat J = cv::Mat::zeros(6,12,CV_64F);
     // J = [ I dR1t2/dq1 R1 0; 0 dq3/dq1 0 dq3/dq2]
     ((cv::Mat) cv::Mat::eye(3,3,CV_64F)).copyTo(J(cv::Range(0,3),cv::Range(0,3)));
-    ((cv::Mat) cv::Mat::eye(3,3,CV_64F)/*p1.orientation.getH_qvec(p2.position)*/).copyTo(J(cv::Range(0,3),cv::Range(3,6)));
+    ((cv::Mat)/* cv::Mat::eye(3,3,CV_64F)*/p1.orientation.getH_qvec(p2.position)).copyTo(J(cv::Range(0,3),cv::Range(3,6)));
     ((cv::Mat) p1.orientation.getR3()).copyTo(J(cv::Range(0,3),cv::Range(6,9)));
     ((cv::Mat) (p3.orientation.getH() * p2.orientation.getQr() * p1.orientation.getG())).copyTo(J(cv::Range(3,6),cv::Range(3,6)));
     ((cv::Mat) (p3.orientation.getH() * p1.orientation.getQl() * p2.orientation.getG())).copyTo(J(cv::Range(3,6),cv::Range(9,12)));

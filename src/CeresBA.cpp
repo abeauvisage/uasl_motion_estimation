@@ -1,16 +1,20 @@
 #include "CeresBA.h"
 
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/calib3d/calib3d.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/core/eigen.hpp>
+//#include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/calib3d/calib3d.hpp>
+//#include <opencv2/imgproc/imgproc.hpp>
+//#include <opencv2/core/eigen.hpp>
+
+#include <chrono>
 
 using namespace cv;
 using namespace std;
 using namespace me;
 
 Matx33d CeresBA::K_;
+Matx33d ScaleOptimiser::K_;
 double CeresBA::baseline_;
+double ScaleOptimiser::baseline_;
 
 vector<int> selectRandomIndices(int nb_samples, int nb_tot) {
 
@@ -457,8 +461,50 @@ bool CeresBA::runRansac(int nb_iterations,double inlier_threshold,int fixedFrame
     }
 }
 
+void ScaleOptimiser::findScale(const std::vector<WBA_Ptf>& features, const CamPose_qd& pose, double init_value){
+
+    auto tp1 = chrono::steady_clock::now();
+
+    cout << "here" << endl;
+
+    problem = new ceres::Problem();
+    cout << "set init value" << endl;
+    lambda = new double(init_value);
+
+    cout << "[Scale] poseID " << pose.ID << endl;
+
+    for( const me::WBA_Ptf& f : features)
+        if((int) f.getLastFrameIdx() == pose.ID){
+            ceres::CostFunction* cstFunc = ScaleOptimiser::MIError::Create(f.get3DLocation(),pose,f.getCameraNum(),10,&stereoPair);
+            problem->AddResidualBlock(cstFunc,nullptr,lambda);
+        }
+
+    ceres::Solver::Options options;
+//    options.max_solver_time_in_seconds = 0.2;
+    options.linear_solver_type = ceres::DENSE_QR;
+    options.function_tolerance = 1e-3;
+    options.minimizer_progress_to_stdout = true;
+    ceres::Problem::EvaluateOptions opt;
+    double cost;
+    vector<double> res,grad;
+    problem->Evaluate(opt,&cost,&res,&grad,nullptr);
+    std::copy(res.begin(),res.end(),std::ostream_iterator<double>(std::cout," "));
+    cout << "evaluation: " << cost << endl;
+    std::copy(grad.begin(),grad.end(),std::ostream_iterator<double>(std::cout," "));
+    cout << "grad" << endl;
+    ceres::Solver::Summary summary;
+    ceres::Solve(options,problem,&summary);
+    cout << " final scale " << *lambda << endl;
+    cout << summary.FullReport() << endl;
+
+    auto tp2 = chrono::steady_clock::now();
+
+    cout << "[Scale ceres] solved in: " << chrono::duration_cast<chrono::milliseconds>(tp2-tp1).count() << " ms." << endl;
+}
+
 void CeresBA::runSolver(int fixedFrames){
 
+    auto tp1 = chrono::steady_clock::now();
     problem = new ceres::Problem();
 
     const double* obs = observations();
@@ -494,6 +540,10 @@ void CeresBA::runSolver(int fixedFrames){
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
     ceres::Solve(options,problem,&summary);
+
+    auto tp2 = chrono::steady_clock::now();
+
+    cout << "[BA] solved in: " << chrono::duration_cast<chrono::milliseconds>(tp2-tp1).count() << " ms." << endl;
 }
 
 void CeresBA::runStereoSolver(int fixedFrames){
@@ -584,28 +634,36 @@ std::vector<me::pt3D> CeresBA::get3DPoints(){
     return pts;
 }
 
-bool CeresBA::getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx33d>& pointCov){
+bool CeresBA::getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx33d>* pointCov){
 
     if(!problem)
         return false;
 
-    poseCov.clear();pointCov.clear();
+    auto tp1 = chrono::steady_clock::now();
+
+    poseCov.clear();
+    if(pointCov)
+        pointCov->clear();
     std::vector<std::pair<const double*,const double*>> cov_blocks;
     std::vector<double*> param_blocks;
     //retrieving param blocks
     problem->GetParameterBlocks(&param_blocks);
-    assert((int)param_blocks.size() == num_cameras_+num_points_);
+    cout << to_string(param_blocks.size())+" blocks"+to_string(num_cameras_+num_points_)+" params" << endl;
+    if((int)param_blocks.size() != num_cameras_+num_points_)
+        return false;
 
-    for(uint i=0;i<param_blocks.size();i++)
+    for(uint i=0;i<(pointCov?param_blocks.size():num_cameras_);i++)
         cov_blocks.push_back(make_pair(param_blocks[i],param_blocks[i]));
     //creating Covariance structure
     ceres::Covariance::Options cov_opts;
     ceres::Covariance covariance(cov_opts);
-
+    auto tp2 = chrono::steady_clock::now();
+    chrono::time_point<chrono::steady_clock> tp3;
     //computing covariance
     if(!covariance.Compute(cov_blocks, problem))
         return false;
     else{
+        tp3 = chrono::steady_clock::now();
         double cov_pose[6*6];double cov_point[3*3];double * cam_ptr = mutable_cameras();
         for(int i=0;i<num_cameras_;i++){
             covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose);
@@ -614,11 +672,16 @@ bool CeresBA::getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx3
             cam_ptr += 6;
 
         }
-        for(int i=num_cameras_;i<num_cameras_+num_points_;i++){
-            covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_point);
-            pointCov.push_back(Mat(3,3,CV_64F,cov_point));
-        }
+        if(pointCov)
+            for(int i=num_cameras_;i<num_cameras_+num_points_;i++){
+                covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_point);
+                pointCov->push_back(Mat(3,3,CV_64F,cov_point));
+            }
     }
+    auto tp4 = chrono::steady_clock::now();
+    cout << "[BA Cov] get block: " << chrono::duration_cast<chrono::milliseconds>(tp2-tp1).count() << endl;
+    cout << "[BA Cov] compute: " << chrono::duration_cast<chrono::milliseconds>(tp3-tp2).count() << endl;
+    cout << "[BA Cov] convert: " << chrono::duration_cast<chrono::milliseconds>(tp4-tp3).count() << endl;
     return true;
 }
 

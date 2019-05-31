@@ -4,6 +4,7 @@
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
+#include <mutualInformation.h>
 #include <featureType.h>
 #include <utils.h>
 
@@ -158,7 +159,7 @@ struct StereoReprojectionError {
   std::vector<me::CamPose_md> getMatPoses();
   std::vector<int> get_inliers(const double threshold);
   std::vector<int> get_inliers_stereo(const double threshold);
-  bool getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx33d>& pointCov);
+  bool getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx33d>* pointCov=nullptr);
   bool getCovarianceQuat(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx33d>& pointCov);
 
   void runSolver(int fixedFrames=0);
@@ -205,6 +206,66 @@ struct StereoReprojectionError {
 
   double* observations_;
   double* parameters_;
+};
+
+class ScaleOptimiser{
+
+public:
+
+struct MIError {
+  MIError(const me::ptH3D& pt_, const me::CamPose_qd& pose_, const int camNum_, const int window_size_, const std::pair<cv::Mat,cv::Mat>* ptr_) : point(pt_),pose(pose_),camNum(camNum_),window_size(window_size_),ptr(ptr_){}
+
+  bool operator()(const double* const lambda, double* residuals) const {
+
+    assert(!ptr->first.empty() && !ptr->first.empty());
+
+    double scale = *lambda;
+//    std::cout << "scale: " << scale << std::endl;
+    cv::Matx44d Tr = pose.TrMat();
+    me::ptH2D feat = K_ * cv::Matx34d::eye() * scale *(Tr * point);
+    cv::Point2f feat_left(me::to_euclidean(feat)(0),me::to_euclidean(feat)(1));
+    me::ptH2D feat_ =  (K_* cv::Matx34d::eye()) * (scale * (Tr * point) - cv::Matx41d(baseline_,0,0,0));
+    cv::Point2f feat_right(me::to_euclidean(feat_)(0),me::to_euclidean(feat_)(1));
+//    std::cout << feat_right.x << " "<< trunc(feat_right.x) << std::endl;
+
+    cv::Rect bb(window_size,window_size,ptr->first.cols-2*window_size,ptr->first.rows-2*window_size);
+
+    if(bb.contains(feat_left) && bb.contains(feat_right)){
+        cv::Mat ROI_left = ptr->first(cv::Rect(feat_left.x-window_size,feat_left.y-window_size,window_size*2,window_size*2));
+        cv::Mat ROI_right = ptr->second(cv::Rect(feat_right.x-window_size,feat_right.y-window_size,window_size*2,window_size*2));
+        cv::Mat ROI_right_plus = ptr->second(cv::Rect(feat_right.x+1-window_size,feat_right.y-window_size,window_size*2,window_size*2));
+        double MI = computeMutualInformation(ROI_left,ROI_right), MI_plus = computeMutualInformation(ROI_left,ROI_right_plus);
+        *residuals = 1.0/(MI+(MI_plus-MI)*(feat_right.x-trunc(feat_right.x))+1e-3);
+    }else{
+        *residuals = 1.0/1e-3;
+    }
+
+    return true;
+  }
+
+  static ceres::CostFunction* Create(const me::ptH3D& pt_, const me::CamPose_qd& pose_, const int camNum_, const int window_size_, const std::pair<cv::Mat,cv::Mat>* ptr_) {
+    return (new ceres::NumericDiffCostFunction<MIError,ceres::CENTRAL, 1, 1>(new MIError(pt_,pose_,camNum_,window_size_,ptr_)));
+  }
+  me::ptH3D point;
+  me::CamPose_qd pose;
+  int camNum,window_size;
+  const std::pair<cv::Mat,cv::Mat>* ptr;
+};
+
+ScaleOptimiser(const std::pair<cv::Mat,cv::Mat>& stereoPair_, const cv::Matx33d& K, const double baseline): stereoPair(stereoPair_){K_=K;baseline_=baseline;}
+~ScaleOptimiser(){delete problem;delete lambda;}
+void findScale(const std::vector<me::WBA_Ptf>& features, const me::CamPose_qd& pose, double init_value=1.0);
+
+static cv::Matx33d K_;
+static double baseline_;
+
+private:
+
+ceres::Problem* problem=nullptr;
+double* lambda=nullptr;
+
+std::pair<cv::Mat,cv::Mat> stereoPair;
+
 };
 
 #endif // CERESBA_H

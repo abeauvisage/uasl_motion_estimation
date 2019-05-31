@@ -2,6 +2,8 @@
 #define FEATURETYPE_H
 
 #include <iostream>
+#include <iomanip>
+#include <iterator>
 #include <assert.h>
 #include <deque>
 
@@ -373,6 +375,15 @@ class CamPose{
     return os;
 }
 };
+
+template<class O, class T>
+std::ostream& operator<<(std::ostream& out, const std::vector<CamPose<O,T>>& v){
+    out << "Poses [" << std::endl;
+    if(!v.empty())
+        std::copy(v.begin(),v.end(), std::ostream_iterator<CamPose<O,T>>(out, ""));
+    out << "\b\b]";
+    return out;
+}
 
 template<class O, class T>
 CamPose<O,T> poseMultiplicationWithCovariance(const CamPose<O,T>& p1, const CamPose<O,T>& p2, int ID);

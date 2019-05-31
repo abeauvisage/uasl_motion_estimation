@@ -39,17 +39,32 @@ struct FrameInfo{
     void write(cv::FileStorage& fs) const{
         fs << "{" << "start" << fframe << "stop" << lframe << "rate" << skip << "bframe" << bias_frame << "initframe" << init << "}";
     }
+    void read(const cv::FileNode& node){
+        fframe = (int)node["start"];
+        lframe = (int)node["stop"];
+        skip = (int)node["rate"];
+        bias_frame = (int)node["bframe"];
+        init = (int)node["initframe"];
+    }
 };
 
 //! structure containing tracking parameters
 struct TrackingInfo{
     int nb_feats=500;
     int window_size=5;
+    int ba_rate=0;
     double parallax=10.0;
     double feat_cov = 0.25;
 
     void write(cv::FileStorage& fs) const{
-        fs << "{" << "feats" << nb_feats << "window" << window_size << "parallax" << parallax << "feat_cov" << feat_cov << "}";
+        fs << "{" << "feats" << nb_feats << "window" << window_size << "ba_rate" << ba_rate << "parallax" << parallax << "feat_cov" << feat_cov << "}";
+    }
+    void read(const cv::FileNode& node){
+        nb_feats = (int)node["feats"];
+        window_size = (int)node["window"];
+        ba_rate = (int)node["ba_rate"];
+        parallax = (double)node["parallax"];
+        feat_cov = (double)node["feat_cov"];
     }
 };
 
@@ -65,7 +80,19 @@ struct DatasetInfo{
     cv::Vec3d p_init = cv::Vec3d(0,0,0);
     void write(cv::FileStorage& fs) const{
         fs << "{" << "dir" << dir << "gps" << gps_orientation << "type" << (type==SetupType::mono?"mono":"stereo") << "scaled" << (scaled_traj?"true":"false") <<
-        "poses" << (poses==PoseType::ABSOLUTE?"absoulte":"relative") << "camID" << cam_ID << "init_orientation" << q_init.vec() << "init_position" << p_init << "}";
+        "poses" << (poses==PoseType::ABSOLUTE?"absolute":"relative") << "camID" << cam_ID << "init_orientation" << q_init.getCoeffs() << "init_position" << p_init << "}";
+    }
+    void read(const cv::FileNode& node){
+        dir = (std::string)node["dir"];
+        gps_orientation = (double)node["gps"];
+        type = (node["type"]=="mono"?SetupType::mono:SetupType::stereo);
+        scaled_traj = (node["scaled"]=="true"?true:false);
+        poses = (node["poses"]=="absolute"?PoseType::ABSOLUTE:PoseType::RELATIVE);
+        cam_ID = (int)node["camID"];
+        cv::Vec4d q;node["init_orientation"] >> q;
+        if(norm(q)>0)
+            q_init = Quatd(q(0),q(1),q(2),q(3));
+        node["init_position"] >> p_init;
     }
 };
 
@@ -73,6 +100,19 @@ template<class T>
 void write(cv::FileStorage& fs, const std::string&, const T& x){
     x.write(fs);
 }
+
+template<class T>
+void read(const cv::FileNode& node, T& x, const T& default_value = T()){
+    if(node.empty())
+        x = default_value;
+    else
+        x.read(node);
+}
+//
+//template<class T>
+//std::ostream operator<<(std::ostream& os, const T& data){
+//
+//}
 
 struct cv_sig_handler{
 
@@ -125,9 +165,9 @@ cv::Mat loadImage(const std::string& dir, int cam_nb, int img_nb, const int padd
 void loadPCImages(const std::string& dir, int nb, std::vector<std::pair<cv::Mat,cv::Mat>>& imgs, const int padding=5);
 std::vector<cv::Mat> loadPCImage(const std::string& dir, int cam_nb, int img_nb, const int padding=5);
 
-inline void openLogFile(std::string filename){logFile.open(filename,std::ofstream::trunc);}
+inline void openLogFile(const std::string& filename){logFile.open(filename);if(!logFile.is_open())std::cerr << "could not create log file" << std::endl;}
 //! write a string in the logFile. Useful for displaying data without flooding the standard output.
-inline void writeLogFile(std::string message){logFile << message;}
+inline void writeLogFile(const std::string& message){logFile << message;}
 inline void closeLogFile(){logFile.close();}
 
 class IOFile{
