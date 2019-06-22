@@ -1,10 +1,5 @@
 #include "CeresBA.h"
 
-//#include <opencv2/highgui/highgui.hpp>
-//#include <opencv2/calib3d/calib3d.hpp>
-//#include <opencv2/imgproc/imgproc.hpp>
-//#include <opencv2/core/eigen.hpp>
-
 #include <chrono>
 
 using namespace cv;
@@ -463,15 +458,9 @@ bool CeresBA::runRansac(int nb_iterations,double inlier_threshold,int fixedFrame
 
 void ScaleOptimiser::findScale(const std::vector<WBA_Ptf>& features, const CamPose_qd& pose, double init_value){
 
-    auto tp1 = chrono::steady_clock::now();
-
-    cout << "here" << endl;
 
     problem = new ceres::Problem();
-    cout << "set init value" << endl;
     lambda = new double(init_value);
-
-    cout << "[Scale] poseID " << pose.ID << endl;
 
     for( const me::WBA_Ptf& f : features)
         if((int) f.getLastFrameIdx() == pose.ID){
@@ -489,17 +478,9 @@ void ScaleOptimiser::findScale(const std::vector<WBA_Ptf>& features, const CamPo
     vector<double> res,grad;
     problem->Evaluate(opt,&cost,&res,&grad,nullptr);
     std::copy(res.begin(),res.end(),std::ostream_iterator<double>(std::cout," "));
-    cout << "evaluation: " << cost << endl;
     std::copy(grad.begin(),grad.end(),std::ostream_iterator<double>(std::cout," "));
-    cout << "grad" << endl;
     ceres::Solver::Summary summary;
     ceres::Solve(options,problem,&summary);
-    cout << " final scale " << *lambda << endl;
-    cout << summary.FullReport() << endl;
-
-    auto tp2 = chrono::steady_clock::now();
-
-    cout << "[Scale ceres] solved in: " << chrono::duration_cast<chrono::milliseconds>(tp2-tp1).count() << " ms." << endl;
 }
 
 void CeresBA::runSolver(int fixedFrames){
@@ -648,7 +629,6 @@ bool CeresBA::getCovariance(std::vector<cv::Mat>& poseCov, std::vector<cv::Matx3
     std::vector<double*> param_blocks;
     //retrieving param blocks
     problem->GetParameterBlocks(&param_blocks);
-    cout << to_string(param_blocks.size())+" blocks"+to_string(num_cameras_+num_points_)+" params" << endl;
     if((int)param_blocks.size() != num_cameras_+num_points_)
         return false;
 
@@ -714,7 +694,6 @@ bool CeresBA::getCovarianceQuat(std::vector<cv::Mat>& poseCov, std::vector<cv::M
             //retrieving and converting covariance
             covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose);
             Mat originalCov(6,6,CV_64F,cov_pose);
-            cout << "orig_cov " << originalCov << endl;
             /*original originalCov = [  ee ep
                                 pe pp] where ee is covariance of angle-axis orientation pp is covariance of position */
             Mat newCov(6,6,CV_64F);
@@ -726,18 +705,12 @@ bool CeresBA::getCovarianceQuat(std::vector<cv::Mat>& poseCov, std::vector<cv::M
 
             newCov = T * originalCov * T.t();
 
-            cout << "new_cov " << newCov << endl;
-
             //retrieving cam poses e=rot_vec = [e1,e2,e3] p=pos_vec=[p1,p2,p3]
             Vec3d pos_vec(cam_ptr);
             Vec3d rot_vec(cam_ptr+3);
             rot_vec = -((Matx33d)TRef).t() * rot_vec; pos_vec = ((Matx33f)TRef).t() * pos_vec;// changing to imu coordinate system
 
-            cout << "pos_vec " << pos_vec  << "," << rot_vec << endl;
-
             Quatd quat = exp_map_Quat(rot_vec);
-            cout << quat << endl;
-//            Mat q_vec = (Mat) quat.vec();
             Vec3d q_vec = quat.vec();
             Mat dqxdq(3,4,CV_64F);
 
@@ -745,13 +718,8 @@ bool CeresBA::getCovarianceQuat(std::vector<cv::Mat>& poseCov, std::vector<cv::M
 
             Mat qv = (Mat)( 2 * (q_vec.t()*pos_vec)[0] * Matx33d::eye()+2*q_vec*pos_vec.t()-2*pos_vec*q_vec.t()-2 * quat.w() * skew(pos_vec));
             Mat qw = (Mat)( 2 * quat.w() * (Mat)pos_vec + 2 * skew(q_vec) * pos_vec);
-
-            cout << "qv " << qv << endl;
-            cout << "qw " << qw << endl;
-
             qv.copyTo(dqxdq(Range(0,3),Range(0,3)));
             qw.copyTo(dqxdq.colRange(3,4));
-            cout << "dqx " << dqxdq << endl;
 
             //Jacobian for quaternion
             double snorm = rot_vec[0]*rot_vec[0]+rot_vec[1]*rot_vec[1]+rot_vec[2]*rot_vec[2]; //squared norm
@@ -776,15 +744,12 @@ bool CeresBA::getCovarianceQuat(std::vector<cv::Mat>& poseCov, std::vector<cv::M
 
             //dq/de
             Mat dqde = dqdu*dude;
-
-            cout << "dqde " << endl << dqde << endl << endl << dqde_ << endl;
             Mat Jacobian = Mat::eye(7,6,CV_64F);
             /* J = [I_3x3   0_3x3
                     0_4x3       dqde] */
             ((Mat)-exp_map_Mat(rot_vec)).copyTo(Jacobian(Range(0,3),Range(0,3)));
             ((Mat)(-dqxdq*dqde_)).copyTo(Jacobian(Range(0,3),Range(3,6)));
             dqde_.copyTo(Jacobian(Range(3,7),Range(3,6)));
-            cout << "final cov " << Jacobian*newCov*Jacobian.t() << endl;
             poseCov.push_back(Jacobian*newCov*Jacobian.t());
             cam_ptr +=6; //moving pointer to next camera pose
         }

@@ -1,8 +1,5 @@
 #include "stereo_viso.h"
 
-#include "fileIO.h"
-#include "utils.h"
-
 #include <numeric>
 
 using namespace std;

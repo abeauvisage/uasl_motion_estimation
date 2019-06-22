@@ -313,7 +313,6 @@ pair<Mat,Mat> loadImages(const std::string& dir, int nb){
     if(imgs.first.empty())
         cerr << "cannot read " << dir+"/cam0_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;
     if(dataset_info.type == SetupType::stereo){
-//        num = stringstream();num <<  std::setfill('0') << std::setw(5) << nb-1;
         imgs.second = imread(dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png",0);
         if(imgs.second.empty())
             cerr << "cannot read " << dir+"/cam1_image"+num.str()+(appendix.empty()?"":"_"+appendix)+".png" << endl;

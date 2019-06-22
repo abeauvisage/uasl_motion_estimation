@@ -108,11 +108,6 @@ void read(const cv::FileNode& node, T& x, const T& default_value = T()){
     else
         x.read(node);
 }
-//
-//template<class T>
-//std::ostream operator<<(std::ostream& os, const T& data){
-//
-//}
 
 struct cv_sig_handler{
 

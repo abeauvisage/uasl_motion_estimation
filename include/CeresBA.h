@@ -50,8 +50,6 @@ struct ReprojectionErrorMonoRight {
   template <typename T>
   bool operator()(const T* const camera,const T* const point,T* residuals) const {
 
-//      std::cout << "Mono" << std::endl;
-
     T p[3];
     ceres::AngleAxisRotatePoint(camera+3, point, p);
     // camera[3,4,5] are the translation.
@@ -220,13 +218,11 @@ struct MIError {
     assert(!ptr->first.empty() && !ptr->first.empty());
 
     double scale = *lambda;
-//    std::cout << "scale: " << scale << std::endl;
     cv::Matx44d Tr = pose.TrMat();
     me::ptH2D feat = K_ * cv::Matx34d::eye() * scale *(Tr * point);
     cv::Point2f feat_left(me::to_euclidean(feat)(0),me::to_euclidean(feat)(1));
     me::ptH2D feat_ =  (K_* cv::Matx34d::eye()) * (scale * (Tr * point) - cv::Matx41d(baseline_,0,0,0));
     cv::Point2f feat_right(me::to_euclidean(feat_)(0),me::to_euclidean(feat_)(1));
-//    std::cout << feat_right.x << " "<< trunc(feat_right.x) << std::endl;
 
     cv::Rect bb(window_size,window_size,ptr->first.cols-2*window_size,ptr->first.rows-2*window_size);
 

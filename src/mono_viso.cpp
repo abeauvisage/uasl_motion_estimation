@@ -1,7 +1,5 @@
 #include "mono_viso.h"
 
-#include <opencv2/calib3d.hpp>
-
 using namespace cv;
 
 namespace me{
