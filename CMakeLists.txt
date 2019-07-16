@@ -14,10 +14,11 @@ find_package(Eigen3 REQUIRED)
 
 # documentation
 find_package(Doxygen)
-if(DOXYGEN_FOUND)
+option(ME_BUILD_DOC "Build doc target for uasl_MSVO" OFF)
+if(DOXYGEN_FOUND AND ME_BUILD_DOC)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
 add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-endif(DOXYGEN_FOUND)
+endif(DOXYGEN_FOUND AND ME_BUILD_DOC)
 
 # source and header files
 file(GLOB SOURCE_FILES src/*.cpp)

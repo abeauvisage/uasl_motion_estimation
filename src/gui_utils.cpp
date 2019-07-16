@@ -133,6 +133,28 @@ cv::Mat show_stereo_reproj_scaled(const pair<vector<WBA_Ptf>,vector<WBA_Ptf>>& p
 }
 
 
+cv::Mat show(const cv::Mat& img, const std::vector<cv::Point2f>& pts){
+
+    assert(img.type() == CV_8UC1 && "image should be 8-bit 1 channel");
+
+    namedWindow("stereo_matches",0);
+    cv::RNG rng_cv( 0xFFFFFFFF );
+
+    Mat color_img(img.size(),CV_8U);
+    img.convertTo(color_img,CV_8UC3);
+    cvtColor(color_img,color_img,CV_GRAY2BGR);
+
+    for(auto& pt : pts){
+        int icolor = (unsigned) rng_cv;
+        cv::Scalar color( icolor&255, (icolor>>8)&255, (icolor>>16)&255 );
+        circle(color_img,pt,10,color,5);
+    }
+    imshow("stereo_matches", color_img);
+    resizeWindow("stereo_matches",1280,480);
+    waitKey(100);
+    return color_img;
+}
+
 cv::Mat display_cov(const string& wname, const cv::Mat& cov, double s){
 
     cv::RotatedRect ellipse_;
