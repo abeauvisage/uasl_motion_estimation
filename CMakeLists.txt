@@ -11,6 +11,7 @@ set( LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib )
 # dependencies
 find_package(OpenCV 3.4 REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(Ceres QUIET)
 
 # documentation
 find_package(Doxygen)
@@ -21,18 +22,75 @@ add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 endif(DOXYGEN_FOUND AND ME_BUILD_DOC)
 
 # source and header files
-file(GLOB SOURCE_FILES src/*.cpp)
-file(GLOB HEADER_FILES include/*.h)
+set(ME_CORE_HEADERS
+					include/core/feature_types.h
+					include/core/rotation_utils.h
+					include/core/data_utils.h
+					include/core/gps_utils.h
+					include/core/mutual_information.h
+					include/core/file_IO.h
+)
+set(ME_CORE_SOURCES
+					src/core/feature_types.cpp
+					src/core/rotation_utils.cpp
+					src/core/mutual_information.cpp
+					src/core/file_IO.cpp
+)
+
+set(ME_GUI_HEADERS
+					include/gui/gui_utils.h
+					include/gui/Graph2D.h
+)
+set(ME_GUI_SOURCES
+					src/gui/gui_utils.cpp
+					src/gui/Graph2D.cpp
+)
+
+set(ME_OPTIM_HEADERS
+					include/optimisation/optimisation.h
+)
+set(ME_OPTIM_SOURCES
+					src/optimisation/optimisation.cpp
+)
+
+set(ME_VO_HEADERS
+					include/vo/MonoVisualOdometry.h
+					include/vo/StereoVisualOdometry.h
+)
+set(ME_VO_SOURCES
+					src/vo/MonoVisualOdometry.cpp
+					src/vo/StereoVisualOdometry.cpp
+)
+
+#Ceres for optimisation
+if(CERES_FOUND)
+list(APPEND ${ME_OPTIM_HEADERS} include/optimisation/CeresBA.h)
+list(APPEND ${ME_OPTIM_HEADERS} include/optimisation/CeresBA.cpp)
+endif(CERES_FOUND)
 
 #library option
 option(DYNAMIC_LIB "Build dynamic lib" OFF)
 
 # library target
 if(DYNAMIC_LIB)
-add_library(MotionEstimation SHARED ${SOURCE_FILES} ${HEADER_FILES})
-else(DYNAMIC_LIB)
-add_library(MotionEstimation ${SOURCE_FILES} ${HEADER_FILES})
+set(SHARED_LIBS SHARED)
 endif(DYNAMIC_LIB)
-install(TARGETS MotionEstimation LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
-target_link_libraries(MotionEstimation ${OpenCV_LIBS} pthread)
-include_directories(include ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
+
+#generating different lib modules
+add_library(MotionEstimation_core ${SHARED_LIBS} ${ME_CORE_HEADERS} ${ME_CORE_SOURCES})
+target_link_libraries(MotionEstimation_core ${OpenCV_LIBS})
+add_library(MotionEstimation_optimisation ${SHARED_LIBS} ${ME_OPTIM_HEADERS} ${ME_OPTIM_SOURCES})
+target_link_libraries(MotionEstimation_optimisation ${OpenCV_LIBS})
+add_library(MotionEstimation_gui ${SHARED_LIBS} ${ME_GUI_HEADERS} ${ME_GUI_SOURCES})
+target_link_libraries(MotionEstimation_gui ${OpenCV_LIBS} pthread)
+add_library(MotionEstimation_vo ${SHARED_LIBS} ${ME_VO_HEADERS} ${ME_VO_SOURCES})
+target_link_libraries(MotionEstimation_vo ${OpenCV_LIBS} pthread)
+
+#install rules
+install(TARGETS MotionEstimation_core MotionEstimation_gui MotionEstimation_vo MotionEstimation_optimisation LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+
+include_directories(	
+						include
+						${OpenCV_INCLUDE_DIRS}
+						${EIGEN3_INCLUDE_DIR}
+)
