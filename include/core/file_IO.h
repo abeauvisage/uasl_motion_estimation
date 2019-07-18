@@ -22,8 +22,6 @@
 
 namespace me{
 
-namespace core{
-
 enum class PoseType{ABSOLUTE,RELATIVE}; //!< Type of pose representation: absolute or relative
 
 enum class SetupType{stereo,mono}; //!< Type of setup: stereo or monocular
@@ -248,7 +246,6 @@ public:
 
 };
 
-}// namespace core
 }// namespace me
 
 #endif // FILEIO_H_INCLUDED

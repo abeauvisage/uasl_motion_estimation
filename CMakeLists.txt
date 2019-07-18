@@ -63,10 +63,10 @@ set(ME_VO_SOURCES
 )
 
 #Ceres for optimisation
-if(CERES_FOUND)
+if(Ceres_DIR)
 list(APPEND ${ME_OPTIM_HEADERS} include/optimisation/CeresBA.h)
-list(APPEND ${ME_OPTIM_HEADERS} include/optimisation/CeresBA.cpp)
-endif(CERES_FOUND)
+list(APPEND ${ME_OPTIM_SOURCES} include/optimisation/CeresBA.cpp)
+endif(Ceres_DIR)
 
 #library option
 option(DYNAMIC_LIB "Build dynamic lib" OFF)

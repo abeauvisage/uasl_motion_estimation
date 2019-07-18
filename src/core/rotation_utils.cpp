@@ -15,8 +15,6 @@ using namespace std;
 
 namespace me{
 
-namespace core{
-
 /******************
 
      Euler class
@@ -385,5 +383,4 @@ template void convertToXYZ(Vec3d& vec);
 template void convertToOpenCV(Vec3f& vec);
 template void convertToXYZ(Vec3f& vec);
 
-}// namespace core
 }// namespace me

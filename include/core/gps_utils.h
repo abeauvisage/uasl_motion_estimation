@@ -11,8 +11,6 @@
 
 namespace me{
 
-namespace core{
-
 static cv::Point2d kitti_pt = cv::Point2d(48.997575979523,8.4772921616664);
 static cv::Point2d da_pt = cv::Point2d(51.604834,-1.636528);
 static cv::Point2d m_origin = da_pt;
@@ -37,7 +35,6 @@ inline cv::Point2f getCartesianCoordinate(const cv::Point2d& gps_geodetic){
     return cv::Point2f(sin(m_angle)*gps_x+cos(m_angle)*gps_y,cos(m_angle)*gps_x-sin(m_angle)*gps_y);
 }
 
-}// namespace core
 }// namespace me
 
 #endif // GPS_UTILS_H_INCLUDED

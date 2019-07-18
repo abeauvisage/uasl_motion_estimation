@@ -13,8 +13,6 @@
 
 namespace me{
 
-namespace core{
-
 float computeEntropy(const cv::Mat& img);
 
 void quantise(cv::Mat& img, const std::pair<uchar,uchar>& range);
@@ -25,7 +23,6 @@ void jointDistribution(const cv::Mat& imgL, const cv::Mat& imgR);
 float comparePC(const cv::Mat& PC1, const cv::Mat& PC2);
 float applyCCOEFFNormed(const cv::Mat& r1, const cv::Mat& r2);
 
-}// namespace core
 }// namespace me
 
 #endif // MUTUALINFORMATION_H_INCLUDED

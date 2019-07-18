@@ -7,8 +7,6 @@
 
 namespace me{
 
-using namespace core;
-
 enum class OptimType{GN,LM};
 
 struct OptimisationParams{

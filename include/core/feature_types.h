@@ -20,8 +20,6 @@
 
 namespace me{
 
-namespace core{
-
 //!< Representation of a 2D point as a Matrix.
 /*! It is better to use this class rather than the opencv Point when dealing with matrices (multiplication, etc...). */
 typedef cv::Matx21d pt2D;
@@ -260,7 +258,6 @@ typedef CamPose<cv::Matx33f,float> CamPose_mf;
 
 std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output);
 
-}// namespace core
 }// namespace me
 
 #endif

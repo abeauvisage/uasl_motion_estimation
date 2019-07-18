@@ -13,8 +13,6 @@
 
 namespace me{
 
-namespace core{
-
 //! enumerate representing unit in which timestamps are expressed
 enum class TimeUnit{SEC,MILLI,MICRO,NANO};
 
@@ -100,7 +98,6 @@ struct PoseData: Data{
     PoseData(const PoseData& data): Data(data.stamp,data.time_unit), position(data.position), orientation(data.orientation){}
 };
 
-}
 }
 
 #endif // DATA_UTILS_H_INCLUDED

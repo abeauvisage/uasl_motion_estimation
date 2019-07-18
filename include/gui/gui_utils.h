@@ -8,8 +8,6 @@
 
 namespace me{
 
-using namespace core;
-
 /**** display WBA_Ptf ****/
 
 //! display features in the latest image

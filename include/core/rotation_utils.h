@@ -16,8 +16,6 @@
 
 namespace me{
 
-namespace core{
-
 const cv::Mat TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0);
 enum StopCondition{NO_STOP,SMALL_GRADIENT,SMALL_INCREMENT,MAX_ITERATIONS,SMALL_DECREASE_FUNCTION,SMALL_REPROJ_ERROR,NO_CONVERGENCE};
 
@@ -278,7 +276,6 @@ void convertToOpenCV(cv::Vec<T,3>& e);
 template<typename T>
 void convertToXYZ(cv::Vec<T,3>& e);
 
-}// namespace core
 }// namespace me
 
 #endif // UTILS_H_INCLUDED

@@ -12,8 +12,6 @@
 
 namespace me{
 
-namespace core{
-
 template class WBA_Point<cv::Point2f>;
 
 template<>
@@ -352,5 +350,4 @@ std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output)
     return maxima;
 }
 
-}// namespace core
 }// namespace me

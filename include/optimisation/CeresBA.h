@@ -4,9 +4,8 @@
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
-#include <mutualInformation.h>
-#include <featureType.h>
-#include <utils.h>
+#include <core/mutual_information.h>
+#include <core/feature_types.h>
 
 class CeresBA {
 
@@ -230,7 +229,7 @@ struct MIError {
         cv::Mat ROI_left = ptr->first(cv::Rect(feat_left.x-window_size,feat_left.y-window_size,window_size*2,window_size*2));
         cv::Mat ROI_right = ptr->second(cv::Rect(feat_right.x-window_size,feat_right.y-window_size,window_size*2,window_size*2));
         cv::Mat ROI_right_plus = ptr->second(cv::Rect(feat_right.x+1-window_size,feat_right.y-window_size,window_size*2,window_size*2));
-        double MI = computeMutualInformation(ROI_left,ROI_right), MI_plus = computeMutualInformation(ROI_left,ROI_right_plus);
+        double MI = me::computeMutualInformation(ROI_left,ROI_right), MI_plus = me::computeMutualInformation(ROI_left,ROI_right_plus);
         *residuals = 1.0/(MI+(MI_plus-MI)*(feat_right.x-trunc(feat_right.x))+1e-3);
     }else{
         *residuals = 1.0/1e-3;

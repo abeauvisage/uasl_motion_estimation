@@ -19,8 +19,6 @@ using namespace cv;
 
 namespace me{
 
-namespace core{
-
 FrameInfo frame_info;
 DatasetInfo dataset_info;
 TrackingInfo tracking_info;
@@ -428,5 +426,4 @@ void read(cv::FileNode& fs, DatasetInfo& x, const DatasetInfo& x_d);
 void read(cv::FileNode& fs, FrameInfo& x, const FrameInfo& x_d);
 void read(cv::FileNode& fs, TrackingInfo& x, const TrackingInfo& x_d);
 
-}// namespace core
 }// namespace me
