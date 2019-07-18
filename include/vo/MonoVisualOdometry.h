@@ -6,6 +6,8 @@
 
 namespace me{
 
+using namespace core;
+
 //! Visual Odometry class for stereovision
 
 /*! This class compute motion from monocular images.

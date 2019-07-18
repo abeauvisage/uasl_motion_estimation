@@ -1,3 +1,13 @@
+/** \file file_IO.cpp
+*   \brief Defines useful functions to read and write libMotionEstimation data types.
+*
+*   Defines:  - structs for configuration files
+*             - signal handler to pause and resume processing
+*             - file readers
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include "core/file_IO.h"
 
 #include <iostream>
@@ -8,6 +18,8 @@ using namespace std;
 using namespace cv;
 
 namespace me{
+
+namespace core{
 
 FrameInfo frame_info;
 DatasetInfo dataset_info;
@@ -415,4 +427,6 @@ void write(cv::FileStorage& fs, const std::string&, const TrackingInfo& x);
 void read(cv::FileNode& fs, DatasetInfo& x, const DatasetInfo& x_d);
 void read(cv::FileNode& fs, FrameInfo& x, const FrameInfo& x_d);
 void read(cv::FileNode& fs, TrackingInfo& x, const TrackingInfo& x_d);
-}
+
+}// namespace core
+}// namespace me

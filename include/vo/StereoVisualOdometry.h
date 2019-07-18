@@ -8,6 +8,8 @@
 
 namespace me{
 
+using namespace core;
+
 //! Visual Odometry class for stereovision
 
 /*! This class compute motion from stereo images using a bundle ajdjustment approach.

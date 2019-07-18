@@ -6,6 +6,9 @@
 #include "core/feature_types.h"
 
 namespace me{
+
+using namespace core;
+
 enum class OptimType{GN,LM};
 
 struct OptimisationParams{

@@ -1,12 +1,22 @@
 #ifndef UTILS_H_INCLUDED
 #define UTILS_H_INCLUDED
 
-#include <opencv2/core.hpp>
-#include <opencv2/calib3d.hpp>
+/** \file rotation_utils.h
+*   \brief Defines useful classes and functions to deal with different rotation representations.
+*
+*   useful applying rotation and converting between euler angles, quaterions, rotation matrices and rotation vectors.
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 
 #define PI 3.14156592
 
 namespace me{
+
+namespace core{
 
 const cv::Mat TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0);
 enum StopCondition{NO_STOP,SMALL_GRADIENT,SMALL_INCREMENT,MAX_ITERATIONS,SMALL_DECREASE_FUNCTION,SMALL_REPROJ_ERROR,NO_CONVERGENCE};
@@ -268,7 +278,7 @@ void convertToOpenCV(cv::Vec<T,3>& e);
 template<typename T>
 void convertToXYZ(cv::Vec<T,3>& e);
 
-
-}
+}// namespace core
+}// namespace me
 
 #endif // UTILS_H_INCLUDED

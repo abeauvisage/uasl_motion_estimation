@@ -1,15 +1,24 @@
 #ifndef DATA_UTILS_H_INCLUDED
 #define DATA_UTILS_H_INCLUDED
 
-#include <opencv2/core.hpp>
+/** \file data_utils.h
+*    \brief Set of structs to store data
+*
+*    Comprises inertial, GNSS/GPS, and poses.
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
 
 #include "core/rotation_utils.h"
 
 namespace me{
 
+namespace core{
+
 //! enumerate representing unit in which timestamps are expressed
 enum class TimeUnit{SEC,MILLI,MICRO,NANO};
 
+//! Base Data class containing a timestamp and its unit of time.
 struct Data{
 
     int64_t stamp; //!< acquisition time stamp
@@ -91,6 +100,7 @@ struct PoseData: Data{
     PoseData(const PoseData& data): Data(data.stamp,data.time_unit), position(data.position), orientation(data.orientation){}
 };
 
+}
 }
 
 #endif // DATA_UTILS_H_INCLUDED

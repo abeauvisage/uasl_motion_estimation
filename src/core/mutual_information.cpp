@@ -1,8 +1,18 @@
+/** \file mutual information.cpp
+*   \brief utilities to compute mutual information from images
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include "core/mutual_information.h"
 
 using namespace std;
 using namespace cv;
 using namespace me;
+
+namespace me{
+
+namespace core{
 
 float comparePC(const Mat& PC1, const Mat& PC2){
 
@@ -131,3 +141,6 @@ float applyCCOEFFNormed(const Mat& r1, const Mat& r2){
     Mat r2_ = (r2-1)/(r2.rows*r2.cols)*sum(r2)[0];
     return sum(r1_.mul(r2_))[0]/sqrt(sum(r1_.mul(r1_))[0]*sum(r2_.mul(r2_))[0]);
 }
+
+}// namespace core
+}// namespace me

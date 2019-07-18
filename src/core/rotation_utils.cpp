@@ -1,3 +1,11 @@
+/** \file rotation_utils.cpp
+*   \brief Defines useful classes and functions to deal with different rotation representations.
+*
+*   useful applying rotation and converting between euler angles, quaterions, rotation matrices and rotation vectors.
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include "core/rotation_utils.h"
 
 #include <iostream>
@@ -7,6 +15,7 @@ using namespace std;
 
 namespace me{
 
+namespace core{
 
 /******************
 
@@ -376,4 +385,5 @@ template void convertToXYZ(Vec3d& vec);
 template void convertToOpenCV(Vec3f& vec);
 template void convertToXYZ(Vec3f& vec);
 
-}
+}// namespace core
+}// namespace me

@@ -1,6 +1,18 @@
+/** \file feature_types.cpp
+*   \brief Defines useful classes and structs to represents image features
+*
+*   Defines:  - homogeneous point coordinates.
+*             - stereo and quad matches.
+*             - points and camera poses for windowed bundle adjustment
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include "core/feature_types.h"
 
 namespace me{
+
+namespace core{
 
 template class WBA_Point<cv::Point2f>;
 
@@ -340,5 +352,5 @@ std::vector<pt2D> nonMaxSupScanline3x3(const cv::Mat& input, cv::Mat& output)
     return maxima;
 }
 
-
-}
+}// namespace core
+}// namespace me

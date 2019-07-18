@@ -1,19 +1,30 @@
 #ifndef FILEIO_H_INCLUDED
 #define FILEIO_H_INCLUDED
 
-#include <string>
-#include <fstream>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+/** \file file_IO.h
+*   \brief Defines useful functions to read and write libMotionEstimation data types.
+*
+*   Defines:  - structs for configuration files
+*             - signal handler to pause and resume processing
+*             - file readers
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
 
 #include "vo/StereoVisualOdometry.h"
 #include "vo/MonoVisualOdometry.h"
 #include "core/data_utils.h"
 
+#include <opencv2/highgui/highgui.hpp>
+
+#include <string>
+#include <fstream>
+
 namespace me{
 
-enum class PoseType{ABSOLUTE,RELATIVE};
+namespace core{
+
+enum class PoseType{ABSOLUTE,RELATIVE}; //!< Type of pose representation: absolute or relative
 
 enum class SetupType{stereo,mono}; //!< Type of setup: stereo or monocular
 //!< Type of filter if a filter if used.
@@ -237,6 +248,7 @@ public:
 
 };
 
-}
+}// namespace core
+}// namespace me
 
 #endif // FILEIO_H_INCLUDED

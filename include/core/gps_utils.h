@@ -1,9 +1,17 @@
 #ifndef GPS_UTILS_H_INCLUDED
 #define GPS_UTILS_H_INCLUDED
 
-#include "opencv2/core.hpp"
+/** \file gps_utils.h
+*   \brief Helper functions to convert from geodetic GNSS data to cartesian data
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
+#include "opencv2/core/core.hpp"
 
 namespace me{
+
+namespace core{
 
 static cv::Point2d kitti_pt = cv::Point2d(48.997575979523,8.4772921616664);
 static cv::Point2d da_pt = cv::Point2d(51.604834,-1.636528);
@@ -29,5 +37,7 @@ inline cv::Point2f getCartesianCoordinate(const cv::Point2d& gps_geodetic){
     return cv::Point2f(sin(m_angle)*gps_x+cos(m_angle)*gps_y,cos(m_angle)*gps_x-sin(m_angle)*gps_y);
 }
 
-}
+}// namespace core
+}// namespace me
+
 #endif // GPS_UTILS_H_INCLUDED
