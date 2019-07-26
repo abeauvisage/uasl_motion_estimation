@@ -16,6 +16,7 @@
 #include "core/data_utils.h"
 
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include <string>
 #include <fstream>
@@ -244,6 +245,120 @@ public:
     /*! returns the number of the image and its corresponding timestamp.*/
     int readData(int& nb, int64_t& stamp);
 
+};
+
+//! structure to read images in a directoty or video
+struct ImageReader{
+
+    me::ImageFile fimage; //!< image file in case of directory
+    std::vector<cv::VideoCapture> cap; //!< video file
+    int img_nb; //!< current image number
+    int64_t img_stamp; //! current_image_stamp
+
+    ImageReader(): fimage(me::dataset_info.dir+"/image_data.csv"), cap(me::dataset_info.type==me::SetupType::stereo?2:1),img_nb{0},img_stamp{0}{
+        if(!fimage.is_open()){
+            for(uint i=0;i<cap.size();i++)
+                cap[i].open(me::dataset_info.dir+"/cam"+std::to_string(i)+"_image.mp4");
+        }else{
+            while(img_nb<me::frame_info.fframe)
+                fimage.readData(img_nb,img_stamp);
+        }
+    }
+
+    bool isValid(){
+        bool valid=fimage.is_open();
+        std::for_each(cap.begin(),cap.end(),[&valid](cv::VideoCapture& vc){valid = valid || vc.isOpened();});
+        return valid;
+    }
+
+    int get_img_nb(){
+        if(!fimage.is_open())
+            return (int) cap[0].get(cv::CAP_PROP_POS_FRAMES);
+        else
+            return img_nb;
+
+    }
+
+    std::pair<cv::Mat,cv::Mat> readStereo(){
+
+        if(fimage.is_open()){
+            int read=0;
+            for(int i=0;i<me::frame_info.skip;i++)
+                read = fimage.readData(img_nb,img_stamp);
+            if(read)
+                return me::loadImages(me::dataset_info.dir,img_nb);
+            else{
+                std::cerr << "[Error] could not read image" << img_nb << " in " << me::dataset_info.dir << std::endl;
+                return std::pair<cv::Mat,cv::Mat>();
+            }
+        }else{
+            std::pair<cv::Mat,cv::Mat> imgs; cap[0] >> imgs.first;cap[1] >> imgs.second;
+            if(imgs.first.type() > 8)
+                cv::cvtColor(imgs.first,imgs.first,CV_BGR2GRAY);
+            if(imgs.second.type() > 8)
+                cv::cvtColor(imgs.second,imgs.second,CV_BGR2GRAY);
+            return imgs;
+        }
+    }
+
+    cv::Mat readMono(){
+        if(fimage.is_open()){
+            int read=0;
+            for(int i=0;i<me::frame_info.skip;i++)
+                read = fimage.readData(img_nb,img_stamp);
+            if(read)
+                return me::loadImage(me::dataset_info.dir,me::dataset_info.cam_ID,img_nb);
+            else{
+                std::cerr << "[Error] could not read image" << img_nb << " in " << me::dataset_info.dir << std::endl;
+                return cv::Mat();
+            }
+        }
+        else{
+            cv::Mat img; cap[0] >> img; return img;
+        }
+    }
+};
+
+//! structure to read ground truth poses from a file of transformations
+struct GTReader{
+
+    std::ifstream stream; //!< transformation file
+
+    GTReader(const std::string& filename): stream{filename}{
+    if(!stream.is_open())
+            std::cerr << "[GTReader] warning: file not open!" << std::endl;
+    }
+
+    std::string readHeader(){
+        std::string header;
+        getline(stream,header);
+        return header;
+    }
+    //!< read one line of the file and returns the corresponding pose and its timestamp
+    std::pair<uint64_t,me::CamPose_qd> readPoseLine(){
+
+        std::pair<uint64_t,me::CamPose_qd> data;
+        if(!stream.is_open()){
+            std::cerr << "[GTReader] could not read line file not open" << std::endl;
+            return data;
+        }
+
+        std::string line;
+        std::getline(stream,line);
+        std::stringstream linestream(line);
+        char coma;
+        linestream >> data.first >> coma; // reading timestamp
+        std::array<double,4> orientation;
+        std::array<double,3> position;
+        for(auto& o : orientation)
+            linestream >> o >> coma;
+        for(auto& p : position)
+            linestream >> p >> coma;
+        data.second.orientation = me::Quatd{orientation[3],orientation[0],orientation[1],orientation[2]};
+        data.second.position = cv::Vec3d{position[0],position[1],position[2]};
+
+        return data;
+    }
 };
 
 }// namespace me

@@ -299,7 +299,6 @@ void BundleAdjuster<M>::initialiseParameters(const std::vector<CamPose<me::Quat<
   for(auto& pose : cams){
     cv::Vec3d rot_vec = log_map_Quat(pose.orientation);
     m_camera_params.push_back(cv::Matx61d{pose.position(0),pose.position(1),pose.position(2),rot_vec(0),rot_vec(1),rot_vec(2)});
-    std::cout << "init: " << pose.position << " " << pose.orientation << std::endl;
   }
 }
 
