@@ -63,15 +63,17 @@ set(ME_VO_SOURCES
 )
 
 #Ceres for optimisation
-if(Ceres_DIR)
-list(APPEND ${ME_OPTIM_HEADERS} include/optimisation/CeresBA.h)
-list(APPEND ${ME_OPTIM_SOURCES} include/optimisation/CeresBA.cpp)
-endif(Ceres_DIR)
+if(Ceres_FOUND)
+message(STATUS "adding Ceres Optimisation")
+list(APPEND ME_OPTIM_HEADERS include/optimisation/CeresBA.h)
+list(APPEND ME_OPTIM_SOURCES src/optimisation/CeresBA.cpp)
+list(APPEND ME_OPTIM_HEADERS include/optimisation/BundleAdjuster.h)
+else(Ceres_FOUND)
+message(WARNING "Ceres was not found, CeresBA and BundleAdjuster will not be included.")
+endif(Ceres_FOUND)
 
 #library option
 option(DYNAMIC_LIB "Build dynamic lib" OFF)
-
-# library target
 if(DYNAMIC_LIB)
 set(SHARED_LIBS SHARED)
 endif(DYNAMIC_LIB)
@@ -80,7 +82,7 @@ endif(DYNAMIC_LIB)
 add_library(MotionEstimation_core ${SHARED_LIBS} ${ME_CORE_HEADERS} ${ME_CORE_SOURCES})
 target_link_libraries(MotionEstimation_core ${OpenCV_LIBS})
 add_library(MotionEstimation_optimisation ${SHARED_LIBS} ${ME_OPTIM_HEADERS} ${ME_OPTIM_SOURCES})
-target_link_libraries(MotionEstimation_optimisation ${OpenCV_LIBS})
+target_link_libraries(MotionEstimation_optimisation ${OpenCV_LIBS} ${CERES_LIBRARIES} MotionEstimation_core)
 add_library(MotionEstimation_gui ${SHARED_LIBS} ${ME_GUI_HEADERS} ${ME_GUI_SOURCES})
 target_link_libraries(MotionEstimation_gui ${OpenCV_LIBS} pthread)
 add_library(MotionEstimation_vo ${SHARED_LIBS} ${ME_VO_HEADERS} ${ME_VO_SOURCES})
@@ -92,5 +94,6 @@ install(TARGETS MotionEstimation_core MotionEstimation_gui MotionEstimation_vo M
 include_directories(	
 						include
 						${OpenCV_INCLUDE_DIRS}
-						${EIGEN3_INCLUDE_DIR}
+						${EIGEN3_INCLUDE_DIRS}
+						${CERES_INCLUDE_DIRS}
 )

@@ -1,10 +1,22 @@
+/** \file CeresBA.cpp
+*   \brief A class to run bundle adjustment with the ceres library
+*
+*   Warning class deprecated. Left for legacy reasons.
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include "optimisation/CeresBA.h"
 
 #include <chrono>
 
 using namespace cv;
 using namespace std;
-using namespace me;
+
+
+namespace me{
+
+namespace optimisation{
 
 Matx33d CeresBA::K_;
 Matx33d ScaleOptimiser::K_;
@@ -159,14 +171,14 @@ void CeresBA::fillData(const std::vector<me::WBA_Ptf>& pts, const std::vector<me
 
     assert(num_cameras_ == (int) poses.size() && num_points_ == (int) pts.size());
     int start = poses[0].ID;
-    camera_nbs.clear();
+    camera_ids.clear();
 
     for(uint i=0;i<pts.size();i++){
         pt3D pt = to_euclidean(pts[i].get3DLocation());
         parameters_[num_cameras_*6+i*3+0] = pt(0);
         parameters_[num_cameras_*6+i*3+1] = pt(1);
         parameters_[num_cameras_*6+i*3+2] = pt(2);
-        camera_nbs.push_back(pts[i].getCameraNum());
+        camera_ids.push_back(pts[i].getCameraID());
     }
 
     cam_idx = new int[poses.size()];
@@ -206,13 +218,14 @@ void CeresBA::fillStereoData(const std::vector<me::WBA_stereo_Ptf>& pts, const s
 
     assert(num_cameras_ == (int) poses.size() && num_points_ == (int) pts.size());
     int start = poses[0].ID;
-    camera_nbs.clear();
+    camera_ids.clear();
     for(uint i=0;i<pts.size();i++){
         pt3D pt = to_euclidean(pts[i].get3DLocation());
+        cout << "pt " << i << ": " << pt.t() << endl;
         parameters_[num_cameras_*6+i*3+0] = pt(0);
         parameters_[num_cameras_*6+i*3+1] = pt(1);
         parameters_[num_cameras_*6+i*3+2] = pt(2);
-        camera_nbs.push_back(pts[i].getCameraNum());
+        camera_ids.push_back(pts[i].getCameraID());
     }
 
     cam_idx = new int[poses.size()];
@@ -255,14 +268,14 @@ void CeresBA::fillStereoData(const std::pair<std::vector<me::WBA_Ptf>,std::vecto
 
     assert(num_cameras_ == (int) poses.size() && num_points_ == (int)(pts.first.size()+pts.second.size()));
     int start = poses[0].ID;
-	camera_nbs.clear();
+	camera_ids.clear();
 
     for(uint i=0;i<pts.first.size();i++){
         pt3D pt = to_euclidean(pts.first[i].get3DLocation());
         parameters_[num_cameras_*6+i*3+0] = pt(0);
         parameters_[num_cameras_*6+i*3+1] = pt(1);
         parameters_[num_cameras_*6+i*3+2] = pt(2);
-        camera_nbs.push_back(pts.first[i].getCameraNum());
+        camera_ids.push_back(pts.first[i].getCameraID());
     }
 
     for(uint i=0;i<pts.second.size();i++){
@@ -270,7 +283,7 @@ void CeresBA::fillStereoData(const std::pair<std::vector<me::WBA_Ptf>,std::vecto
         parameters_[num_cameras_*6+(pts.first.size()+i)*3+0] = pt(0);
         parameters_[num_cameras_*6+(pts.first.size()+i)*3+1] = pt(1);
         parameters_[num_cameras_*6+(pts.first.size()+i)*3+2] = pt(2);
-        camera_nbs.push_back(pts.second[i].getCameraNum());
+        camera_ids.push_back(pts.second[i].getCameraID());
     }
 
     cam_idx = new int[poses.size()];
@@ -464,7 +477,7 @@ void ScaleOptimiser::findScale(const std::vector<WBA_Ptf>& features, const CamPo
 
     for( const me::WBA_Ptf& f : features)
         if((int) f.getLastFrameIdx() == pose.ID){
-            ceres::CostFunction* cstFunc = ScaleOptimiser::MIError::Create(f.get3DLocation(),pose,f.getCameraNum(),10,&stereoPair);
+            ceres::CostFunction* cstFunc = ScaleOptimiser::MIError::Create(f.get3DLocation(),pose,f.getCameraID(),10,&stereoPair);
             problem->AddResidualBlock(cstFunc,nullptr,lambda);
         }
 
@@ -491,14 +504,14 @@ void CeresBA::runSolver(int fixedFrames){
     const double* obs = observations();
     cout << "[BA] " << num_cameras_ << " cams (" << fixedFrames << " fixed) | " << num_points_ << " points | " << num_observations() << " observations" << " (noise: " << feat_noise_ << " )" << endl;
 
-	assert((int) camera_nbs.size() == num_points_);
+	assert((int) camera_ids.size() == num_points_);
 
     for(int i=0;i<num_observations();++i){
 
         ceres::CostFunction* cstFunc;
         ceres::LossFunction* lossFunc = new ceres::HuberLoss(1.0);//new ceres::CauchyLoss(1.0);
 
-        if(camera_nbs.empty() || camera_nbs[point_index_[i]] == 0)
+        if(camera_ids.empty() || camera_ids[point_index_[i]] == 0)
             cstFunc = CeresBA::ReprojectionError::Create(obs[2*i+0],obs[2*i+1],sqrt(feat_noise_)); //error is squared so should use feat. standard deviation
         else
             cstFunc = CeresBA::ReprojectionErrorMonoRight::Create(obs[2*i+0],obs[2*i+1],sqrt(feat_noise_));
@@ -552,13 +565,19 @@ void CeresBA::runStereoSolver(int fixedFrames){
         rep(mutable_camera_for_observation(i),mutable_point_for_observation(i),residual);
         initial_cost += sqrt(residual[0]*residual[0]+residual[1]*residual[1])+sqrt(residual[2]*residual[2]+residual[3]*residual[3]);
     }
-
+    std::cout << "Ceres pb: " << std::endl;
+  std::cout << "\t\t" << problem->NumParameterBlocks() << " param blocks" << std::endl;
+  std::cout << "\t\t" << problem->NumParameters() << " params" << std::endl;
+  std::cout << "\t\t" << problem->NumResidualBlocks() << " res blocks" << std::endl;
+  std::cout << "\t\t" << problem->NumResiduals() << " res blocks" << std::endl;
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::SPARSE_SCHUR;
     options.function_tolerance = 1e-6;
-    options.minimizer_progress_to_stdout = false;
+    options.minimizer_progress_to_stdout = true;
     ceres::Solver::Summary summary;
     ceres::Solve(options,problem,&summary);
+
+    cout << summary.BriefReport() << endl;
 
     for(int i=0;i<num_observations();++i){
         if(!m_mask.empty() && !m_mask[point_index_[i]])
@@ -782,3 +801,6 @@ std::vector<me::CamPose_md> CeresBA::getMatPoses(){
     }
     return poses;
 }
+
+}//namespace optimisation
+}//namespace me

@@ -33,9 +33,9 @@ cv::Mat show(const vector<WBA_Ptf>& pts, const pair<vector<CamPose_qd>,vector<Ca
      int nb_pts[2] = {0,0};
     for(auto& pt : pts)
         if((int) pt.getLastFrameIdx() == pose.ID){
-            nb_pts[pt.getCameraNum()]++;
+            nb_pts[pt.getCameraID()]++;
             int color = ((pose.orientation * to_euclidean(pt.get3DLocation())+pose.position)(2)-5)*(255/45.0);
-            circle(img_color,pt.getLastFeat()+pt.getCameraNum()*Point2f(img.first.cols,0),2,Scalar(0,color,255),-1);
+            circle(img_color,pt.getLastFeat()+pt.getCameraID()*Point2f(img.first.cols,0),2,Scalar(0,color,255),-1);
         }
     imshow("img",img_color);
     waitKey(1);
@@ -54,8 +54,8 @@ cv::Mat show_stereo_reproj(const vector<WBA_Ptf>& pts, const pair<vector<CamPose
     int nb_pts[2] = {0,0};
     for(auto& pt : pts){
         if((int) pt.getLastFrameIdx() == pose_left.ID){
-            int color = pt.getCameraNum()*255;
-            nb_pts[pt.getCameraNum()]++;
+            int color = pt.getCameraID()*255;
+            nb_pts[pt.getCameraID()]++;
 
             pt3D p3_left = (pose_left.orientation * to_euclidean(pt.get3DLocation()) + pose_left.position);normalize(p3_left);
             pt3D p3_right = (pose_right.orientation * to_euclidean(pt.get3DLocation()) + pose_right.position);normalize(p3_right);

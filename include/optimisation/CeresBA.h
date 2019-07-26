@@ -1,11 +1,23 @@
 #ifndef CERESBA_H
 #define CERESBA_H
 
+/** \file CeresBA.h
+*   \brief A class to run bundle adjustment with the ceres library
+*
+*   Warning class deprecated. Left for legacy reasons.
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
 #include <core/mutual_information.h>
 #include <core/feature_types.h>
+
+namespace me{
+
+namespace optimisation{
 
 class CeresBA {
 
@@ -199,7 +211,7 @@ struct StereoReprojectionError {
   int* cam_idx;
   double feat_noise_;
 
-  std::vector<int>  camera_nbs;
+  std::vector<int>  camera_ids;
 
   double* observations_;
   double* parameters_;
@@ -229,7 +241,7 @@ struct MIError {
         cv::Mat ROI_left = ptr->first(cv::Rect(feat_left.x-window_size,feat_left.y-window_size,window_size*2,window_size*2));
         cv::Mat ROI_right = ptr->second(cv::Rect(feat_right.x-window_size,feat_right.y-window_size,window_size*2,window_size*2));
         cv::Mat ROI_right_plus = ptr->second(cv::Rect(feat_right.x+1-window_size,feat_right.y-window_size,window_size*2,window_size*2));
-        double MI = me::computeMutualInformation(ROI_left,ROI_right), MI_plus = me::computeMutualInformation(ROI_left,ROI_right_plus);
+        float MI = computeMutualInformation(ROI_left,ROI_right), MI_plus = computeMutualInformation(ROI_left,ROI_right_plus);
         *residuals = 1.0/(MI+(MI_plus-MI)*(feat_right.x-trunc(feat_right.x))+1e-3);
     }else{
         *residuals = 1.0/1e-3;
@@ -262,5 +274,8 @@ double* lambda=nullptr;
 std::pair<cv::Mat,cv::Mat> stereoPair;
 
 };
+
+}// namespace optimisation
+}//namespace me
 
 #endif // CERESBA_H

@@ -1,11 +1,21 @@
 #ifndef OPTIMISATION_H_INCLUDED
 #define OPTIMISATION_H_INCLUDED
 
+/** \file optimisation.h
+*   \brief Set of stucts and classes to perform optimisation
+*
+*   Optimisation can be performed with Levenberg-Marquardt or Gauss-Newton.
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include <Eigen/Core>
 
 #include "core/feature_types.h"
 
 namespace me{
+
+namespace optimisation{
 
 enum class OptimType{GN,LM};
 
@@ -114,6 +124,7 @@ StopCondition m_stop;
 
 };
 
-}
+}//namespace optimisation
+}//namespace me
 
 #endif

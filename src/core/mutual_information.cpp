@@ -8,11 +8,8 @@
 
 using namespace std;
 using namespace cv;
-using namespace me;
 
 namespace me{
-
-namespace core{
 
 float comparePC(const Mat& PC1, const Mat& PC2){
 
@@ -142,5 +139,4 @@ float applyCCOEFFNormed(const Mat& r1, const Mat& r2){
     return sum(r1_.mul(r2_))[0]/sqrt(sum(r1_.mul(r1_))[0]*sum(r2_.mul(r2_))[0]);
 }
 
-}// namespace core
 }// namespace me

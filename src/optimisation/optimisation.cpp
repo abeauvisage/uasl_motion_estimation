@@ -1,3 +1,11 @@
+/** \file optimisation.cpp
+*   \brief Set of stucts and classes to perform optimisation
+*
+*   Optimisation can be performed with Levenberg-Marquardt or Gauss-Newton.
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include "optimisation/optimisation.h"
 #include "core/mutual_information.h"
 
@@ -15,6 +23,8 @@ ofstream log_mi;
 ofstream log_scale;
 
 namespace me{
+
+namespace optimisation{
 
 template<class S, class T>
 StopCondition Optimiser<S,T>::optimise(S& state, const bool test, const Eigen::VectorXi& mask){
@@ -737,4 +747,6 @@ std::vector<int> Optimiser<S,T>::compute_inliers(const double threshold){
 }
 
 template class Optimiser<ScaleState,std::vector<std::pair<cv::Mat,cv::Mat>>>;
-}
+
+}// namespace optimisation
+}// namespace me
