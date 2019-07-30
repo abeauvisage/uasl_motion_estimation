@@ -250,72 +250,108 @@ public:
 //! structure to read images in a directoty or video
 struct ImageReader{
 
+    enum class Type{IMAGES,VIDEO}; //!< type of data
+
     me::ImageFile fimage; //!< image file in case of directory
     std::vector<cv::VideoCapture> cap; //!< video file
+    Type type;
     int img_nb; //!< current image number
     int64_t img_stamp; //! current_image_stamp
 
-    ImageReader(): fimage(me::dataset_info.dir+"/image_data.csv"), cap(me::dataset_info.type==me::SetupType::stereo?2:1),img_nb{0},img_stamp{0}{
-        if(!fimage.is_open()){
-            for(uint i=0;i<cap.size();i++)
+
+    ImageReader(const std::string& filename=dataset_info.dir+"/image_data.csv", Type type_=Type::IMAGES): fimage{filename}, cap(me::dataset_info.type==me::SetupType::stereo?2:1),type{type_},img_nb{0},img_stamp{0}{
+
+        if(!fimage.is_open())
+            std::cerr << "[ImageReader] warning: could not find an image file in " << dataset_info.dir << std::endl;
+
+        if(type == Type::VIDEO){ // if video needs to open video streams
+            for(uint i=0;i<cap.size();i++){
                 cap[i].open(me::dataset_info.dir+"/cam"+std::to_string(i)+"_image.mp4");
-        }else{
-            while(img_nb<me::frame_info.fframe)
-                fimage.readData(img_nb,img_stamp);
+            }
         }
+        do{
+          readMono(); // this method can be run  with mono and stereo
+        }while(img_nb && img_nb<me::frame_info.fframe); // reading images until we reach the first frame
+    }
+
+    void openReader(const std::string& filename=dataset_info.dir+"/image_data.csv", Type type_=Type::IMAGES){
+
+        fimage.openFile(filename);
+        type = type_;
+
+        if(!fimage.is_open())
+            std::cerr << "[ImageReader] warning: could not find an image file in " << dataset_info.dir << std::endl;
+
+        if(type == Type::VIDEO){ // if video needs to open video streams
+            for(uint i=0;i<cap.size();i++){
+                cap[i].open(me::dataset_info.dir+"/cam"+std::to_string(i)+"_image.mp4");
+            }
+        }
+        do{
+          readMono(); // this method can be run  with mono and stereo
+        }while(img_nb && img_nb<me::frame_info.fframe); // reading images until we reach the first frame
     }
 
     bool isValid(){
-        bool valid=fimage.is_open();
-        std::for_each(cap.begin(),cap.end(),[&valid](cv::VideoCapture& vc){valid = valid || vc.isOpened();});
+        bool valid = img_nb; //first img should have been read
+        if(type == Type::VIDEO) // if video check that every camera stream is open
+          std::for_each(cap.begin(),cap.end(),[&valid](cv::VideoCapture& vc){valid = (valid || vc.isOpened());});
         return valid;
     }
 
-    int get_img_nb(){
-        if(!fimage.is_open())
-            return (int) cap[0].get(cv::CAP_PROP_POS_FRAMES);
-        else
-            return img_nb;
-
-    }
+    int get_img_nb(){return img_nb;}
 
     std::pair<cv::Mat,cv::Mat> readStereo(){
 
-        if(fimage.is_open()){
-            int read=0;
-            for(int i=0;i<me::frame_info.skip;i++)
-                read = fimage.readData(img_nb,img_stamp);
-            if(read)
-                return me::loadImages(me::dataset_info.dir,img_nb);
-            else{
+      // updating next frame number
+      if(fimage.is_open())
+          for(int i=0;i<me::frame_info.skip;i++){
+              if(!fimage.readData(img_nb,img_stamp)){ // trying to read in image file
                 std::cerr << "[Error] could not read image" << img_nb << " in " << me::dataset_info.dir << std::endl;
                 return std::pair<cv::Mat,cv::Mat>();
-            }
-        }else{
-            std::pair<cv::Mat,cv::Mat> imgs; cap[0] >> imgs.first;cap[1] >> imgs.second;
-            if(imgs.first.type() > 8)
-                cv::cvtColor(imgs.first,imgs.first,CV_BGR2GRAY);
-            if(imgs.second.type() > 8)
-                cv::cvtColor(imgs.second,imgs.second,CV_BGR2GRAY);
-            return imgs;
-        }
+              }
+          }
+      else
+        img_nb += me::frame_info.skip;
+
+      // loading images
+      if(type==Type::IMAGES)
+          return me::loadImages(me::dataset_info.dir,img_nb);
+      else{
+        std::pair<cv::Mat,cv::Mat> imgs;
+        cap[0].set(cv::CAP_PROP_POS_FRAMES,img_nb); cap[0] >> imgs.first;
+        cap[1].set(cv::CAP_PROP_POS_FRAMES,img_nb); cap[1] >> imgs.second;
+        if(imgs.first.type() > 8)
+            cv::cvtColor(imgs.first,imgs.first,CV_BGR2GRAY);
+        if(imgs.second.type() > 8)
+            cv::cvtColor(imgs.second,imgs.second,CV_BGR2GRAY);
+        return imgs;
+      }
     }
 
     cv::Mat readMono(){
-        if(fimage.is_open()){
-            int read=0;
-            for(int i=0;i<me::frame_info.skip;i++)
-                read = fimage.readData(img_nb,img_stamp);
-            if(read)
-                return me::loadImage(me::dataset_info.dir,me::dataset_info.cam_ID,img_nb);
-            else{
+
+      // updating next frame number
+      if(fimage.is_open())
+          for(int i=0;i<me::frame_info.skip;i++){
+              if(!fimage.readData(img_nb,img_stamp)){ // trying to read in image file
                 std::cerr << "[Error] could not read image" << img_nb << " in " << me::dataset_info.dir << std::endl;
                 return cv::Mat();
-            }
-        }
-        else{
-            cv::Mat img; cap[0] >> img; return img;
-        }
+              }
+          }
+      else
+        img_nb += me::frame_info.skip;
+
+      // loading images
+      if(type==Type::IMAGES)
+          return me::loadImage(me::dataset_info.dir,0,img_nb);
+      else{
+        cv::Mat img;
+        cap[0].set(cv::CAP_PROP_POS_FRAMES,img_nb); cap[0] >> img;
+        if(img.type() > 8)
+            cv::cvtColor(img,img,CV_BGR2GRAY);
+        return img;
+      }
     }
 };
 
