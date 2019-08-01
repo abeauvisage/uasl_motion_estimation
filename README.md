@@ -14,9 +14,9 @@
 ################
 
 1. extract library folder
-2. $ mkdir build
-3. $ cd build
-4. $ cmake ..
-5. $ make
-6. $ sudo make install
-7. $ make doc (optional for generating documentation)
+2. mkdir build
+3. cd build
+4. cmake ..
+5. make
+6. sudo make install (optional)
+7. make doc (optional for generating documentation)
