@@ -22,7 +22,7 @@ namespace optimisation{
 /*! data do not need to be allocated dynamically, std::array is safer */
 template<int N>
 struct Observation{
-  std::array<double,N> data;
+  std::array<double,N> data; //! 2D features
   int camIdx; //!< camera index in the window
   int ptIdx; //!< 3D pt which has been observed
   int camID; //!< cameraID (in which the observation was made)
@@ -37,9 +37,10 @@ struct CalibrationParameters{
   std::vector<cv::Matx33d> K; //!< calibration parameters (for each camera)
   double feat_var; //!< feature location noise covaraiance in x-y = var * I_{2x2}
   double baseline; //!< baseline for stereo setups
+  bool compute_cov; //!< estimating pose and pts covariance matrices or not
 
-  explicit CalibrationParameters(const cv::Matx33d& K_,double var,double baseline_=0.0): K{{K_}}, feat_var{var}, baseline{baseline_}{}
-  CalibrationParameters(const std::vector<cv::Matx33d>& K_,double var,double baseline_=0.0): K{K_}, feat_var{var}, baseline{baseline_}{}
+  explicit CalibrationParameters(const cv::Matx33d& K_,double var,double baseline_=0.0): K{{K_}}, feat_var{var}, baseline{baseline_}, compute_cov{false}{}
+  CalibrationParameters(const std::vector<cv::Matx33d>& K_,double var,double baseline_=0.0): K{K_}, feat_var{var}, baseline{baseline_}, compute_cov{false}{}
 
 };
 
@@ -234,6 +235,8 @@ public:
       cams.push_back(CamPose_qd{idx++,Quatd{exp_map_Quat(cv::Vec3d{cam_pose(3),cam_pose(4),cam_pose(5)})},cv::Vec3d{cam_pose(0),cam_pose(1),cam_pose(2)}});
     return cams;
   }
+  std::vector<cv::Mat> getPosesCovariance(){return m_camera_covs;}
+  std::vector<cv::Mat> getPointsCovariance(){return m_point_covs;}
   int getNbPoints() const {return m_point_params.size();}
   int getNbCameras() const {return m_camera_params.size();}
   int getNbObservations() const {return m_observations.size();}
@@ -260,14 +263,18 @@ public:
 
 private:
 
-  static bool glog_init; //! make sure glog is initilialised only once
+    void extract_covariance(ceres::Problem* pb);
 
-  CalibrationParameters calib_params; //!< intrinsic params and baseline if stereo
-  Status m_status; //!< current state of the optimiser
+    static bool glog_init; //! make sure glog is initilialised only once
 
-  VecCams m_camera_params; //!< camera parameters to be optimised
-  VecPts m_point_params; //!< point parameters to be optimised
-  VecObs m_observations; //!< observations
+    CalibrationParameters calib_params; //!< intrinsic params and baseline if stereo
+    Status m_status; //!< current state of the optimiser
+
+    VecCams m_camera_params; //!< camera parameters to be optimised
+    VecPts m_point_params; //!< point parameters to be optimised
+    VecObs m_observations; //!< observations
+    std::vector<cv::Mat> m_camera_covs;//! camera pose covariance matrices after optimisation (6x6)
+    std::vector<cv::Mat> m_point_covs;//! point location covariance after optimisation (3x3)
 };
 
 
@@ -318,10 +325,10 @@ void BundleAdjuster<M>::initialiseObservations(const VecObs& observations){
 template<>
 template<typename T>
 void BundleAdjuster<2>::initialiseObservations(const std::vector<WBA_Point<cv::Point_<T>>>& observations,const int first_frame){
-  if(m_status != Status::UNINITIALISED || m_camera_params.empty()){ // if state other than unitialised it means the object has already been used
-    std::cerr << "[Bundle Adjuster] system should be uninitialised and cameras not empty!" << std::endl;
-    return;
-  }
+	if(m_status != Status::UNINITIALISED || m_camera_params.empty()){ // if state other than unitialised it means the object has already been used
+		std::cerr << "[Bundle Adjuster] system should be uninitialised and cameras not empty!" << std::endl;
+		return;
+	}
 
   bool init_points = m_point_params.empty();
   int pt_idx=0;
@@ -329,14 +336,14 @@ void BundleAdjuster<2>::initialiseObservations(const std::vector<WBA_Point<cv::P
     assert(observations.size() == m_point_params.size() && "nb of pts and observations do not match");
   m_observations.clear();
   for(auto obs : observations){
-    if(init_points){
+    if(init_points)
       m_point_params.push_back(to_euclidean(obs.get3DLocation()));
-    }
     for(uint i=0;i<obs.getNbFeatures();i++){
-      int frame_idx = obs.getFrameIdx(i);
-        if(frame_idx-first_frame>=0 && frame_idx-first_frame < obs.getNbFeatures())
-          m_observations.push_back(Observation<2>{{obs.getFeat(i).x,obs.getFeat(i).y},frame_idx-first_frame,pt_idx++,obs.getCameraID()});
+        int frame_idx = obs.getFrameIdx(i);
+        if(frame_idx-first_frame>=0)
+          m_observations.push_back(Observation<2>{{obs.getFeat(i).x,obs.getFeat(i).y},frame_idx-first_frame,pt_idx,obs.getCameraID()});
     }
+    pt_idx++;
   }
   m_status = Status::INITIALISED;
 }
@@ -360,7 +367,7 @@ void BundleAdjuster<4>::initialiseObservations(const std::vector<WBA_Point<std::
     }
     for(uint i=0;i<obs.getNbFeatures();i++){
       int frame_idx = obs.getFrameIdx(i);
-        if(frame_idx-first_frame>=0 && frame_idx-first_frame < getNbCameras())
+        if(frame_idx-first_frame>=0)
           m_observations.push_back(Observation<4>{{obs.getFeat(i).first.x,obs.getFeat(i).first.y,obs.getFeat(i).second.x,obs.getFeat(i).second.y},frame_idx-first_frame,pt_idx,obs.getCameraID()});
     }
     pt_idx++;
@@ -382,11 +389,11 @@ BundleAdjuster<2>::Status BundleAdjuster<2>::optimise(int fixedFrames){
 
     ceres::CostFunction* cstFunc;
     ceres::LossFunction* lossFunc = new ceres::HuberLoss(1.0);//new ceres::CauchyLoss(1.0);
-    //
+
     if(obs.camID == 0)
-        cstFunc = StandardReprojectionError::create(obs.data,&calib_params,sqrt(calib_params.feat_var)); //error is squared so should use feat. standard deviation
+        cstFunc = StandardReprojectionError::create(obs.data[0],obs.data[1],&calib_params,sqrt(calib_params.feat_var)); //error is squared so should use feat. standard deviation
     else
-        cstFunc = StereoRightError::create(obs.data,&calib_params,sqrt(calib_params.feat_var));
+        cstFunc = StereoRightError::create(obs.data[0],obs.data[1],&calib_params,sqrt(calib_params.feat_var));
 
     double* obs_cam_params = m_camera_params[obs.camIdx].val, *obs_pt_params = m_point_params[obs.ptIdx].val;
     m_problem.AddResidualBlock(cstFunc,lossFunc,obs_cam_params,obs_pt_params);
@@ -398,16 +405,21 @@ BundleAdjuster<2>::Status BundleAdjuster<2>::optimise(int fixedFrames){
     m_problem.SetParameterLowerBound(obs_pt_params,0,-500);
     m_problem.SetParameterLowerBound(obs_pt_params,1,-500);
     m_problem.SetParameterLowerBound(obs_pt_params,2,0);
-
   }
 
   ceres::Solver::Options options;
-  options.max_solver_time_in_seconds = 0.2;
+  options.max_solver_time_in_seconds = 1.0;
   options.linear_solver_type = ceres::SPARSE_SCHUR;
   options.function_tolerance = 1e-3;
   options.minimizer_progress_to_stdout = false;
   ceres::Solver::Summary summary;
   ceres::Solve(options,&m_problem,&summary);
+
+  std::cout << summary.BriefReport() << std::endl;
+  std::cout << "is usable? " << std::boolalpha << summary.IsSolutionUsable() << std::endl;
+
+  if(calib_params.compute_cov)
+    extract_covariance(&m_problem);
 
   m_status = (summary.IsSolutionUsable()?Status::SUCCESSFUL:Status::FAILED);
   return m_status;
@@ -445,8 +457,59 @@ BundleAdjuster<4>::Status BundleAdjuster<4>::optimise(int fixedFrames){
   ceres::Solver::Summary summary;
   ceres::Solve(options,&m_problem,&summary);
 
+  if(calib_params.compute_cov)
+    extract_covariance(&m_problem);
+
   m_status = (summary.IsSolutionUsable()?Status::SUCCESSFUL:Status::FAILED);
   return m_status;
+}
+
+template<int M>
+void BundleAdjuster<M>::extract_covariance(ceres::Problem* pb){
+
+    if(!pb){
+        std::cerr << "[Bundle Adjuster] wrong ceres problem given for covariance estimation" << std::endl;
+        return;
+    }
+
+    std::vector<std::pair<const double*,const double*>> cov_blocks;
+    std::vector<double*> param_blocks;
+    //retrieving param blocks
+    pb->GetParameterBlocks(&param_blocks);
+    if((int)param_blocks.size() != getNbCameras()+getNbPoints()){
+        std::cerr << "[BundleAdjuster] Error retrieving covariance blocks size and number of parameters do not correspond:" << std::endl;
+        std::cerr << "[BundleAdjuster] blocks size: " << param_blocks.size() << ", nb parameters: " << getNbCameras()+getNbPoints() << std::endl;
+        return;
+    }
+
+    for(int i=0;i<getNbCameras();i++)
+        cov_blocks.push_back(std::make_pair(param_blocks[i],param_blocks[i]));
+    //creating Covariance structure
+    ceres::Covariance::Options cov_opts;
+    ceres::Covariance covariance(cov_opts);
+
+    if(covariance.Compute(cov_blocks, pb)){
+        double cov_pose[6*6];//double cov_point[3*3];
+        for(int i=0;i<getNbCameras();i++)
+            if(covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose)){
+                m_camera_covs.push_back(cv::Mat(6,6,CV_64F,cov_pose));
+            }
+            else{
+                std::cerr << "cov failed for cam " << i << std::endl;
+                m_camera_covs.push_back(cv::Mat());
+            }
+//        for(int i=getNbCameras();i<getNbCameras()+getNbPoints();i++){
+//            if(covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_point))
+//                m_point_covs.push_back(cv::Mat(3,3,CV_64F,cov_point));
+//            else{
+//                m_camera_covs.push_back(cv::Mat());
+//                std::cerr << "cov failed for pt " << i-getNbCameras() << std::endl;
+//            }
+//        }
+    }else{
+        std::cerr << "[Bundle Adjuster] error computing the covariance" << std::endl;
+        return;
+    }
 }
 
 
