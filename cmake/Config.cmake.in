@@ -1,0 +1,16 @@
+# - Config file for the MotionEstimation package
+# It defines the following variables
+#  MotionEstimation_INCLUDE_DIRS	- include directories for MotionEstimation and its dependencies
+#  MotionEstimation_LIBRARIES		- libraries to link against
+#  MotionEstimation_FOUND			- defined when the package is found
+
+#current directory
+set(@PROJECT_NAME@_ROOT_DIR ${@PROJECT_NAME@_DIR}/../..)
+message(STATUS "ROOT DIR ${@PROJECT_NAME@_ROOT_DIR}")
+
+set(@PROJECT_NAME@_LIBRARIES @MotionEstimation_TARGETS@ @OpenCV_LIBRARIES@ @CERES_LIBRARIES@ @GLOG_LIBRARY@)
+set(@PROJECT_NAME@_INCLUDE_DIRS "${@PROJECT_NAME@_ROOT_DIR}/@HEADER_DIR@;@OpenCV_INCLUDE_DIRS@;@CERES_INCLUDE_DIRS@")
+link_directories(${@PROJECT_NAME@_ROOT_DIR}/@LIB_DIR@)
+
+message(STATUS "found MotionEstimation package")
+

@@ -5,9 +5,12 @@
 # DEPENDENCIES #
 ################
 
+- Cmake 3.10 minimum
 - Opencv 3.4 minimum
 - Ceres 1.12 minimum (optional)
 - Eigen 3 minimum
+
+Ubuntu 16.04LTS : sudo apt-get install cmake ceres eigen3 opencv
 
 ################
 # INSTALLATION #
