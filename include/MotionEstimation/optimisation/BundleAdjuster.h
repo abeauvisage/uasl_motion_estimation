@@ -488,16 +488,17 @@ void BundleAdjuster<M>::extract_covariance(ceres::Problem* pb){
     ceres::Covariance::Options cov_opts;
     ceres::Covariance covariance(cov_opts);
 
+
     if(covariance.Compute(cov_blocks, pb)){
-        double cov_pose[6*6];//double cov_point[3*3];
-        for(int i=0;i<getNbCameras();i++)
-            if(covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose)){
-                m_camera_covs.push_back(cv::Mat(6,6,CV_64F,cov_pose));
-            }
-            else{
-                std::cerr << "cov failed for cam " << i << std::endl;
-                m_camera_covs.push_back(cv::Mat());
-            }
+		m_camera_covs = std::vector<cv::Mat>(getNbCameras());
+		double cov_pose[6*6];//double cov_point[3*3];
+		for(int i=0;i<getNbCameras();i++)
+			if(covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose)){
+				cv::Mat(6,6,CV_64F,cov_pose).copyTo(m_camera_covs[i]);
+			}
+			else{
+				std::cerr << "cov failed for cam " << i << std::endl;
+			}
 //        for(int i=getNbCameras();i<getNbCameras()+getNbPoints();i++){
 //            if(covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_point))
 //                m_point_covs.push_back(cv::Mat(3,3,CV_64F,cov_point));
