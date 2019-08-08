@@ -37,27 +37,15 @@ bool loadYML(string filename){
 
     //defining dataset information
     FileNode dataset = configFile["dataset"];
-    dataset["gps"] >> dataset_info.gps_orientation;
-    dataset["dir"] >> dataset_info.dir;
-    dataset_info.type = dataset["type"]=="stereo"?SetupType::stereo:SetupType::mono;
-    dataset_info.scaled_traj = dataset["scaled"]=="true"?true:false;
-    dataset["camID"] >> dataset_info.cam_ID;
-    dataset_info.poses = dataset["poses"]=="absolute"?PoseType::ABSOLUTE:PoseType::RELATIVE;
-    cv::Vec4d quat_coeffs;
-    dataset["init_orientation"] >> quat_coeffs;
-    if(norm(quat_coeffs)>0)
-        dataset_info.q_init = Quatd(quat_coeffs(0),quat_coeffs(1),quat_coeffs(2),quat_coeffs(3));
-    dataset["init_position"] >> dataset_info.p_init;
+    dataset_info.read(dataset);
 
     // defining frame informations
     FileNode frames = configFile["frames"];
-    frame_info.fframe = frames["start"];
-    frame_info.lframe = frames["stop"];
-    frame_info.skip = frames["rate"];
-    if(!frame_info.skip)
-    	frame_info.skip = 1;
-    frame_info.bias_frame = frames["bias"];
-    frame_info.init = frames["init"];
+    frame_info.read(frames);
+
+    //defining tracking parameters
+    FileNode tracking = configFile["tracking"];
+    tracking_info.read(tracking);
 
     //defining calibration parameters
     FileNode calib = configFile["calib"];
@@ -103,16 +91,6 @@ bool loadYML(string filename){
         calib["threshold"] >> param_mono.inlier_threshold;
         calib["fixed_frames"] >> param_mono.nb_fixed_frames;
     }
-
-    //defining tracking parameters
-    FileNode tracking = configFile["tracking"];
-    tracking["feats"] >> tracking_info.nb_feats;
-    tracking["window"] >> tracking_info.window_size;
-    tracking["ba_rate"] >> tracking_info.ba_rate;
-    tracking["parallax"] >> tracking_info.parallax;
-    tracking["feat_cov"] >> tracking_info.feat_cov;
-    if(!tracking_info.feat_cov)
-        tracking_info.feat_cov = 1.0;
 
     configFile["appendix"] >> appendix;
 

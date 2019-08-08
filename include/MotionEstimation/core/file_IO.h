@@ -55,6 +55,8 @@ struct FrameInfo{
         skip = (int)node["rate"];
         bias_frame = (int)node["bframe"];
         init = (int)node["initframe"];
+        if(!skip)
+			skip = 1;
     }
 };
 
@@ -75,6 +77,8 @@ struct TrackingInfo{
         ba_rate = (int)node["ba_rate"];
         parallax = (double)node["parallax"];
         feat_cov = (double)node["feat_cov"];
+        if(!feat_cov)
+			feat_cov = 1.0;
     }
 };
 
@@ -86,8 +90,8 @@ struct DatasetInfo{
     bool scaled_traj=false;
     PoseType poses = PoseType::ABSOLUTE;
     int cam_ID=0;
-    Quatd q_init;
-    cv::Vec3d p_init = cv::Vec3d(0,0,0);
+    Quatd q_init, q_cam_to_base;
+    cv::Vec3d p_init = cv::Vec3d(0,0,0), p_cam_to_base = cv::Vec3d(0,0,0);
     void write(cv::FileStorage& fs) const{
         fs << "{" << "dir" << dir << "gps" << gps_orientation << "type" << (type==SetupType::mono?"mono":"stereo") << "scaled" << (scaled_traj?"true":"false") <<
         "poses" << (poses==PoseType::ABSOLUTE?"absolute":"relative") << "camID" << cam_ID << "init_orientation" << q_init.getCoeffs() << "init_position" << p_init << "}";
@@ -102,7 +106,11 @@ struct DatasetInfo{
         cv::Vec4d q;node["init_orientation"] >> q;
         if(norm(q)>0)
             q_init = Quatd(q(0),q(1),q(2),q(3));
+		node["cam_orientation"] >> q;
+        if(norm(q)>0)
+            q_cam_to_base = Quatd(q(0),q(1),q(2),q(3));
         node["init_position"] >> p_init;
+        node["cam_position"] >> p_cam_to_base;
     }
 };
 
@@ -259,7 +267,7 @@ struct ImageReader{
     int64_t img_stamp; //! current_image_stamp
 
 
-    ImageReader(const std::string& filename=dataset_info.dir+"/image_data.csv", Type type_=Type::IMAGES): fimage{filename}, cap(me::dataset_info.type==me::SetupType::stereo?2:1),type{type_},img_nb{0},img_stamp{0}{
+    ImageReader(const std::string& filename="", Type type_=Type::IMAGES): fimage{filename}, cap(me::dataset_info.type==me::SetupType::stereo?2:1),type{type_},img_nb{0},img_stamp{0}{
 
         if(!fimage.is_open())
             std::cerr << "[ImageReader] warning: could not find an image file in " << dataset_info.dir << std::endl;
@@ -271,7 +279,7 @@ struct ImageReader{
         }
         do{
           readMono(); // this method can be run  with mono and stereo
-        }while(img_nb && img_nb<me::frame_info.fframe); // reading images until we reach the first frame
+        }while(img_nb<me::frame_info.fframe); // reading images until we reach the first frame
     }
 
     void openReader(const std::string& filename=dataset_info.dir+"/image_data.csv", Type type_=Type::IMAGES){
@@ -289,7 +297,7 @@ struct ImageReader{
         }
         do{
           readMono(); // this method can be run  with mono and stereo
-        }while(img_nb && img_nb<me::frame_info.fframe); // reading images until we reach the first frame
+        }while(img_nb<me::frame_info.fframe); // reading images until we reach the first frame
     }
 
     bool isValid(){
@@ -319,8 +327,11 @@ struct ImageReader{
           return me::loadImages(me::dataset_info.dir,img_nb);
       else{
         std::pair<cv::Mat,cv::Mat> imgs;
-        cap[0].set(cv::CAP_PROP_POS_FRAMES,img_nb); cap[0] >> imgs.first;
-        cap[1].set(cv::CAP_PROP_POS_FRAMES,img_nb); cap[1] >> imgs.second;
+        while(cap[0].get(cv::CAP_PROP_POS_FRAMES) < img_nb)
+			cap[0].grab();
+		while(cap[1].get(cv::CAP_PROP_POS_FRAMES) < img_nb)
+			cap[1].grab();
+		cap[0] >> imgs.first; cap[1] >> imgs.second;
         if(imgs.first.type() > 8)
             cv::cvtColor(imgs.first,imgs.first,CV_BGR2GRAY);
         if(imgs.second.type() > 8)
@@ -347,7 +358,9 @@ struct ImageReader{
           return me::loadImage(me::dataset_info.dir,0,img_nb);
       else{
         cv::Mat img;
-        cap[0].set(cv::CAP_PROP_POS_FRAMES,img_nb); cap[0] >> img;
+        while(cap[0].get(cv::CAP_PROP_POS_FRAMES) < img_nb)
+			cap[0].grab();
+         cap[0] >> img;
         if(img.type() > 8)
             cv::cvtColor(img,img,CV_BGR2GRAY);
         return img;
