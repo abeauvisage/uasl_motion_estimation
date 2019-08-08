@@ -13,7 +13,7 @@ Graph3D::Graph3D(const string& name, bool traj) : m_viz(name), m_traj(traj)
     m_viz.setBackgroundColor(viz::Color::black(),viz::Color::gray());
     m_viz.showWidget("Coordinate_system", viz::WCoordinateSystem(1));
     m_viz.resetCamera();
-    m_viz.setWindowSize(Size(640,350));
+    m_viz.setWindowSize(Size(1240,350));
     m_t = thread(&Graph3D::mainloop,this);
 }
 
@@ -36,7 +36,7 @@ void Graph3D::refresh(){
     if(!m_poses.empty()){
         if(m_traj)
             m_viz.showWidget("Camera_trajectory",viz::WTrajectory(m_poses,viz::WTrajectory::PATH,1.0,viz::Color::green()));
-        m_viz.showWidget("Camera_widget",viz::WTrajectoryFrustums(std::vector<cv::Affine3d>(m_poses.end()-5,m_poses.end()),Vec2d(1,0.5),1.0,viz::Color::blue()));
+        m_viz.showWidget("Camera_widget",viz::WTrajectoryFrustums(std::vector<cv::Affine3d>(m_poses.begin(),m_poses.end()),Vec2d(1,0.5),1.0,viz::Color::blue()));
     }
 
     if(!m_gps.empty()){
@@ -46,7 +46,10 @@ void Graph3D::refresh(){
         m_viz.showWidget("IMU_track",viz::WTrajectorySpheres(m_imu,1.0,0.07,viz::Color::red(),viz::Color::red()));
 
     if(!m_pts.empty()){
-        viz::WCloud wcloud(m_pts);
+		cv::Mat colors(m_pts.size(),CV_8UC3);
+		for(int i=0;i<m_pts.rows;i++)
+			colors.at<Matx<uchar,3,1>>(i) = cv::Matx<uchar,3,1>(0,(m_pts.at<double>(i,2)+2)*20>255?255:uchar((m_pts.at<double>(i,2)+2)*20),255);
+        viz::WCloud wcloud(m_pts,colors);
         m_viz.showWidget("Cloud",wcloud);
         m_viz.setRenderingProperty("Cloud",viz::POINT_SIZE,3);
     }
@@ -62,7 +65,9 @@ void Graph3D::add3Dpts(const vector<me::pt3D>& points){
 
     Mat new_pts = Mat::zeros(points.size(),1,CV_64FC3);
     for(uint i=0;i<points.size();i++)
-        new_pts.at<Matx31d>(i) = points[i];
+		if(norm(points[i])< 300)
+			new_pts.at<Matx31d>(i) = points[i];
+
 
    m_pts.push_back(new_pts);
    refresh();

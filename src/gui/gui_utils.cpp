@@ -43,6 +43,31 @@ cv::Mat show(const vector<WBA_Ptf>& pts, const pair<vector<CamPose_qd>,vector<Ca
 }
 
 //! display features in the latest stereo pair
+cv::Mat show(const vector<WBA_stereo_Ptf>& pts, const pair<vector<CamPose_qd>,vector<CamPose_qd>>& poses, const pair<cv::Mat,cv::Mat>& img){
+	namedWindow("img",0);
+    CamPose_qd pose = *(poses.first.end()-1);
+    Mat img_color(img.first.rows,img.first.cols+img.second.cols,CV_8U);
+    img.first.convertTo(img_color.colRange(Range(0,img.first.cols)),CV_8UC3);
+    img.second.convertTo(img_color.colRange(Range(img.first.cols,img.first.cols+img.second.cols)),CV_8UC3);
+    cvtColor(img_color,img_color,CV_GRAY2BGR);
+
+     int nb_pts[2] = {0,0};
+    for(auto& pt : pts)
+        if((int) pt.getLastFrameIdx() == pose.ID){
+            nb_pts[pt.getCameraID()]++;
+            int color = ((pose.orientation * to_euclidean(pt.get3DLocation())+pose.position)(2))*(255/45.0);
+            circle(img_color,pt.getLastFeat().first,0.01*img_color.rows,Scalar(0,color,255),-1);
+            circle(img_color,pt.getLastFeat().second+Point2f(img.first.cols,0),0.01*img_color.rows,Scalar(0,color,255),-1);
+            line(img_color,pt.getFeat(pt.getNbFeatures()-2).first,pt.getLastFeat().first,Scalar(0,color,255));
+        }
+    imshow("img",img_color);
+    int MAX_DISPLAY_WIDTH = 1080;
+	resizeWindow("img", MAX_DISPLAY_WIDTH,(float)img_color.rows/(float)img_color.cols*MAX_DISPLAY_WIDTH);
+    waitKey(1);
+    return img_color;
+}
+
+//! display features in the latest stereo pair
 cv::Mat show_stereo_reproj(const vector<WBA_Ptf>& pts, const pair<vector<CamPose_qd>,vector<CamPose_qd>>& poses, const pair<cv::Mat,cv::Mat>& img, const cv::Matx33d& K){
     CamPose_qd pose_left = *(poses.first.end()-1);
     CamPose_qd pose_right = *(poses.second.end()-1);
