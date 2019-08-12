@@ -1,3 +1,9 @@
+/** \file gui_utils.cpp
+*   \brief Various graphical interface to show 2D features in the current images
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include "gui/gui_utils.h"
 
 using namespace std;
@@ -76,11 +82,9 @@ cv::Mat show_stereo_reproj(const vector<WBA_Ptf>& pts, const pair<vector<CamPose
     img.second.convertTo(img_color.colRange(Range(img.first.cols,img.first.cols+img.second.cols)),CV_8UC3);
     cvtColor(img_color,img_color,CV_GRAY2BGR);
 
-    int nb_pts[2] = {0,0};
     for(auto& pt : pts){
         if((int) pt.getLastFrameIdx() == pose_left.ID){
             int color = pt.getCameraID()*255;
-            nb_pts[pt.getCameraID()]++;
 
             pt3D p3_left = (pose_left.orientation * to_euclidean(pt.get3DLocation()) + pose_left.position);normalize(p3_left);
             pt3D p3_right = (pose_right.orientation * to_euclidean(pt.get3DLocation()) + pose_right.position);normalize(p3_right);
@@ -110,6 +114,7 @@ cv::Mat show_stereo_reproj_scaled(const pair<vector<WBA_Ptf>,vector<WBA_Ptf>>& p
 
     //features are reprojected in the last frame only
     uint lframe = poses.first[0].ID + poses.first.size()-1;
+    cout << "[StereoReproj] lframe: " << lframe << endl;
     //for all features extracted from the left camera
     for(uint i=0;i<pts.first.size();i++){
         if(pts.first[i].isTriangulated()){

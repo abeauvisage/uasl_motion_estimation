@@ -1,6 +1,12 @@
 #ifndef GUI_UTILS_H_INCLUDED
 #define GUI_UTILS_H_INCLUDED
 
+/** \file gui_utils.h
+*   \brief Various graphical interface to show 2D features in the current images
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include "core/feature_types.h"
 
 #include <opencv2/highgui/highgui.hpp>
@@ -22,8 +28,10 @@ cv::Mat show_stereo_reproj_scaled(const std::pair<std::vector<me::WBA_Ptf>,std::
 
 /**** display Point2f ****/
 
+//! display a set of Point2f pts in image img
 cv::Mat show(const cv::Mat& img, const std::vector<cv::Point2f>& pts);
 
+/**** display covariance ****/
 
 //! display a 2D confidence ellipses (95%) of the 3D covariance provided along each axis
 cv::Mat display_cov(const std::string& wname, const cv::Mat& cov, double s=1);

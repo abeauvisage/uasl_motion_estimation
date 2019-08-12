@@ -1,5 +1,16 @@
 #include "gui/Graph2D.h"
 
+/** \file Graph2D.h
+*   \brief Creates a 1D or 2D graph with 2 axes
+*
+*	automatically resize the graph based on the data being added
+*	adding a single value will create a 1D plot and adding a vector will create a 2D plot
+*	Legend can be added
+*	For 2D graph the total length of trajectory can be computed with getLength()
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include <sstream>
 #include <iomanip>
 

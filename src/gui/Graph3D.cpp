@@ -1,7 +1,15 @@
+/** \file Graph3D.cpp
+*   \brief Creates and update an OpenCV viz 3D graph
+*
+*	add/update 6-dof camera and IMU poses
+*	add/update 3D point cloud and GPS coordinates
+*
+*    \author Axel Beauvisage (axel.beauvisage@gmail.com)
+*/
+
 #include "gui/Graph3D.h"
 
 #include <opencv2/highgui/highgui.hpp>
-#include <iostream>
 
 using namespace std;
 using namespace cv;
@@ -54,11 +62,9 @@ void Graph3D::refresh(){
         m_viz.setRenderingProperty("Cloud",viz::POINT_SIZE,3);
     }
 
-    Affine3d pose_viewer = Affine3d::Identity();
-    pose_viewer.rotation(Vec3d(0,-2.2,-0.9));
-    //m_viz.addLight(m_poses[m_poses.size()-1].translation());
-//    pose_viewer.translation(Vec3d(1.0,1.0,1.0));
-    m_viz.setViewerPose(pose_viewer);
+//    Vec3d translation = m_poses[m_poses.size()-1].translation();
+//    Affine3d pose_viewer = viz::makeCameraPose(translation+Vec3d{5,5,5},translation,Vec3d{0,0,-1});
+//    m_viz.setViewerPose(pose_viewer);
 }
 
 void Graph3D::add3Dpts(const vector<me::pt3D>& points){
