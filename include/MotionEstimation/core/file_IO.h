@@ -192,6 +192,7 @@ public:
     bool is_open(){return m_file.is_open();}
     int openFile(std::string filename);
     void closeFile(){m_file.close();}
+    std::string show_header(){std::string header;for(auto s : m_file_desc)header+=s+';';return header;}
 
 private:
     int check_header();
