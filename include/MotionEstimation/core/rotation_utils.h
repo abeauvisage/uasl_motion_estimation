@@ -19,6 +19,10 @@ namespace me{
 const cv::Mat TRef = (cv::Mat_<double>(3,3) << 0,-1,0,0,0,-1,1,0,0);
 enum StopCondition{NO_STOP,SMALL_GRADIENT,SMALL_INCREMENT,MAX_ITERATIONS,SMALL_DECREASE_FUNCTION,SMALL_REPROJ_ERROR,NO_CONVERGENCE};
 
+constexpr double deg2Rad(double deg){return deg * PI/180;}
+constexpr double rad2Deg(double rad){return rad * 180/PI;}
+
+
 template <typename T>
 cv::Matx<T,4,3> Gq_v(const cv::Vec<T,3>& v);
 
