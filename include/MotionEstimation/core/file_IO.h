@@ -85,6 +85,8 @@ struct TrackingInfo{
 //! structure containing various information about the dataset to use
 struct DatasetInfo{
     std::string dir="";
+    std::string image_filename="";
+    std::string gt_filename="";
     double gps_orientation = 0;
     SetupType type=SetupType::mono;
     bool scaled_traj=false;
@@ -98,6 +100,8 @@ struct DatasetInfo{
     }
     void read(const cv::FileNode& node){
         dir = (std::string)node["dir"];
+        image_filename = (std::string)node["image_file"];
+        gt_filename = (std::string)node["gt_file"];
         gps_orientation = (double)node["gps"];
         type = (node["type"]=="mono"?SetupType::mono:SetupType::stereo);
         scaled_traj = (node["scaled"]=="true"?true:false);
