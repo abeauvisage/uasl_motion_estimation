@@ -385,6 +385,9 @@ BundleAdjuster<2>::Status BundleAdjuster<2>::optimise(int fixedFrames){
 
   ceres::Problem m_problem{}; //!< ceres problem which optimises points and camera parameters
 
+  double Zmax = calib_params.K[0](0,0)*calib_params.baseline/0.1;
+  double Zmin = calib_params.K[0](0,0)*calib_params.baseline/(2*calib_params.K[0](0,2));
+
   for(auto& obs : m_observations){
 
     ceres::CostFunction* cstFunc;
@@ -399,12 +402,12 @@ BundleAdjuster<2>::Status BundleAdjuster<2>::optimise(int fixedFrames){
     m_problem.AddResidualBlock(cstFunc,lossFunc,obs_cam_params,obs_pt_params);
     if(obs.camIdx < fixedFrames)
         m_problem.SetParameterBlockConstant(obs_cam_params);
-    m_problem.SetParameterUpperBound(obs_pt_params,0,500);
-    m_problem.SetParameterUpperBound(obs_pt_params,1,500);
-    m_problem.SetParameterUpperBound(obs_pt_params,2,500);
-    m_problem.SetParameterLowerBound(obs_pt_params,0,-500);
-    m_problem.SetParameterLowerBound(obs_pt_params,1,-500);
-    m_problem.SetParameterLowerBound(obs_pt_params,2,0);
+    m_problem.SetParameterUpperBound(obs_pt_params,0,Zmax/calib_params.K[0](0,0)*calib_params.K[0](0,2));
+    m_problem.SetParameterUpperBound(obs_pt_params,1,Zmax/calib_params.K[0](1,1)*calib_params.K[0](1,2));
+    m_problem.SetParameterUpperBound(obs_pt_params,2,Zmax);
+    m_problem.SetParameterLowerBound(obs_pt_params,0,-Zmax/calib_params.K[0](0,0)*calib_params.K[0](0,2));
+    m_problem.SetParameterLowerBound(obs_pt_params,1,-Zmax/calib_params.K[0](1,1)*calib_params.K[0](1,2));
+    m_problem.SetParameterLowerBound(obs_pt_params,2,Zmin);
   }
 
   ceres::Solver::Options options;
@@ -434,8 +437,10 @@ BundleAdjuster<4>::Status BundleAdjuster<4>::optimise(int fixedFrames){
   }
 
   std::cout << "[Bundle Adjuster] optimising (" << m_camera_params.size() << " cam poses and " << m_point_params.size() << " pts with " << m_observations.size() << " observations." << std::endl;
-
   ceres::Problem m_problem{}; //!< ceres problem which optimises points and camera parameters
+
+  double Zmax = calib_params.K[0](0,0)*calib_params.baseline/0.1;
+  double Zmin = calib_params.K[0](0,0)*calib_params.baseline/(2*calib_params.K[0](0,2));
 
   for(auto& obs : m_observations){
 
@@ -444,9 +449,15 @@ BundleAdjuster<4>::Status BundleAdjuster<4>::optimise(int fixedFrames){
     double* obs_cam_params = m_camera_params[obs.camIdx].val, *obs_pt_params = m_point_params[obs.ptIdx].val;
 
     m_problem.AddResidualBlock(cstFunc,lossFunc,obs_cam_params,obs_pt_params);
-    if(obs.camIdx < fixedFrames)
+    if(obs.camIdx < fixedFrames){
         m_problem.SetParameterBlockConstant(obs_cam_params);
-//    m_problem.SetParameterBlockConstant(obs_pt_params);
+    }
+    m_problem.SetParameterUpperBound(obs_pt_params,0,Zmax/calib_params.K[0](0,0)*calib_params.K[0](0,2));
+    m_problem.SetParameterUpperBound(obs_pt_params,1,Zmax/calib_params.K[0](1,1)*calib_params.K[0](1,2));
+    m_problem.SetParameterUpperBound(obs_pt_params,2,Zmax);
+    m_problem.SetParameterLowerBound(obs_pt_params,0,-Zmax/calib_params.K[0](0,0)*calib_params.K[0](0,2));
+    m_problem.SetParameterLowerBound(obs_pt_params,1,-Zmax/calib_params.K[0](1,1)*calib_params.K[0](1,2));
+    m_problem.SetParameterLowerBound(obs_pt_params,2,Zmin);
   }
 
   ceres::Solver::Options options;
@@ -483,7 +494,10 @@ void BundleAdjuster<M>::extract_covariance(ceres::Problem* pb){
     }
 
     for(int i=0;i<getNbCameras();i++)
-        cov_blocks.push_back(std::make_pair(param_blocks[i],param_blocks[i]));
+        cov_blocks.push_back(std::make_pair(m_camera_params[i].val,m_camera_params[i].val));
+//	for(int i=0;i<getNbPoints();i++)
+//        cov_blocks.push_back(std::make_pair(m_point_params[i].val,m_point_params[i].val));
+
     //creating Covariance structure
     ceres::Covariance::Options cov_opts;
     ceres::Covariance covariance(cov_opts);
@@ -493,14 +507,14 @@ void BundleAdjuster<M>::extract_covariance(ceres::Problem* pb){
 		m_camera_covs = std::vector<cv::Mat>(getNbCameras());
 		double cov_pose[6*6];//double cov_point[3*3];
 		for(int i=0;i<getNbCameras();i++)
-			if(covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_pose)){
+			if(covariance.GetCovarianceBlock(m_camera_params[i].val,m_camera_params[i].val,cov_pose)){
 				cv::Mat(6,6,CV_64F,cov_pose).copyTo(m_camera_covs[i]);
 			}
 			else{
 				std::cerr << "cov failed for cam " << i << std::endl;
 			}
 //        for(int i=getNbCameras();i<getNbCameras()+getNbPoints();i++){
-//            if(covariance.GetCovarianceBlock(param_blocks[i],param_blocks[i],cov_point))
+//            if(covariance.GetCovarianceBlock(m_point_params[i].val,m_point_params[i].val,cov_point))
 //                m_point_covs.push_back(cv::Mat(3,3,CV_64F,cov_point));
 //            else{
 //                m_camera_covs.push_back(cv::Mat());
@@ -508,7 +522,7 @@ void BundleAdjuster<M>::extract_covariance(ceres::Problem* pb){
 //            }
 //        }
     }else{
-        std::cerr << "[Bundle Adjuster] error computing the covariance" << std::endl;
+        std::cerr << "[Bundle Adjuster] error computing the covariance matrix" << std::endl;
         return;
     }
 }
