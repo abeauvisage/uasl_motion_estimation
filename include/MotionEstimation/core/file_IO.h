@@ -87,6 +87,7 @@ struct DatasetInfo{
     std::string dir="";
     std::string image_filename="";
     std::string gt_filename="";
+    std::string imu_filename="";
     double gps_orientation = 0;
     SetupType type=SetupType::mono;
     bool scaled_traj=false;
@@ -102,6 +103,7 @@ struct DatasetInfo{
         dir = (std::string)node["dir"];
         image_filename = (std::string)node["image_file"];
         gt_filename = (std::string)node["gt_file"];
+        imu_filename = (std::string)node["imu_file"];
         gps_orientation = (double)node["gps"];
         type = (node["type"]=="mono"?SetupType::mono:SetupType::stereo);
         scaled_traj = (node["scaled"]=="true"?true:false);

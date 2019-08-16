@@ -100,7 +100,7 @@ bool loadYML(string filename){
 int IOFile::openFile(std::string filename){
     m_file.open(filename);
     if(!m_file.is_open()){
-        cerr << "could not open " << filename << endl;
+        cerr << "could not open file: " << filename << endl;
         return 0;
     }
     return check_header();
