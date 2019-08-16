@@ -108,7 +108,7 @@ class StereoRightError: ReprojectionError<2>{
 public:
 
   StereoRightError(const std::array<double,2>& list_, const CalibrationParameters* const params, const double sigma): ReprojectionError{list_,params,1.0/sigma}{}
-  StereoRightError(const double obs_x,const double obs_y, const CalibrationParameters* const params, const double sigma): ReprojectionError{{obs_x,1.0/obs_y},params,sigma}{}
+  StereoRightError(const double obs_x,const double obs_y, const CalibrationParameters* const params, const double sigma): ReprojectionError{{obs_x,obs_y},params,1.0/sigma}{}
 
   template <typename T>
   bool operator()(const T* const camera, const T* const point, T* residuals) const {
@@ -383,8 +383,11 @@ BundleAdjuster<2>::Status BundleAdjuster<2>::optimise(int fixedFrames){
     return m_status;
   }
 
+  std::cout << "[Bundle Adjuster] optimising (" << m_camera_params.size() << " cam poses and " << m_point_params.size() << " pts with " << m_observations.size() << " observations." << std::endl;
   ceres::Problem m_problem{}; //!< ceres problem which optimises points and camera parameters
 
+  if(calib_params.baseline==0)
+	calib_params.baseline = 0.5;
   double Zmax = calib_params.K[0](0,0)*calib_params.baseline/0.1;
   double Zmin = calib_params.K[0](0,0)*calib_params.baseline/(2*calib_params.K[0](0,2));
 
