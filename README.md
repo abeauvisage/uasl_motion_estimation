@@ -27,8 +27,8 @@ sudo dnf install cmake opencv-devel ceres-solver-devel eigen3-devel
 3. mkdir build
 4. cd build
 5. cmake ..
-	if using custom OpenCV, Eigen or Ceres add options:
-- -DOPENCV_CONFIG_FILE=/path/to/OpenCV/config -DEIGEN_CONFIG_FILE=/path/to/Eigen/config -DCERES_CONFIG_FILE=/path/to/Ceres/config
+>	if using custom OpenCV, Eigen or Ceres add options:
+-DOPENCV_CONFIG_FILE=/path/to/OpenCV/config -DEIGEN_CONFIG_FILE=/path/to/Eigen/config -DCERES_CONFIG_FILE=/path/to/Ceres/config
 6. make
 7. sudo make install (optional)
 8. make doc (optional for generating documentation)
