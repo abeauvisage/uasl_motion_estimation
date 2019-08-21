@@ -267,26 +267,26 @@ struct ImageReader{
 
     enum class Type{IMAGES,VIDEO}; //!< type of data
 
-    me::ImageFile fimage; //!< image file in case of directory
+    ImageFile fimage; //!< image file in case of directory
     std::vector<cv::VideoCapture> cap; //!< video file
     Type type;
     int img_nb; //!< current image number
     int64_t img_stamp; //! current_image_stamp
 
 
-    ImageReader(const std::string& filename="", Type type_=Type::IMAGES): fimage{filename}, cap(me::dataset_info.type==me::SetupType::stereo?2:1),type{type_},img_nb{0},img_stamp{0}{
+    ImageReader(const std::string& filename="", Type type_=Type::IMAGES): fimage{filename}, cap(dataset_info.type==SetupType::stereo?2:1),type{type_},img_nb{0},img_stamp{0}{
 
         if(!fimage.is_open())
             std::cerr << "[ImageReader] warning: could not find an image file in " << dataset_info.dir << std::endl;
 
         if(type == Type::VIDEO){ // if video needs to open video streams
             for(uint i=0;i<cap.size();i++){
-                cap[i].open(me::dataset_info.dir+"/cam"+std::to_string(i)+"_image.mp4");
+                cap[i].open(dataset_info.dir+"/cam"+std::to_string(i)+"_image.mp4");
             }
         }
         do{
           readMono(); // this method can be run  with mono and stereo
-        }while(img_nb<me::frame_info.fframe); // reading images until we reach the first frame
+        }while(img_nb<frame_info.fframe); // reading images until we reach the first frame
     }
 
     void openReader(const std::string& filename=dataset_info.dir+"/image_data.csv", Type type_=Type::IMAGES){
@@ -299,12 +299,12 @@ struct ImageReader{
 
         if(type == Type::VIDEO){ // if video needs to open video streams
             for(uint i=0;i<cap.size();i++){
-                cap[i].open(me::dataset_info.dir+"/cam"+std::to_string(i)+"_image.mp4");
+                cap[i].open(dataset_info.dir+"/cam"+std::to_string(i)+"_image.mp4");
             }
         }
         do{
           readMono(); // this method can be run  with mono and stereo
-        }while(img_nb<me::frame_info.fframe); // reading images until we reach the first frame
+        }while(img_nb<frame_info.fframe); // reading images until we reach the first frame
     }
 
     bool isValid(){
@@ -320,18 +320,18 @@ struct ImageReader{
 
       // updating next frame number
       if(fimage.is_open())
-          for(int i=0;i<me::frame_info.skip;i++){
+          for(int i=0;i<frame_info.skip;i++){
               if(!fimage.readData(img_nb,img_stamp)){ // trying to read in image file
-                std::cerr << "[Error] could not read image" << img_nb << " in " << me::dataset_info.dir << std::endl;
+                std::cerr << "[Error] could not read image" << img_nb << " in " << dataset_info.dir << std::endl;
                 return std::pair<cv::Mat,cv::Mat>();
               }
           }
       else
-        img_nb += me::frame_info.skip;
+        img_nb += frame_info.skip;
 
       // loading images
       if(type==Type::IMAGES)
-          return me::loadImages(me::dataset_info.dir,img_nb);
+          return loadImages(dataset_info.dir,img_nb);
       else{
         std::pair<cv::Mat,cv::Mat> imgs;
         while(cap[0].get(cv::CAP_PROP_POS_FRAMES) < img_nb)
@@ -351,18 +351,18 @@ struct ImageReader{
 
       // updating next frame number
       if(fimage.is_open())
-          for(int i=0;i<me::frame_info.skip;i++){
+          for(int i=0;i<frame_info.skip;i++){
               if(!fimage.readData(img_nb,img_stamp)){ // trying to read in image file
-                std::cerr << "[Error] could not read image" << img_nb << " in " << me::dataset_info.dir << std::endl;
+                std::cerr << "[Error] could not read image" << img_nb << " in " << dataset_info.dir << std::endl;
                 return cv::Mat();
               }
           }
       else
-        img_nb += me::frame_info.skip;
+        img_nb += frame_info.skip;
 
       // loading images
       if(type==Type::IMAGES)
-          return me::loadImage(me::dataset_info.dir,0,img_nb);
+          return loadImage(dataset_info.dir,dataset_info.cam_ID,img_nb);
       else{
         cv::Mat img;
         while(cap[0].get(cv::CAP_PROP_POS_FRAMES) < img_nb)
@@ -391,9 +391,9 @@ struct GTReader{
         return header;
     }
     //!< read one line of the file and returns the corresponding pose and its timestamp
-    std::pair<uint64_t,me::CamPose_qd> readPoseLine(){
+    std::pair<uint64_t,CamPose_qd> readPoseLine(){
 
-        std::pair<uint64_t,me::CamPose_qd> data;
+        std::pair<uint64_t,CamPose_qd> data;
         if(!stream.is_open()){
             std::cerr << "[GTReader] could not read line file not open" << std::endl;
             return data;
@@ -410,7 +410,7 @@ struct GTReader{
             linestream >> o >> coma;
         for(auto& p : position)
             linestream >> p >> coma;
-        data.second.orientation = me::Quatd{orientation[3],orientation[0],orientation[1],orientation[2]};
+        data.second.orientation = Quatd{orientation[3],orientation[0],orientation[1],orientation[2]};
         data.second.position = cv::Vec3d{position[0],position[1],position[2]};
 
         return data;
