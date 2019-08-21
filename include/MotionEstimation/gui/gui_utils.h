@@ -34,7 +34,7 @@ cv::Mat show(const cv::Mat& img, const std::vector<cv::Point2f>& pts);
 /**** display covariance ****/
 
 //! display a 2D confidence ellipses (95%) of the 3D covariance provided along each axis
-cv::Mat display_cov(const std::string& wname, const cv::Mat& cov, double s=1);
+void display_cov(const std::string& wname, const cv::Mat& cov, double s=1);
 
 }
 
