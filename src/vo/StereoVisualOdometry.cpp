@@ -274,7 +274,7 @@ bool StereoVisualOdometry::optimize(const std::vector<int>& selection, bool weig
                 break;
             }
         }
-    }while(!(k++ < m_param.max_iter?stop:stop=StopCondition::MAX_ITERATIONS));
+    }while(!(k++ < (m_param.max_iter?stop:stop=StopCondition::MAX_ITERATIONS)));
 
     if(stop == StopCondition::NO_CONVERGENCE || stop == StopCondition::MAX_ITERATIONS) // if failed or reached max iterations, return false (didn't work)
         return false;

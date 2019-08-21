@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.5)
 project (MotionEstimation)
 
 # compiler options
@@ -6,9 +6,10 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wno-comment")
 
 # dependencies
-find_package(OpenCV 3.4 REQUIRED core videoio imgcodecs flann highgui imgproc calib3d video OPTIONAL_COMPONENTS viz)
-find_package(Eigen3 REQUIRED)
-find_package(Ceres QUIET)
+message(STATUS "OpenCV config: ${OPENCV_CONFIG_PATH}")
+find_package(OpenCV 3.4 REQUIRED core videoio imgcodecs flann highgui imgproc calib3d video OPTIONAL_COMPONENTS viz PATHS ${OPENCV_CONFIG_PATH})
+find_package(Eigen3 REQUIRED PATHS ${EIGEN_CONFIG_PATH})
+find_package(Ceres QUIET PATHS ${CERES_CONFIG_FILE})
 message(STATUS "Ceres libs: ${CERES_LIBRARIES}")
 
 # documentation
