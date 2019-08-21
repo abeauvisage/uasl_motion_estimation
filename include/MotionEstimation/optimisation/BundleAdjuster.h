@@ -421,9 +421,6 @@ BundleAdjuster<2>::Status BundleAdjuster<2>::optimise(int fixedFrames){
   ceres::Solver::Summary summary;
   ceres::Solve(options,&m_problem,&summary);
 
-  std::cout << summary.BriefReport() << std::endl;
-  std::cout << "is usable? " << std::boolalpha << summary.IsSolutionUsable() << std::endl;
-
   if(calib_params.compute_cov)
     extract_covariance(&m_problem);
 
