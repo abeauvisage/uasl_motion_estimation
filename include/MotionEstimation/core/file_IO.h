@@ -96,8 +96,13 @@ struct DatasetInfo{
     Quatd q_init, q_cam_to_base;
     cv::Vec3d p_init = cv::Vec3d(0,0,0), p_cam_to_base = cv::Vec3d(0,0,0);
     void write(cv::FileStorage& fs) const{
-        fs << "{" << "dir" << dir << "gps" << gps_orientation << "type" << (type==SetupType::mono?"mono":"stereo") << "scaled" << (scaled_traj?"true":"false") <<
-        "poses" << (poses==PoseType::ABSOLUTE?"absolute":"relative") << "camID" << cam_ID << "init_orientation" << q_init.getCoeffs() << "init_position" << p_init << "}";
+		fs	<< "{"
+			<< "dir" << dir << "image_file" << image_filename << "gt_file" << gt_filename << "imu_file" << imu_filename
+			<< "gps" << gps_orientation << "type" << (type==SetupType::mono?"mono":"stereo")
+			<< "scaled" << (scaled_traj?"true":"false") << "poses" << (poses==PoseType::ABSOLUTE?"absolute":"relative")
+			<< "camID" << cam_ID << "init_orientation" << q_init.getCoeffs() << "init_position" << p_init
+			<< "cam_orientation" << q_cam_to_base.getCoeffs() << "cam_position" << p_cam_to_base
+			<< "}";
     }
     void read(const cv::FileNode& node){
         dir = (std::string)node["dir"];
