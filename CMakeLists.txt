@@ -72,12 +72,9 @@ set(ME_VO_SOURCES
 
 #Ceres for optimisation
 if(Ceres_FOUND)
-message(STATUS "adding Ceres Optimisation")
-list(APPEND ME_OPTIM_HEADERS ${HEADER_DIR}/optimisation/CeresBA.h)
-list(APPEND ME_OPTIM_SOURCES ${SRC_DIR}/optimisation/CeresBA.cpp)
 list(APPEND ME_OPTIM_HEADERS ${HEADER_DIR}/optimisation/BundleAdjuster.h)
 else(Ceres_FOUND)
-message(WARNING "Ceres was not found, CeresBA and BundleAdjuster will not be included.")
+message(WARNING "Ceres was not found, BundleAdjuster will not be included.")
 endif(Ceres_FOUND)
 
 if(OPENCV_VIZ_FOUND)
