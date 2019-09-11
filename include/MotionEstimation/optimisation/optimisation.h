@@ -106,10 +106,10 @@ public:
     StopCondition optimise(S& state, const bool test=false, const Eigen::VectorXi& mask=Eigen::VectorXi());
     std::vector<int> compute_inliers(const double threshold);
     Eigen::MatrixXd getJacobian(){return compute_jacobian();}
+	Eigen::MatrixXd compute_residuals(const S& state);
 
 private:
 
-Eigen::MatrixXd compute_residuals(const S& state);
 void compute_normal_equations(const Eigen::MatrixXd& residuals, Eigen::MatrixXd& JJ, Eigen::VectorXd& e);
 Eigen::MatrixXd compute_jacobian();
 
