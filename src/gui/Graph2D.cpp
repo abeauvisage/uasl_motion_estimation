@@ -51,7 +51,7 @@ void Graph2D::clearGraph(){
 void Graph2D::refresh(){
 
     if(m_image.empty())
-        namedWindow(m_name,CV_WINDOW_NORMAL);
+        namedWindow(m_name,WINDOW_NORMAL);
 
     float dx=0,dy=0;
     if(m_min_x < 0)

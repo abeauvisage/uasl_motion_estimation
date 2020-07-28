@@ -16,7 +16,7 @@ namespace me{
 cv::Mat show(const vector<WBA_Ptf>& pts, const vector<CamPose_qd>& poses, const cv::Mat& img){
     CamPose_qd pose = poses[poses.size()-1];
     Mat img_color;img.convertTo(img_color,CV_8UC3);
-    cvtColor(img_color,img_color,CV_GRAY2BGR);
+    cvtColor(img_color,img_color,COLOR_GRAY2BGR);
     for(auto& pt : pts)
         if((int) pt.getLastFrameIdx() == pose.ID){
             int color = (to_euclidean(pt.get3DLocation())(2)-5)*(255/45.0);
@@ -34,7 +34,7 @@ cv::Mat show(const vector<WBA_Ptf>& pts, const pair<vector<CamPose_qd>,vector<Ca
     Mat img_color(img.first.rows,img.first.cols+img.second.cols,CV_8U);
     img.first.convertTo(img_color.colRange(Range(0,img.first.cols)),CV_8UC3);
     img.second.convertTo(img_color.colRange(Range(img.first.cols,img.first.cols+img.second.cols)),CV_8UC3);
-    cvtColor(img_color,img_color,CV_GRAY2BGR);
+    cvtColor(img_color,img_color,COLOR_GRAY2BGR);
 
      int nb_pts[2] = {0,0};
     for(auto& pt : pts)
@@ -55,7 +55,7 @@ cv::Mat show(const vector<WBA_stereo_Ptf>& pts, const pair<vector<CamPose_qd>,ve
     Mat img_color(img.first.rows,img.first.cols+img.second.cols,CV_8U);
     img.first.convertTo(img_color.colRange(Range(0,img.first.cols)),CV_8UC3);
     img.second.convertTo(img_color.colRange(Range(img.first.cols,img.first.cols+img.second.cols)),CV_8UC3);
-    cvtColor(img_color,img_color,CV_GRAY2BGR);
+    cvtColor(img_color,img_color,COLOR_GRAY2BGR);
 
      int nb_pts[2] = {0,0};
     for(auto& pt : pts)
@@ -80,7 +80,7 @@ cv::Mat show_stereo_reproj(const vector<WBA_Ptf>& pts, const pair<vector<CamPose
     Mat img_color(img.first.rows,img.first.cols+img.second.cols,CV_8U);
     img.first.convertTo(img_color.colRange(Range(0,img.first.cols)),CV_8UC3);
     img.second.convertTo(img_color.colRange(Range(img.first.cols,img.first.cols+img.second.cols)),CV_8UC3);
-    cvtColor(img_color,img_color,CV_GRAY2BGR);
+    cvtColor(img_color,img_color,COLOR_GRAY2BGR);
 
     for(auto& pt : pts){
         if((int) pt.getLastFrameIdx() == pose_left.ID){
@@ -108,7 +108,7 @@ cv::Mat show_stereo_reproj_scaled(const pair<vector<WBA_Ptf>,vector<WBA_Ptf>>& p
     Mat img_color(img.first.rows,img.first.cols+img.second.cols,CV_8U);
     img.first.convertTo(img_color.colRange(Range(0,img.first.cols)),CV_8UC3);
     img.second.convertTo(img_color.colRange(Range(img.first.cols,img.first.cols+img.second.cols)),CV_8UC3);
-    cvtColor(img_color,img_color,CV_GRAY2BGR);
+    cvtColor(img_color,img_color,COLOR_GRAY2BGR);
     int window_size = 1;
     Rect bb(window_size,window_size,img.first.cols-2*window_size-1,img.first.rows-2*window_size-1);
 
@@ -172,7 +172,7 @@ cv::Mat show(const cv::Mat& img, const std::vector<cv::Point2f>& pts){
 
     Mat color_img(img.size(),CV_8U);
     img.convertTo(color_img,CV_8UC3);
-    cvtColor(color_img,color_img,CV_GRAY2BGR);
+    cvtColor(color_img,color_img,COLOR_GRAY2BGR);
 
     for(auto& pt : pts){
         int icolor = (unsigned) rng_cv;
@@ -232,7 +232,7 @@ void display_cov(const string& wname, const cv::Mat& cov, double s){
 		arrowedLine(visualizeimage,cv::Point2f(240,120),cv::Point2f(240,80),cv::Scalar(255,0,0));putText(visualizeimage,"z",cv::Point2f(240,80),cv::FONT_HERSHEY_SIMPLEX,0.4,cv::Scalar(255,0,0));
 		arrowedLine(visualizeimage,cv::Point2f(240,120),cv::Point2f(200,120),cv::Scalar(0,255,0));putText(visualizeimage,"y",cv::Point2f(200,120),cv::FONT_HERSHEY_SIMPLEX,0.4,cv::Scalar(0,255,0));
 		cv::ellipse(visualizeimage, ellipse_, cv::Scalar::all(255), 2);
-		cv::putText(visualizeimage,"1:"+to_string(1.0/s),cv::Point(250,20),CV_FONT_HERSHEY_COMPLEX,0.4,cv::Scalar::all(255));
+		cv::putText(visualizeimage,"1:"+to_string(1.0/s),cv::Point(250,20),cv::FONT_HERSHEY_COMPLEX,0.4,cv::Scalar::all(255));
 		return visualizeimage;
     };
 

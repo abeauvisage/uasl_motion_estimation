@@ -126,11 +126,11 @@ struct DatasetInfo{
         image_filename = (std::string)node["image_file"];
         gt_filename = (std::string)node["gt_file"];
         imu_filename = (std::string)node["imu_file"];
-        is_video = (node["video"]=="true"?true:false);
+        is_video = (std::string(node["video"])=="true"?true:false);
         gps_orientation = (double)node["gps"];
-        type = (node["type"]=="mono"?SetupType::mono:SetupType::stereo);
-        scaled_traj = (node["scaled"]=="true"?true:false);
-        poses = (node["poses"]=="absolute"?PoseType::ABSOLUTE:PoseType::RELATIVE);
+        type = (std::string(node["type"])=="mono"?SetupType::mono:SetupType::stereo);
+        scaled_traj = (std::string(node["scaled"])=="true"?true:false);
+        poses = (std::string(node["poses"])=="absolute"?PoseType::ABSOLUTE:PoseType::RELATIVE);
         cam_ID = (int)node["camID"];
         cv::Vec4d q;node["init_orientation"] >> q;
         if(norm(q)>0)
@@ -376,9 +376,9 @@ struct ImageReader{
 		cap[0] >> imgs.first; cap[1] >> imgs.second;
 
         if(imgs.first.type() > 8)
-            cv::cvtColor(imgs.first,imgs.first,CV_BGR2GRAY);
+            cv::cvtColor(imgs.first,imgs.first,cv::COLOR_BGR2GRAY);
         if(imgs.second.type() > 8)
-            cv::cvtColor(imgs.second,imgs.second,CV_BGR2GRAY);
+            cv::cvtColor(imgs.second,imgs.second,cv::COLOR_BGR2GRAY);
 
         return imgs;
       }
@@ -413,7 +413,7 @@ struct ImageReader{
 
          cap[0] >> img;
         if(img.type() > 8)
-            cv::cvtColor(img,img,CV_BGR2GRAY);
+            cv::cvtColor(img,img,cv::COLOR_BGR2GRAY);
 
         return img;
       }

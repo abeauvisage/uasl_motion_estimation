@@ -73,10 +73,10 @@ bool loadYML(string filename){
         if(!param_stereo.cv2)
             calib["cv2"] >> param_stereo.cv2;
         calib["baseline"] >> param_stereo.baseline;
-        param_stereo.ransac = (calib["ransac"] == "true"?true:false);
-        param_stereo.weighting = (calib["weighting"] == "true"?true:false);
+        param_stereo.ransac = (std::string(calib["ransac"]) == "true"?true:false);
+        param_stereo.weighting = (std::string(calib["weighting"]) == "true"?true:false);
         calib["threshold"] >> param_stereo.inlier_threshold;
-        param_stereo.method = calib["method"] == "GN"?VisualOdometry::Method::GN:VisualOdometry::Method::LM;
+        param_stereo.method = (std::string(calib["method"]) == "GN"?VisualOdometry::Method::GN:VisualOdometry::Method::LM);
         calib["fixed_frames"] >> param_stereo.nb_fixed_frames;
     }else{
         calib["fu"] >> param_mono.fu;

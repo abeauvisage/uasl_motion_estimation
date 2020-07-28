@@ -17,7 +17,7 @@ bool MonoVisualOdometry::process(const std::vector<StereoMatch<cv::Point2f>>& ma
 
         if( m_param.inlier_threshold <= 0)
             m_param.inlier_threshold = 1.0;
-        m_E = findEssentialMat(in, out, m_K, m_param.ransac?CV_RANSAC:CV_LMEDS, m_param.prob, m_param.inlier_threshold, mask);
+        m_E = findEssentialMat(in, out, m_K, m_param.ransac?RANSAC:LMEDS, m_param.prob, m_param.inlier_threshold, mask);
 
         if(m_E.empty()){
             m_Rt = Mat::eye(4,4,CV_64FC1);

@@ -117,8 +117,8 @@ void jointDistribution(const Mat& imgL, const Mat& imgR){
     Mat ROIRc(imgR.size(),CV_8UC3);
     imgL.convertTo(ROILc,CV_8UC3);
     imgR.convertTo(ROILc,CV_8UC3);
-    cvtColor(imgL,ROILc,CV_GRAY2BGR);
-    cvtColor(imgR,ROIRc,CV_GRAY2BGR);
+    cvtColor(imgL,ROILc,COLOR_GRAY2BGR);
+    cvtColor(imgR,ROIRc,COLOR_GRAY2BGR);
 
     ROILc.at<Vec3b>(0,0).val[0] = 255;
 
